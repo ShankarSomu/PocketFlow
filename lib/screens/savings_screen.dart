@@ -4,6 +4,9 @@ import '../db/database.dart';
 import '../models/savings_goal.dart';
 import '../models/account.dart';
 import '../services/refresh_notifier.dart';
+import '../theme/app_theme.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/gradient_text.dart';
 
 class SavingsScreen extends StatefulWidget {
   const SavingsScreen({super.key});
@@ -17,6 +20,25 @@ class _SavingsScreenState extends State<SavingsScreen> {
   Map<int, double> _accountBalances = {};
   Map<int, double> _monthlyContributions = {};
   bool _loading = true;
+
+  String _getEmojiForGoal(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('emergency') || n.contains('fund') || n.contains('safety')) return '🛡️';
+    if (n.contains('car') || n.contains('vehicle') || n.contains('auto')) return '🚗';
+    if (n.contains('vacation') || n.contains('travel') || n.contains('trip') || n.contains('holiday')) return '✈️';
+    if (n.contains('house') || n.contains('home') || n.contains('property')) return '🏡';
+    if (n.contains('wedding') || n.contains('marriage')) return '💍';
+    if (n.contains('education') || n.contains('college') || n.contains('school')) return '🎓';
+    if (n.contains('retirement') || n.contains('pension')) return '🌴';
+    if (n.contains('baby') || n.contains('child') || n.contains('kid')) return '👶';
+    if (n.contains('business') || n.contains('startup')) return '💼';
+    if (n.contains('computer') || n.contains('laptop') || n.contains('tech')) return '💻';
+    if (n.contains('phone') || n.contains('iphone')) return '📱';
+    if (n.contains('bike') || n.contains('bicycle')) return '🚴';
+    if (n.contains('gift') || n.contains('present')) return '🎁';
+    if (n.contains('pet') || n.contains('dog') || n.contains('cat')) return '🐾';
+    return '🎯';
+  }
 
   @override
   void initState() {
@@ -292,60 +314,248 @@ class _SavingsScreenState extends State<SavingsScreen> {
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
     final allocations = _computeAllocations();
-    final hasLinkedGoals = _goals.any((g) => g.accountId != null);
+    final totalTarget = _goals.fold(0.0, (sum, g) => sum + g.target);
+    final totalCurrent = _goals.fold(0.0, (sum, g) => sum + g.saved);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Savings Goals'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showForm(),
-        child: const Icon(Icons.add),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _goals.isEmpty
-              ? const Center(
-                  child: Text('No goals yet.\nTap + to create one.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey)))
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // ── Account allocation summary ──────────────────────
-                    if (hasLinkedGoals) ...[
-                      _AllocationSummary(
-                        goals: _goals,
-                        accounts: _accounts,
-                        balances: _accountBalances,
-                        allocations: allocations,
-                        fmt: fmt,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            : _goals.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.flag_outlined, size: 64, color: Colors.white.withOpacity(0.3)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No goals yet.\nTap + to create one.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    children: [
+                      // Fixed Header
+                      SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Row(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (bounds) => const LinearGradient(
+                                      colors: [Colors.white, Color(0xFFD1FAE5)],
+                                    ).createShader(bounds),
+                                    child: const Text(
+                                      'Goals',
+                                      style: TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.w300,
+                                        letterSpacing: -1,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Track your financial goals',
+                                    style: TextStyle(
+                                      color: Color(0xFF94A3B8),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 16),
+                      // Scrollable Content
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          children: [
+
+                      // Overall Progress Card
+                      if (_goals.isNotEmpty) ...[
+                        TweenAnimationBuilder(
+                          duration: const Duration(milliseconds: 600),
+                          tween: Tween<double>(begin: 0, end: 1),
+                          builder: (context, double value, child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.scale(
+                                scale: 0.95 + (0.05 * value),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED), Color(0xFFD946EF)],
+                              ),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Text('Total Goal Progress',
+                                                style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                            SizedBox(width: 6),
+                                            Icon(Icons.emoji_events, color: Colors.white70, size: 16),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(fmt.format(totalCurrent),
+                                            style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 48,
+                                                fontWeight: FontWeight.w300)),
+                                        const SizedBox(height: 4),
+                                        Text('of ${fmt.format(totalTarget)} target',
+                                            style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                                      ],
+                                    ),
+                                    Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+                                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                                      ),
+                                      child: const Icon(Icons.track_changes, color: Colors.white, size: 40),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: LinearProgressIndicator(
+                                    value: totalTarget > 0 ? (totalCurrent / totalTarget).clamp(0.0, 1.0) : 0,
+                                    minHeight: 12,
+                                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                                    valueColor: const AlwaysStoppedAnimation(Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '${totalTarget > 0 ? ((totalCurrent / totalTarget) * 100).toStringAsFixed(1) : "0.0"}% complete',
+                                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                                    ),
+                                    Text(
+                                      '${fmt.format(totalTarget - totalCurrent)} remaining',
+                                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Goal cards
+                      ..._goals.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final g = entry.value;
+                        final account = _accounts
+                            .where((a) => a.id == g.accountId)
+                            .firstOrNull;
+                        final accountBalance =
+                            g.accountId != null
+                                ? (_accountBalances[g.accountId] ?? 0)
+                                : null;
+                        final allocated = allocations[g.id];
+                        return TweenAnimationBuilder(
+                          duration: Duration(milliseconds: 700 + (index * 100)),
+                          tween: Tween<double>(begin: 0, end: 1),
+                          builder: (context, double value, child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.translate(
+                                offset: Offset(0, 20 * (1 - value)),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: _GoalCard(
+                            goal: g,
+                            emoji: _getEmojiForGoal(g.name),
+                            account: account,
+                            accountBalance: accountBalance,
+                            allocated: allocated,
+                            monthlyContribution: _monthlyContributions[g.id] ?? 0,
+                            fmt: fmt,
+                            onTap: () => _showForm(g),
+                            onContribute: () => _showContribute(g),
+                          ),
+                        );
+                      }),
+                          ],
+                        ),
+                      ),
                     ],
-                    // ── Goal cards ──────────────────────────────────────
-                    ..._goals.map((g) {
-                      final account = _accounts
-                          .where((a) => a.id == g.accountId)
-                          .firstOrNull;
-                      final accountBalance =
-                          g.accountId != null
-                              ? (_accountBalances[g.accountId] ?? 0)
-                              : null;
-                      final allocated = allocations[g.id];
-                      return _GoalCard(
-                        goal: g,
-                        account: account,
-                        accountBalance: accountBalance,
-                        allocated: allocated,
-                        monthlyContribution: _monthlyContributions[g.id] ?? 0,
-                        fmt: fmt,
-                        onTap: () => _showForm(g),
-                        onContribute: () => _showContribute(g),
-                      );
-                    }),
-                  ],
-                ),
+                  ),
+      ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF059669), Color(0xFF3B82F6)],
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.emerald.withOpacity(0.5),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showForm(),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Goal'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+      ),
     );
   }
 
@@ -496,6 +706,7 @@ class _AllocationSummary extends StatelessWidget {
 
 class _GoalCard extends StatelessWidget {
   final SavingsGoal goal;
+  final String emoji;
   final Account? account;
   final double? accountBalance;
   final double? allocated;
@@ -506,6 +717,7 @@ class _GoalCard extends StatelessWidget {
 
   const _GoalCard({
     required this.goal,
+    required this.emoji,
     required this.account,
     required this.accountBalance,
     required this.allocated,
@@ -530,172 +742,161 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pct = (goal.progress * 100).toStringAsFixed(1);
-    final accountFunded = accountBalance != null &&
-        accountBalance! >= goal.remaining;
-    final allocationColor = allocated == null
-        ? Colors.blue
-        : allocated! >= goal.remaining
-            ? Colors.green
-            : allocated! > 0
-                ? Colors.orange
-                : Colors.red;
+    final remaining = goal.target - goal.saved;
 
-    // Use recurring contribution if available, else fall back to 10% of balance
-    final monthlyEstimate = monthlyContribution > 0
-        ? monthlyContribution
-        : (accountBalance != null ? accountBalance! * 0.1 : 0.0);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return GlassCard(
+      margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(children: [
-                          if (goal.priority < 999)
-                            Container(
-                              width: 22,
-                              height: 22,
-                              margin: const EdgeInsets.only(right: 8),
-                              alignment: Alignment.center,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF6C63FF),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text('${goal.priority}',
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold)),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
                             ),
-                          Expanded(
-                            child: Text(goal.name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16)),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        ]),
-                      ),
-                      TextButton.icon(
-                        onPressed: onContribute,
-                        icon: const Icon(Icons.add, size: 14),
-                        label: const Text('Add',
-                            style: TextStyle(fontSize: 12)),
-                      ),
-                    ]),
-
-                // Account badge
-                if (account != null) ...[
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    const Icon(Icons.account_balance_wallet,
-                        size: 12, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(account!.name,
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.grey)),
-                    const SizedBox(width: 8),
-                    Icon(
-                      accountFunded
-                          ? Icons.check_circle
-                          : Icons.warning_amber,
-                      size: 12,
-                      color: accountFunded ? Colors.green : Colors.orange,
+                          alignment: Alignment.center,
+                          child: Text(
+                            emoji,
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(goal.name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18,
+                                    color: AppTheme.slate900)),
+                            const Text(
+                              'Savings goal',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.slate400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 2),
-                    Text(
-                      accountFunded
-                          ? 'Funded'
-                          : 'Needs ${fmt.format(goal.remaining - (accountBalance ?? 0))} more',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: accountFunded
-                              ? Colors.green
-                              : Colors.orange),
+                    TextButton.icon(
+                      onPressed: onContribute,
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Add'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.indigo,
+                      ),
                     ),
-                  ]),
-                ],
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Current',
+                            style: TextStyle(fontSize: 11, color: AppTheme.slate500)),
+                        const SizedBox(height: 4),
+                        GradientText(
+                          fmt.format(goal.saved),
+                          style: const TextStyle(
+                              fontSize: 32, fontWeight: FontWeight.w300),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF10B981), Color(0xFF059669)],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Target',
+                            style: TextStyle(fontSize: 11, color: AppTheme.slate500)),
+                        const SizedBox(height: 4),
+                        Text(fmt.format(goal.target),
+                            style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w300,
+                                color: AppTheme.slate400)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-                // Progress bar
-                Stack(children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
                       value: goal.progress,
-                      minHeight: 22,
-                      backgroundColor: Colors.blue.withValues(alpha: 0.12),
-                      valueColor:
-                          AlwaysStoppedAnimation(allocationColor),
+                      minHeight: 10,
+                      backgroundColor: const Color(0xFFE0E7FF),
+                      valueColor: const AlwaysStoppedAnimation(Color(0xFF8B5CF6)),
                     ),
                   ),
-                  Positioned.fill(
-                    child: Center(
-                      child: Text('$pct%',
-                          style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
-                    ),
-                  ),
-                ]),
+                const SizedBox(height: 12),
 
-                const SizedBox(height: 8),
-
-                // Amounts row
                 Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Saved: ${fmt.format(goal.saved)}',
-                          style: const TextStyle(fontSize: 13)),
-                      Text('Target: ${fmt.format(goal.target)}',
-                          style: const TextStyle(
-                              fontSize: 13, color: Colors.grey)),
-                    ]),
-
-                // Allocation row
-                if (allocated != null) ...[
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    Icon(Icons.auto_fix_high,
-                        size: 12, color: allocationColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Allocated: ${fmt.format(allocated!)}',
-                      style: TextStyle(
-                          fontSize: 11, color: allocationColor),
-                    ),
-                    if (allocated! < goal.remaining) ...[
-                      const SizedBox(width: 6),
-                      Text(
-                        '(${fmt.format(goal.remaining - allocated!)} short)',
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('$pct% complete',
                         style: const TextStyle(
-                            fontSize: 11, color: Colors.red),
-                      ),
-                    ],
-                  ]),
-                ],
-
-                // Estimate
-                const SizedBox(height: 4),
-                Text(
-                  _estimateLabel(monthlyEstimate),
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: goal.remaining <= 0
-                          ? Colors.green
-                          : Colors.grey),
+                            fontSize: 13,
+                            color: AppTheme.slate600,
+                            fontWeight: FontWeight.w500)),
+                    Text('${fmt.format(remaining)} to go',
+                        style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.emerald,
+                            fontWeight: FontWeight.w500)),
+                  ],
                 ),
+
+                if (monthlyContribution > 0) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.trending_up,
+                              size: 14, color: Color(0xFF059669)),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('On track to reach goal',
+                            style: const TextStyle(
+                                fontSize: 12, color: Color(0xFF065F46))),
+                      ],
+                    ),
+                  ),
+                ],
               ]),
         ),
       ),

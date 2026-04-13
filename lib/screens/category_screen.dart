@@ -112,7 +112,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ]),
               const SizedBox(height: 16),
               Row(children: [
-                if (isEdit && !existing!.isDefault)
+                if (isEdit && !existing.isDefault)
                   TextButton.icon(
                     onPressed: () async {
                       final confirm = await showDialog<bool>(
@@ -219,6 +219,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 final subs = entry.value;
                 return ExpansionTile(
                   leading: CircleAvatar(
+                    radius: 14,
                     backgroundColor:
                         _hexColor(top.color).withValues(alpha: 0.15),
                     child: Text(top.icon,

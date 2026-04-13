@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import '../db/database.dart';
 import '../models/account.dart';
 import '../services/refresh_notifier.dart';
+import '../theme/app_theme.dart';
+import '../widgets/glass_card.dart';
+
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -225,6 +228,114 @@ class _AccountsScreenState extends State<AccountsScreen> {
     );
   }
 
+  void _showTransactions(Account account) async {
+    final transactions = await AppDatabase.getTransactions();
+    final accountTxns = transactions.where((t) => t.accountId == account.id).toList();
+    
+    if (!mounted) return;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        account.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        '${accountTxns.length} transactions',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.slate500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: accountTxns.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No transactions yet',
+                          style: TextStyle(color: AppTheme.slate400),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        itemCount: accountTxns.length,
+                        itemBuilder: (context, index) {
+                          final t = accountTxns[index];
+                          final isIncome = t.type == 'income';
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: (isIncome ? AppTheme.emerald : AppTheme.error)
+                                    .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                                color: isIncome ? AppTheme.emerald : AppTheme.error,
+                                size: 20,
+                              ),
+                            ),
+                            title: Text(
+                              t.category,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${DateFormat('MMM d, yyyy').format(t.date)}${t.note?.isNotEmpty == true ? ' · ${t.note}' : ''}',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            trailing: Text(
+                              _fmt.format(t.amount),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: isIncome ? AppTheme.emerald : AppTheme.error,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showTransferDialog() {
     if (_accounts.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -401,56 +512,330 @@ class _AccountsScreenState extends State<AccountsScreen> {
         totalAssets += bal;
       }
     }
+    final netWorth = totalAssets - totalDebt;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Accounts'),
-        actions: [
-          if (_accounts.length >= 2)
-            IconButton(
-              icon: const Icon(Icons.swap_horiz),
-              tooltip: 'Transfer',
-              onPressed: _showTransferDialog,
-            ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showForm(),
-        child: const Icon(Icons.add),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _accounts.isEmpty
-              ? const Center(
-                  child: Text('No accounts yet.\nTap + to add one.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey)))
-              : ListView(
-                  padding: const EdgeInsets.all(16),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+              : Column(
                   children: [
-                    Card(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    // Fixed Header
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ShaderMask(
+                                shaderCallback: (bounds) => const LinearGradient(
+                                  colors: [Colors.white, Color(0xFFD1FAE5)],
+                                ).createShader(bounds),
+                                child: const Text(
+                                  'Accounts',
+                                  style: TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w300,
+                                    letterSpacing: -1,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Manage your financial accounts',
+                                style: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_accounts.length >= 2)
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.swap_horiz_rounded, color: Colors.white),
+                                onPressed: _showTransferDialog,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Scrollable Content
+                    if (_accounts.isEmpty)
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.account_balance_wallet_outlined, size: 64, color: Colors.white.withOpacity(0.3)),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No accounts yet.\nTap + to add one.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
                           children: [
-                            _NetItem('Assets', totalAssets, Colors.green),
-                            _NetItem('Debt', totalDebt, Colors.red),
-                            _NetItem(
-                                'Net Worth',
-                                totalAssets - totalDebt,
-                                totalAssets >= totalDebt
-                                    ? Colors.blue
-                                    : Colors.orange),
+                            // Net Worth Hero Card
+                            _buildNetWorthCard(netWorth, totalAssets, totalDebt, fmt),
+                            const SizedBox(height: 24),
+                            // Account Cards
+                            ..._buildGrouped(fmt),
+                            const SizedBox(height: 80),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ..._buildGrouped(fmt),
                   ],
                 ),
+        ),
+      ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF059669), Color(0xFF3B82F6)],
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.emerald.withOpacity(0.5),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showForm(),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Account'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNetWorthCard(double netWorth, double assets, double debt, NumberFormat fmt) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.scale(
+            scale: 0.95 + (0.05 * value),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.emeraldBlueGradient,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.emerald.withValues(alpha: 0.3),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -50,
+              right: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total Net Worth',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      Icon(Icons.visibility, color: Colors.white70, size: 20),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    fmt.format(netWorth),
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.white,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.trending_up, color: Colors.white, size: 16),
+                            const SizedBox(width: 6),
+                            const Text(
+                              '+8.3% this month',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              fmt.format((netWorth * 0.083).abs()),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.trending_up, color: Colors.white, size: 16),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'Assets',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                fmt.format(assets),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.trending_down, color: Colors.white, size: 16),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'Debt',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                fmt.format(debt),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -460,85 +845,224 @@ class _AccountsScreenState extends State<AccountsScreen> {
       groups.putIfAbsent(a.type, () => []).add(a);
     }
     final widgets = <Widget>[];
+    int cardIndex = 0;
+    
     for (final type in Account.types) {
       if (!groups.containsKey(type)) continue;
       widgets.add(Padding(
-        padding: const EdgeInsets.only(bottom: 6, top: 4),
-        child: Text(type[0].toUpperCase() + type.substring(1),
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.grey)),
+        padding: const EdgeInsets.only(bottom: 12, top: 8),
+        child: Text(
+          type[0].toUpperCase() + type.substring(1),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppTheme.slate600,
+            fontSize: 13,
+            letterSpacing: 0.5,
+          ),
+        ),
       ));
+      
       for (final a in groups[type]!) {
         final bal = _balances[a.id] ?? 0;
         final isCredit = a.type == 'credit';
         final daysUntil = a.daysUntilDue;
-
-        widgets.add(Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: _typeColor(a.type).withValues(alpha: 0.15),
-              child: Icon(_typeIcon(a.type),
-                  color: _typeColor(a.type), size: 20),
-            ),
-            title: Text(a.name),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (a.last4 != null)
-                  Text('•••• ${a.last4}',
-                      style: const TextStyle(fontSize: 12)),
-                if (isCredit && daysUntil != null)
-                  Row(children: [
-                    Icon(
-                      daysUntil <= 3
-                          ? Icons.warning_amber
-                          : Icons.calendar_today,
-                      size: 11,
-                      color: daysUntil <= 3 ? Colors.red : Colors.grey,
+        
+        widgets.add(
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: Duration(milliseconds: 600 + (cardIndex * 100)),
+            curve: Curves.easeOut,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 20 * (1 - value)),
+                  child: child,
+                ),
+              );
+            },
+            child: GlassCard(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(20),
+              borderRadius: 16,
+              child: InkWell(
+                onTap: () => _showForm(a),
+                borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: _typeGradient(a.type),
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _typeColor(a.type).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _typeIcon(a.type),
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                a.name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.slate900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  if (a.last4 != null) ...[
+                                    Text(
+                                      '•••• ${a.last4}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.slate500,
+                                      ),
+                                    ),
+                                    if (isCredit && daysUntil != null)
+                                      const Text(' · ', style: TextStyle(color: AppTheme.slate400)),
+                                  ],
+                                  if (isCredit && daysUntil != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: daysUntil <= 3
+                                            ? AppTheme.error.withValues(alpha: 0.1)
+                                            : AppTheme.slate200,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            daysUntil <= 3 ? Icons.warning_amber : Icons.calendar_today,
+                                            size: 10,
+                                            color: daysUntil <= 3 ? AppTheme.error : AppTheme.slate600,
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            daysUntil == 0
+                                                ? 'Due today'
+                                                : daysUntil < 0
+                                                    ? 'Overdue'
+                                                    : 'Due in $daysUntil days',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: daysUntil <= 3 ? AppTheme.error : AppTheme.slate600,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (isCredit && a.creditLimit != null) ...[
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: (bal / a.creditLimit!).clamp(0.0, 1.0),
+                                    minHeight: 4,
+                                    backgroundColor: AppTheme.slate200,
+                                    valueColor: AlwaysStoppedAnimation(
+                                      bal / a.creditLimit! > 0.8 ? AppTheme.error : AppTheme.indigo,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${((bal / a.creditLimit!) * 100).toStringAsFixed(0)}% of ${fmt.format(a.creditLimit)} limit',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: AppTheme.slate500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              fmt.format(bal),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: isCredit
+                                    ? (bal > 0 ? AppTheme.error : AppTheme.emerald)
+                                    : AppTheme.slate900,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isCredit ? 'outstanding' : 'available',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.slate500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 3),
-                    Text(
-                      daysUntil == 0
-                          ? 'Due today!'
-                          : daysUntil < 0
-                              ? 'Overdue!'
-                              : 'Due in $daysUntil days',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: daysUntil <= 3 ? Colors.red : Colors.grey),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _showForm(a),
+                            icon: const Icon(Icons.edit, size: 16),
+                            label: const Text('Edit'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.slate700,
+                              side: const BorderSide(color: AppTheme.slate300),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: () => _showTransactions(a),
+                            icon: const Icon(Icons.receipt_long, size: 16),
+                            label: const Text('Transactions'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _typeColor(a.type),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    if (a.creditLimit != null) ...[
-                      const Text(' · ',
-                          style:
-                              TextStyle(fontSize: 11, color: Colors.grey)),
-                      Text(
-                          '${((bal / a.creditLimit!) * 100).toStringAsFixed(0)}% used',
-                          style: const TextStyle(
-                              fontSize: 11, color: Colors.grey)),
-                    ],
-                  ]),
-              ],
+                  ],
+                ),
+              ),
             ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(fmt.format(bal),
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isCredit
-                            ? (bal > 0 ? Colors.red : Colors.green)
-                            : Colors.green,
-                        fontSize: 15)),
-                Text(isCredit ? 'outstanding' : 'available',
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.grey)),
-              ],
-            ),
-            onTap: () => _showForm(a),
           ),
-        ));
+        );
+        cardIndex++;
       }
     }
     return widgets;
@@ -553,6 +1077,14 @@ class _AccountsScreenState extends State<AccountsScreen> {
       _ => 'th',
     };
   }
+
+  List<Color> _typeGradient(String type) => switch (type) {
+        'checking' => [AppTheme.blue, const Color(0xFF2563EB)],
+        'savings' => [AppTheme.emerald, AppTheme.emeraldDark],
+        'credit' => [AppTheme.error, const Color(0xFFDC2626)],
+        'cash' => [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+        _ => [const Color(0xFFA78BFA), const Color(0xFF8B5CF6)],
+      };
 
   IconData _typeIcon(String type) => switch (type) {
         'checking' => Icons.account_balance,
@@ -571,21 +1103,4 @@ class _AccountsScreenState extends State<AccountsScreen> {
       };
 }
 
-class _NetItem extends StatelessWidget {
-  final String label;
-  final double amount;
-  final Color color;
-  const _NetItem(this.label, this.amount, this.color);
 
-  @override
-  Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(symbol: '\$');
-    return Column(children: [
-      Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      const SizedBox(height: 4),
-      Text(fmt.format(amount),
-          style: TextStyle(
-              fontWeight: FontWeight.bold, color: color, fontSize: 14)),
-    ]);
-  }
-}

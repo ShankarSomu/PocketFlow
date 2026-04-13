@@ -10,6 +10,8 @@ import '../services/chat_parser.dart';
 import '../services/groq_service.dart';
 import '../services/refresh_notifier.dart';
 import '../services/app_logger.dart';
+import '../theme/app_theme.dart';
+import '../widgets/gradient_text.dart';
 // import '../widgets/category_picker.dart'; // reserved for future use
 
 class ChatScreen extends StatefulWidget {
@@ -24,7 +26,6 @@ class _ChatScreenState extends State<ChatScreen> {
   List<model.Transaction> _recent = [];
   final List<_ChatMessage> _messages = [];
   final List<Map<String, String>> _aiHistory = []; // conversation history for Groq
-  int? _lastTransactionId; // Track last created transaction for modifications
   bool _hasApiKey = false;
   bool _aiThinking = false;
   bool _showRecent = false;
@@ -33,7 +34,6 @@ class _ChatScreenState extends State<ChatScreen> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
   bool _speechAvailable = false;
-  double _soundLevel = 0.0;
 
   @override
   void initState() {
@@ -108,7 +108,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       
       if (mounted) setState(() {});
-    } catch (e, stack) {
+    } catch (e) {
       AppLogger.err('speech_init_exception', e);
       _speechAvailable = false;
       if (mounted) setState(() {});
@@ -158,7 +158,6 @@ class _ChatScreenState extends State<ChatScreen> {
       },
       onSoundLevelChange: (level) {
         AppLogger.db('sound_level', detail: level.toStringAsFixed(1));
-        if (mounted) setState(() => _soundLevel = level);
       },
       listenFor: const Duration(seconds: 30),
       pauseFor: const Duration(seconds: 3),
@@ -375,23 +374,41 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Row(children: [
-          const Text('Chat'),
+          GradientText(
+            'Chat',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1E293B), Color(0xFF6C63FF)],
+            ),
+          ),
           const SizedBox(width: 8),
           if (_hasApiKey)
             Container(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.15),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFD1FAE5), Color(0xFFA7F3D0)],
+                ),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF6EE7B7)),
               ),
-              child: const Text('AI',
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold)),
+              child: const Row(
+                children: [
+                  Icon(Icons.auto_awesome, size: 12, color: Color(0xFF059669)),
+                  SizedBox(width: 4),
+                  Text('AI',
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF059669),
+                          fontWeight: FontWeight.bold)),
+                ],
+              ),
             ),
         ]),
         actions: [
@@ -402,7 +419,15 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: Column(children: [
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFAFAFA), Colors.white, Color(0xFFF5F3FF)],
+          ),
+        ),
+        child: Column(children: [
         // ── Recent transactions collapsible header ──────────────────────
         if (_recent.isNotEmpty)
           InkWell(
@@ -443,7 +468,7 @@ class _ChatScreenState extends State<ChatScreen> {
         Expanded(
           child: ListView(
             controller: _scrollController,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 100, 12, 12),
             children: [
               if (_messages.isEmpty)
                 Padding(
@@ -451,7 +476,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Column(children: [
                     if (_hasApiKey) ...[
                       const Icon(Icons.auto_awesome,
-                          color: Colors.indigo, size: 32),
+                          color: AppTheme.indigo, size: 32),
                       const SizedBox(height: 8),
                       const Text('AI assistant ready!',
                           style: TextStyle(
@@ -460,7 +485,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       const Text(
                           'Ask anything about your finances, or use commands below.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, fontSize: 13)),
+                          style: TextStyle(color: AppTheme.slate500, fontSize: 13)),
                       const SizedBox(height: 16),
                     ],
                     const Text(
@@ -472,7 +497,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       '  contribute vacation 200\n'
                       '  account Chase checking 1000\n'
                       '  transfer Chase Checking 500',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                      style: TextStyle(color: AppTheme.slate500, fontSize: 13),
                     ),
                   ]),
                 ),
@@ -527,7 +552,8 @@ class _ChatScreenState extends State<ChatScreen> {
           speechAvailable: _speechAvailable,
           onVoiceToggle: _toggleListening,
         ),
-      ]),
+        ]),
+      ),
     );
   }
 }
@@ -593,7 +619,7 @@ class _ApiKeySetupState extends State<_ApiKeySetup> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            const Icon(Icons.auto_awesome, color: Colors.indigo),
+            const Icon(Icons.auto_awesome, color: AppTheme.indigo),
             const SizedBox(width: 8),
             const Text('Setup AI Assistant',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -750,10 +776,10 @@ class _ProviderCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF6C63FF).withValues(alpha: 0.1)
+              ? AppTheme.indigo.withValues(alpha: 0.1)
               : Colors.grey.withValues(alpha: 0.05),
           border: Border.all(
-            color: selected ? const Color(0xFF6C63FF) : Colors.grey.withValues(alpha: 0.3),
+            color: selected ? AppTheme.indigo : Colors.grey.withValues(alpha: 0.3),
             width: selected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -770,7 +796,7 @@ class _ProviderCard extends StatelessWidget {
               Text(provider.label,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: selected ? const Color(0xFF6C63FF) : Colors.black87)),
+                      color: selected ? AppTheme.indigo : Colors.black87)),
             ]),
             const SizedBox(height: 4),
             Text(provider.description,
@@ -805,22 +831,34 @@ class _Bubble extends StatelessWidget {
       alignment:
           msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
+        margin: const EdgeInsets.symmetric(vertical: 6),
         padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            const EdgeInsets.all(16),
         constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.85),
         decoration: BoxDecoration(
+          gradient: msg.isUser
+              ? const LinearGradient(
+                  colors: [Color(0xFF6C63FF), Color(0xFF8B5CF6)],
+                )
+              : null,
           color: msg.isUser
-              ? Theme.of(context).colorScheme.primary
+              ? null
               : msg.isAi
-                  ? Colors.indigo.withValues(alpha: 0.08)
-                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+                  ? Colors.white.withValues(alpha: 0.9)
+                  : Colors.white.withValues(alpha: 0.7),
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           border: msg.isAi
               ? Border.all(
-                  color: Colors.indigo.withValues(alpha: 0.2))
+                  color: AppTheme.indigo.withValues(alpha: 0.2))
               : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -830,12 +868,12 @@ class _Bubble extends StatelessWidget {
                   padding: EdgeInsets.only(bottom: 4),
                   child: Row(children: [
                     Icon(Icons.auto_awesome,
-                        size: 12, color: Colors.indigo),
+                        size: 12, color: AppTheme.indigo),
                     SizedBox(width: 4),
                     Text('AI',
                         style: TextStyle(
                             fontSize: 10,
-                            color: Colors.indigo,
+                            color: AppTheme.indigo,
                             fontWeight: FontWeight.bold)),
                   ]),
                 ),
@@ -850,8 +888,8 @@ class _Bubble extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () => onConfirm!(false),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.grey,
-                        side: const BorderSide(color: Colors.grey),
+                        foregroundColor: AppTheme.slate600,
+                        side: BorderSide(color: AppTheme.slate300),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                       child: const Text('No', style: TextStyle(fontSize: 12)),
@@ -904,19 +942,26 @@ class _TypingIndicatorState extends State<_TypingIndicator>
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.indigo.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.indigo.withValues(alpha: 0.2)),
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        border: Border.all(color: AppTheme.indigo.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: FadeTransition(
         opacity: _anim,
         child: const Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.auto_awesome, size: 12, color: Colors.indigo),
-          SizedBox(width: 6),
+          Icon(Icons.auto_awesome, size: 14, color: AppTheme.indigo),
+          SizedBox(width: 8),
           Text('AI is thinking...',
-              style: TextStyle(fontSize: 12, color: Colors.indigo)),
+              style: TextStyle(fontSize: 13, color: AppTheme.indigo)),
         ]),
       ),
     );
@@ -939,7 +984,7 @@ class _TransactionTile extends StatelessWidget {
           isIncome
               ? Icons.add_circle_outline
               : Icons.remove_circle_outline,
-          color: isIncome ? Colors.green : Colors.red,
+          color: isIncome ? AppTheme.emerald : AppTheme.error,
           size: 20),
       title: Text(t.category, style: const TextStyle(fontSize: 13)),
       subtitle: t.note != null
@@ -947,7 +992,7 @@ class _TransactionTile extends StatelessWidget {
           : null,
       trailing: Text(fmt.format(t.amount),
           style: TextStyle(
-              color: isIncome ? Colors.green : Colors.red,
+              color: isIncome ? AppTheme.emerald : AppTheme.error,
               fontWeight: FontWeight.w600,
               fontSize: 13)),
     );

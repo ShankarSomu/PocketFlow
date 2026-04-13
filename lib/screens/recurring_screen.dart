@@ -6,6 +6,9 @@ import '../models/account.dart';
 import '../models/savings_goal.dart';
 import '../services/refresh_notifier.dart';
 import '../services/recurring_scheduler.dart';
+import '../theme/app_theme.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/gradient_text.dart';
 import '../widgets/category_picker.dart';
 
 class RecurringScreen extends StatefulWidget {
@@ -31,6 +34,41 @@ class _RecurringScreenState extends State<RecurringScreen> {
   void dispose() {
     appRefresh.removeListener(_load);
     super.dispose();
+  }
+
+  // Emoji mapping for categories
+  String _getEmojiForCategory(String category, String type) {
+    if (type == 'transfer') return '💸';
+    if (type == 'goal') return '🎯';
+    
+    final categoryLower = category.toLowerCase();
+    if (categoryLower.contains('food') || categoryLower.contains('dining') || categoryLower.contains('restaurant')) return '🍔';
+    if (categoryLower.contains('transport') || categoryLower.contains('gas') || categoryLower.contains('car')) return '🚗';
+    if (categoryLower.contains('shop') || categoryLower.contains('retail')) return '🛍️';
+    if (categoryLower.contains('entertain') || categoryLower.contains('movie') || categoryLower.contains('game')) return '🎬';
+    if (categoryLower.contains('utilit') || categoryLower.contains('electric') || categoryLower.contains('water')) return '⚡';
+    if (categoryLower.contains('health') || categoryLower.contains('medical') || categoryLower.contains('doctor')) return '🏥';
+    if (categoryLower.contains('netflix') || categoryLower.contains('streaming')) return '📺';
+    if (categoryLower.contains('spotify') || categoryLower.contains('music')) return '🎵';
+    if (categoryLower.contains('gym') || categoryLower.contains('fitness')) return '💪';
+    if (categoryLower.contains('cloud') || categoryLower.contains('storage')) return '☁️';
+    if (categoryLower.contains('internet') || categoryLower.contains('wifi')) return '📡';
+    if (categoryLower.contains('insurance')) return '🛡️';
+    if (categoryLower.contains('phone') || categoryLower.contains('mobile')) return '📱';
+    if (categoryLower.contains('software') || categoryLower.contains('app')) return '🎨';
+    
+    return type == 'income' ? '💰' : '💳';
+  }
+
+  double _toMonthlyAmount(double amount, String frequency) {
+    return switch (frequency) {
+      'daily'       => amount * 30,
+      'weekly'      => amount * 4.33,
+      'biweekly'    => amount * 2.17,
+      'half-yearly' => amount / 6,
+      'yearly'      => amount / 12,
+      _             => amount,
+    };
   }
 
   Future<void> _load() async {
@@ -335,9 +373,21 @@ class _RecurringScreenState extends State<RecurringScreen> {
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
+    final activeItems = _items.where((r) => r.isActive).toList();
+    final totalMonthly = activeItems.fold(0.0, (sum, r) {
+      if (r.type == 'expense') {
+        return sum + _toMonthlyAmount(r.amount, r.frequency);
+      }
+      return sum;
+    });
+    final pausedCount = _items.where((r) => !r.isActive).length;
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Recurring'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(''),
         actions: [
           IconButton(
             icon: const Icon(Icons.play_circle_outline),
@@ -354,127 +404,347 @@ class _RecurringScreenState extends State<RecurringScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showForm(),
-        child: const Icon(Icons.add),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF059669), Color(0xFF3B82F6)],
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.emerald.withOpacity(0.5),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showForm(),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Recurring'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _items.isEmpty
-              ? const Center(
-                  child: Text(
-                      'No recurring transactions.\nTap + to add one.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey)))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _items.length,
-                  itemBuilder: (_, i) {
-                    final r = _items[i];
-                    final fromAccount = _accounts
-                        .where((a) => a.id == r.accountId)
-                        .firstOrNull;
-                    final toAccount = _accounts
-                        .where((a) => a.id == r.toAccountId)
-                        .firstOrNull;
-                    final goal = _goals
-                        .where((g) => g.id == r.goalId)
-                        .firstOrNull;
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFAFAFA), Colors.white, Color(0xFFEFF6FF)],
+          ),
+        ),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(16, 100, 16, 24),
+                children: [
+                  GradientText(
+                    'Recurring',
+                    style: const TextStyle(
+                        fontSize: 32, fontWeight: FontWeight.bold),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1E293B), Color(0xFF3B82F6)],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text('Manage subscriptions and recurring payments',
+                      style: TextStyle(color: AppTheme.slate500)),
+                  const SizedBox(height: 24),
 
-                    final isIncome = r.type == 'income';
-                    final isTransfer = r.type == 'transfer';
-                    final isGoal = r.type == 'goal';
-
-                    Color iconColor = isIncome
-                        ? Colors.green
-                        : isTransfer
-                            ? Colors.blue
-                            : isGoal
-                                ? Colors.purple
-                                : Colors.red;
-
-                    IconData iconData = isIncome
-                        ? Icons.arrow_downward
-                        : isTransfer
-                            ? Icons.swap_horiz
-                            : isGoal
-                                ? Icons.savings
-                                : Icons.arrow_upward;
-
-                    String subtitle = '';
-                    if (isTransfer) {
-                      subtitle =
-                          '${fromAccount?.name ?? '?'} → ${toAccount?.name ?? '?'}';
-                    } else if (isGoal) {
-                      subtitle = 'Goal: ${goal?.name ?? '?'}';
-                      if (fromAccount != null) {
-                        subtitle += ' · from ${fromAccount.name}';
-                      }
-                    } else {
-                      subtitle = fromAccount?.name ?? '';
-                    }
-
-                    final freqLabel = r.frequency == 'once'
-                        ? 'One-time'
-                        : r.frequency[0].toUpperCase() +
-                            r.frequency.substring(1);
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor:
-                              iconColor.withValues(alpha: 0.15),
-                          child: Icon(iconData,
-                              color: iconColor, size: 20),
+                  TweenAnimationBuilder(
+                    duration: const Duration(milliseconds: 600),
+                    tween: Tween<double>(begin: 0, end: 1),
+                    builder: (context, double value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.scale(
+                          scale: 0.95 + (0.05 * value),
+                          child: child,
                         ),
-                        title: Row(children: [
-                          Expanded(
-                            child: Text(
-                              isTransfer
-                                  ? 'Transfer'
-                                  : isGoal
-                                      ? (goal?.name ?? 'Goal')
-                                      : r.category,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold),
-                            ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.white, Colors.white, Color(0xFFEFF6FF)],
+                        ),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 4),
                           ),
-                          if (!r.isActive)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text('done',
-                                  style: TextStyle(
-                                      fontSize: 10, color: Colors.grey)),
-                            ),
-                        ]),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('$freqLabel · Next: ${DateFormat('MMM d, yyyy').format(r.nextDueDate)}'),
-                            if (subtitle.isNotEmpty)
-                              Text(subtitle,
-                                  style: const TextStyle(
-                                      fontSize: 11, color: Colors.grey)),
-                          ],
-                        ),
-                        trailing: Text(
-                          fmt.format(r.amount),
-                          style: TextStyle(
-                              color: iconColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15),
-                        ),
-                        onTap: () => _showForm(r),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Total Monthly Recurring',
+                                      style: TextStyle(color: AppTheme.slate500, fontSize: 13)),
+                                  const SizedBox(height: 12),
+                                  GradientText(
+                                    fmt.format(totalMonthly),
+                                    style: const TextStyle(
+                                        fontSize: 48, fontWeight: FontWeight.w300),
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF1E293B), Color(0xFF3B82F6)],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                                        ),
+                                        child: Text(
+                                          '${activeItems.length} active subscriptions',
+                                          style: const TextStyle(fontSize: 12, color: AppTheme.slate600),
+                                        ),
+                                      ),
+                                      if (pausedCount > 0) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF3F4F6),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                                          ),
+                                          child: Text(
+                                            '$pausedCount paused',
+                                            style: const TextStyle(fontSize: 12, color: AppTheme.slate600),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(Icons.calendar_month, color: Colors.white, size: 40),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  if (_items.isEmpty)
+                    const Center(
+                        child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text(
+                          'No recurring transactions.\nTap + to add one.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey)),
+                    ))
+                  else
+                    GlassCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: _items.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final r = entry.value;
+                          final fromAccount = _accounts
+                              .where((a) => a.id == r.accountId)
+                              .firstOrNull;
+                          final toAccount = _accounts
+                              .where((a) => a.id == r.toAccountId)
+                              .firstOrNull;
+                          final goal = _goals
+                              .where((g) => g.id == r.goalId)
+                              .firstOrNull;
+
+                          final isTransfer = r.type == 'transfer';
+                          final isGoal = r.type == 'goal';
+
+                          String displayName = '';
+                          String subtitle = '';
+                          
+                          if (isTransfer) {
+                            displayName = 'Transfer';
+                            subtitle = '${fromAccount?.name ?? '?'} → ${toAccount?.name ?? '?'}';
+                          } else if (isGoal) {
+                            displayName = goal?.name ?? 'Goal';
+                            subtitle = 'Goal';
+                            if (fromAccount != null) {
+                              subtitle += ' · from ${fromAccount.name}';
+                            }
+                          } else {
+                            displayName = r.category;
+                            subtitle = fromAccount?.name ?? '';
+                          }
+
+                          final freqLabel = r.frequency == 'once'
+                              ? 'One-time'
+                              : r.frequency[0].toUpperCase() +
+                                  r.frequency.substring(1);
+
+                          final emoji = _getEmojiForCategory(r.category, r.type);
+
+                          return TweenAnimationBuilder(
+                            duration: Duration(milliseconds: 700 + (index * 50)),
+                            tween: Tween<double>(begin: 0, end: 1),
+                            builder: (context, double value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: Transform.translate(
+                                  offset: Offset(-20 * (1 - value), 0),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: InkWell(
+                              onTap: () => _showForm(r),
+                              child: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  border: index < _items.length - 1
+                                      ? const Border(
+                                          bottom: BorderSide(
+                                              color: Color(0xFFF1F5F9)))
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(emoji,
+                                        style: const TextStyle(fontSize: 48)),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                displayName,
+                                                style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: AppTheme.slate900),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: r.isActive
+                                                      ? const Color(0xFFD1FAE5)
+                                                      : const Color(0xFFF3F4F6),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  r.isActive ? 'active' : 'paused',
+                                                  style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: r.isActive
+                                                          ? const Color(0xFF059669)
+                                                          : AppTheme.slate600),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              if (subtitle.isNotEmpty) ...[
+                                                Text(
+                                                  subtitle,
+                                                  style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: AppTheme.slate500),
+                                                ),
+                                                const Text(' • ',
+                                                    style: TextStyle(
+                                                        color: AppTheme.slate500)),
+                                              ],
+                                              Text(
+                                                freqLabel,
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: AppTheme.slate500),
+                                              ),
+                                              const Text(' • ',
+                                                  style: TextStyle(
+                                                      color: AppTheme.slate500)),
+                                              Text(
+                                                'Next: ${DateFormat('MMM d, yyyy').format(r.nextDueDate)}',
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    color: AppTheme.slate500),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          fmt.format(r.amount),
+                                          style: const TextStyle(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w300,
+                                              color: AppTheme.slate900),
+                                        ),
+                                        const Text(
+                                          'per month',
+                                          style: TextStyle(
+                                              fontSize: 10,
+                                              color: AppTheme.slate400),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                ],
+              ),
+      ),
     );
   }
 }

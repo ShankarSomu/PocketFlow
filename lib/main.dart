@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/budget_screen.dart';
@@ -8,9 +9,11 @@ import 'screens/accounts_screen.dart';
 import 'screens/recurring_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/transactions_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'services/recurring_scheduler.dart';
 import 'services/auth_service.dart';
 import 'services/app_logger.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,96 +29,53 @@ void main() async {
   runApp(const PocketFlowApp());
 }
 
-class PocketFlowApp extends StatelessWidget {
+class PocketFlowApp extends StatefulWidget {
   const PocketFlowApp({super.key});
+
+  @override
+  State<PocketFlowApp> createState() => _PocketFlowAppState();
+}
+
+class _PocketFlowAppState extends State<PocketFlowApp> {
+  bool _showWelcome = true;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFirstLaunch();
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
+    if (mounted) {
+      setState(() {
+        _showWelcome = !hasSeenWelcome;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _onGetStarted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_welcome', true);
+    if (mounted) {
+      setState(() => _showWelcome = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PocketFlow',
       debugShowCheckedModeBanner: false,
-      theme: _buildTheme(),
-      home: const _RootNav(),
-    );
-  }
-
-  ThemeData _buildTheme() {
-    const seed = Color(0xFF6C63FF); // vibrant indigo-purple
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: seed,
-        brightness: Brightness.light,
-        primary: seed,
-        secondary: const Color(0xFF03DAC6),
-        tertiary: const Color(0xFFFF6584),
-      ),
-      // AppBar
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF1A1A2E),
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: Color(0xFF1A1A2E),
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      // Cards
-      cardTheme: CardThemeData(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.black12,
-      ),
-      // Navigation bar
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.white,
-        elevation: 8,
-        shadowColor: Colors.black26,
-        indicatorColor: seed.withValues(alpha: 0.15),
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: Color(0xFF6C63FF), size: 26);
-          }
-          return const IconThemeData(color: Color(0xFF9E9E9E), size: 24);
-        }),
-      ),
-      // Scaffold
-      scaffoldBackgroundColor: const Color(0xFFF8F9FE),
-      // FilledButton
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: seed,
-          foregroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        ),
-      ),
-      // Input fields
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFFF0F0F8),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
+      theme: AppTheme.lightTheme,
+      home: _loading
+          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+          : _showWelcome
+              ? WelcomeScreen(onGetStarted: _onGetStarted)
+              : const _RootNav(),
     );
   }
 }
@@ -130,7 +90,7 @@ class _RootNavState extends State<_RootNav> {
   int _index = 0;
 
   // Chat is index 3 — center of 7 items
-  static const _screens = [
+  final _screens = const [
     HomeScreen(),
     AccountsScreen(),
     BudgetScreen(),
@@ -164,8 +124,8 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = Color(0xFF6C63FF);
-    const inactiveColor = Color(0xFF9E9E9E);
+    const activeColor = AppTheme.indigo;
+    const inactiveColor = AppTheme.slate400;
 
     final items = [
       _NavItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
@@ -184,14 +144,8 @@ class _BottomNav extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        color: AppTheme.surface,
+        boxShadow: AppTheme.cardShadow,
       ),
       child: SafeArea(
         child: SizedBox(
@@ -212,16 +166,18 @@ class _BottomNav extends StatelessWidget {
                           gradient: index == 3
                               ? const LinearGradient(
                                   colors: [
-                                    Color(0xFF6C63FF),
-                                    Color(0xFF9C63FF)
+                                    Color(0xFF10B981),
+                                    Color(0xFF059669),
+                                    Color(0xFF3B82F6)
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 )
                               : const LinearGradient(
                                   colors: [
-                                    Color(0xFF8B83FF),
-                                    Color(0xFFB083FF)
+                                    Color(0xFF10B981),
+                                    Color(0xFF059669),
+                                    Color(0xFF3B82F6)
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
@@ -229,8 +185,7 @@ class _BottomNav extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF6C63FF)
-                                  .withValues(alpha: 0.4),
+                              color: AppTheme.indigo.withValues(alpha: 0.4),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -244,10 +199,7 @@ class _BottomNav extends StatelessWidget {
                 );
               }
 
-              // Map nav index to screen index
-              // slots: 0,1,2,[3=chat],4,5,6
-              // screens: 0=Home,1=Accounts,2=Budget,3=Chat,4=Savings,5=Recurring,6=Profile
-              final si = i <= 2 ? i : i; // direct 1:1 since null slot is index 3
+              final si = i <= 2 ? i : i;
               final isSelected = index == si;
               final item = items[i]!;
 

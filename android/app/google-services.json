@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "280001122541",
+    "project_id": "pocketflow-655e2",
+    "storage_bucket": "pocketflow-655e2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:280001122541:android:08886b5b1ebb3521c5bce4",
+        "android_client_info": {
+          "package_name": "com.pocketflow.pocket_flow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "280001122541-qqqee4e88ghreh1794qhuitogglcenvf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pocketflow.pocket_flow",
+            "certificate_hash": "65b94552dba55c6489e0e58777c04c6acf941ead"
+          }
+        },
+        {
+          "client_id": "280001122541-auoa81jnfns02ee0r63i3730t72uuh6p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANcRPgP0_dZKQAakMeOO5_HrHVW6uJjIo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "280001122541-auoa81jnfns02ee0r63i3730t72uuh6p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

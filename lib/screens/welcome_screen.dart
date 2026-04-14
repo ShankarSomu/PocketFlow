@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_blob.dart';
 
 class WelcomeScreen extends StatelessWidget {
   final VoidCallback onGetStarted;
+  final bool isFirstTime;
 
-  const WelcomeScreen({super.key, required this.onGetStarted});
+  const WelcomeScreen({super.key, required this.onGetStarted, this.isFirstTime = true});
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ));
+    
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -37,7 +45,7 @@ class WelcomeScreen extends StatelessWidget {
             // Content
             SafeArea(
               child: Center(
-                child: SingleChildScrollView(
+                child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -132,12 +140,13 @@ class WelcomeScreen extends StatelessWidget {
                       
                       const SizedBox(height: 64),
                       
-                      // Features
-                      _buildFeatures(),
+                      // Features - only for first time
+                      if (isFirstTime) _buildFeatures(),
                       
-                      const SizedBox(height: 64),
+                      if (isFirstTime) const SizedBox(height: 64),
                       
-                      // CTA Button
+                      // CTA Button - only for first time
+                      if (isFirstTime)
                       TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
                         duration: const Duration(milliseconds: 1000),

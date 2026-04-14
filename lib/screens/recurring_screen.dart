@@ -429,28 +429,51 @@ class _RecurringScreenState extends State<RecurringScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
+            colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFFAFAFA), Colors.white, Color(0xFFEFF6FF)],
           ),
         ),
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 100, 16, 24),
+            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            : Column(
                 children: [
-                  GradientText(
-                    'Recurring',
-                    style: const TextStyle(
-                        fontSize: 32, fontWeight: FontWeight.bold),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1E293B), Color(0xFF3B82F6)],
+                  // Fixed Header
+                  SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Colors.white, Color(0xFFD1FAE5)],
+                            ).createShader(bounds),
+                            child: const Text(
+                              'Recurring',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w300,
+                                color: Colors.white,
+                                letterSpacing: -1,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text('Manage subscriptions and recurring payments',
+                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text('Manage subscriptions and recurring payments',
-                      style: TextStyle(color: AppTheme.slate500)),
-                  const SizedBox(height: 24),
+                  // Scrollable Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                      child: Column(
+                        children: [
 
                   TweenAnimationBuilder(
                     duration: const Duration(milliseconds: 600),
@@ -481,88 +504,91 @@ class _RecurringScreenState extends State<RecurringScreen> {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(_items.length <= 5 ? 20 : _items.length <= 10 ? 16 : 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Total Monthly Recurring',
-                                      style: TextStyle(color: AppTheme.slate500, fontSize: 13)),
-                                  const SizedBox(height: 12),
-                                  GradientText(
-                                    fmt.format(totalMonthly),
-                                    style: const TextStyle(
-                                        fontSize: 48, fontWeight: FontWeight.w300),
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF1E293B), Color(0xFF3B82F6)],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFEFF6FF),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(color: const Color(0xFFBFDBFE)),
-                                        ),
-                                        child: Text(
-                                          '${activeItems.length} active subscriptions',
-                                          style: const TextStyle(fontSize: 12, color: AppTheme.slate600),
-                                        ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Total Monthly Recurring',
+                                        style: TextStyle(color: AppTheme.slate500, fontSize: _items.length <= 5 ? 13 : _items.length <= 10 ? 12 : 11)),
+                                    SizedBox(height: _items.length <= 5 ? 10 : _items.length <= 10 ? 8 : 6),
+                                    GradientText(
+                                      fmt.format(totalMonthly),
+                                      style: TextStyle(
+                                          fontSize: _items.length <= 5 ? 32 : _items.length <= 10 ? 28 : 24, fontWeight: FontWeight.w300),
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF1E293B), Color(0xFF3B82F6)],
                                       ),
-                                      if (pausedCount > 0) ...[
-                                        const SizedBox(width: 8),
+                                    ),
+                                    SizedBox(height: _items.length <= 5 ? 10 : _items.length <= 10 ? 8 : 6),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          padding: EdgeInsets.symmetric(horizontal: _items.length <= 5 ? 10 : 8, vertical: _items.length <= 5 ? 5 : 4),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFF3F4F6),
+                                            color: const Color(0xFFEFF6FF),
                                             borderRadius: BorderRadius.circular(20),
-                                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                                            border: Border.all(color: const Color(0xFFBFDBFE)),
                                           ),
                                           child: Text(
-                                            '$pausedCount paused',
-                                            style: const TextStyle(fontSize: 12, color: AppTheme.slate600),
+                                            '${activeItems.length} active',
+                                            style: TextStyle(fontSize: _items.length <= 5 ? 11 : 10, color: AppTheme.slate600),
                                           ),
                                         ),
+                                        if (pausedCount > 0)
+                                          Container(
+                                            padding: EdgeInsets.symmetric(horizontal: _items.length <= 5 ? 10 : 8, vertical: _items.length <= 5 ? 5 : 4),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF3F4F6),
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(color: const Color(0xFFE5E7EB)),
+                                            ),
+                                            child: Text(
+                                              '$pausedCount paused',
+                                              style: TextStyle(fontSize: _items.length <= 5 ? 11 : 10, color: AppTheme.slate600),
+                                            ),
+                                          ),
                                       ],
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-                                  ),
-                                  borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
-                                child: const Icon(Icons.calendar_month, color: Colors.white, size: 40),
                               ),
+                              if (_items.length <= 10)
+                                Container(
+                                  width: _items.length <= 5 ? 70 : 60,
+                                  height: _items.length <= 5 ? 70 : 60,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(Icons.calendar_month, color: Colors.white, size: _items.length <= 5 ? 35 : 30),
+                                ),
                             ],
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: _items.length <= 5 ? 16 : _items.length <= 10 ? 12 : 10),
 
                   if (_items.isEmpty)
                     const Center(
@@ -580,6 +606,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                         children: _items.asMap().entries.map((entry) {
                           final index = entry.key;
                           final r = entry.value;
+                          final totalItems = _items.length;
                           final fromAccount = _accounts
                               .where((a) => a.id == r.accountId)
                               .firstOrNull;
@@ -617,6 +644,13 @@ class _RecurringScreenState extends State<RecurringScreen> {
 
                           final emoji = _getEmojiForCategory(r.category, r.type);
 
+                          // Dynamic sizing
+                          final double emojiSize = totalItems <= 5 ? 48 : totalItems <= 10 ? 40 : 32;
+                          final double cardPadding = totalItems <= 5 ? 20 : totalItems <= 10 ? 16 : 12;
+                          final double titleSize = totalItems <= 5 ? 16 : totalItems <= 10 ? 15 : 14;
+                          final double subtitleSize = totalItems <= 5 ? 12 : totalItems <= 10 ? 11 : 10;
+                          final double amountSize = totalItems <= 5 ? 22 : totalItems <= 10 ? 20 : 18;
+
                           return TweenAnimationBuilder(
                             duration: Duration(milliseconds: 700 + (index * 50)),
                             tween: Tween<double>(begin: 0, end: 1),
@@ -632,7 +666,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                             child: InkWell(
                               onTap: () => _showForm(r),
                               child: Container(
-                                padding: const EdgeInsets.all(20),
+                                padding: EdgeInsets.all(cardPadding),
                                 decoration: BoxDecoration(
                                   border: index < _items.length - 1
                                       ? const Border(
@@ -643,7 +677,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                 child: Row(
                                   children: [
                                     Text(emoji,
-                                        style: const TextStyle(fontSize: 48)),
+                                        style: TextStyle(fontSize: emojiSize)),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
@@ -652,12 +686,15 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                         children: [
                                           Row(
                                             children: [
-                                              Text(
-                                                displayName,
-                                                style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: AppTheme.slate900),
+                                              Flexible(
+                                                child: Text(
+                                                  displayName,
+                                                  style: TextStyle(
+                                                      fontSize: titleSize,
+                                                      fontWeight: FontWeight.w500,
+                                                      color: AppTheme.slate900),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
                                               ),
                                               const SizedBox(width: 8),
                                               Container(
@@ -682,34 +719,43 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 4),
+                                          SizedBox(height: totalItems <= 10 ? 4 : 2),
                                           Row(
                                             children: [
                                               if (subtitle.isNotEmpty) ...[
-                                                Text(
-                                                  subtitle,
-                                                  style: const TextStyle(
-                                                      fontSize: 13,
-                                                      color: AppTheme.slate500),
-                                                ),
-                                                const Text(' • ',
+                                                Flexible(
+                                                  child: Text(
+                                                    subtitle,
                                                     style: TextStyle(
-                                                        color: AppTheme.slate500)),
+                                                        fontSize: subtitleSize,
+                                                        color: AppTheme.slate500),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                Text(' • ',
+                                                    style: TextStyle(
+                                                        color: AppTheme.slate500, fontSize: subtitleSize)),
                                               ],
-                                              Text(
-                                                freqLabel,
-                                                style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: AppTheme.slate500),
-                                              ),
-                                              const Text(' • ',
+                                              Flexible(
+                                                child: Text(
+                                                  freqLabel,
                                                   style: TextStyle(
-                                                      color: AppTheme.slate500)),
-                                              Text(
-                                                'Next: ${DateFormat('MMM d, yyyy').format(r.nextDueDate)}',
-                                                style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: AppTheme.slate500),
+                                                      fontSize: subtitleSize,
+                                                      color: AppTheme.slate500),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              Text(' • ',
+                                                  style: TextStyle(
+                                                      color: AppTheme.slate500, fontSize: subtitleSize)),
+                                              Flexible(
+                                                child: Text(
+                                                  'Next: ${DateFormat('MMM d').format(r.nextDueDate)}',
+                                                  style: TextStyle(
+                                                      fontSize: subtitleSize,
+                                                      color: AppTheme.slate500),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -721,17 +767,18 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                       children: [
                                         Text(
                                           fmt.format(r.amount),
-                                          style: const TextStyle(
-                                              fontSize: 28,
+                                          style: TextStyle(
+                                              fontSize: amountSize,
                                               fontWeight: FontWeight.w300,
                                               color: AppTheme.slate900),
                                         ),
-                                        const Text(
-                                          'per month',
-                                          style: TextStyle(
-                                              fontSize: 10,
-                                              color: AppTheme.slate400),
-                                        ),
+                                        if (totalItems <= 10)
+                                          const Text(
+                                            'per month',
+                                            style: TextStyle(
+                                                fontSize: 9,
+                                                color: AppTheme.slate400),
+                                          ),
                                       ],
                                     ),
                                   ],
@@ -742,6 +789,10 @@ class _RecurringScreenState extends State<RecurringScreen> {
                         }).toList(),
                       ),
                     ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
       ),

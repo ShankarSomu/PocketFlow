@@ -595,16 +595,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       )
                     else
                       Expanded(
-                        child: ListView(
+                        child: SingleChildScrollView(
+                          physics: const NeverScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-                          children: [
-                            // Net Worth Hero Card
-                            _buildNetWorthCard(netWorth, totalAssets, totalDebt, fmt),
-                            const SizedBox(height: 24),
-                            // Account Cards
-                            ..._buildGrouped(fmt),
-                            const SizedBox(height: 80),
-                          ],
+                          child: Column(
+                            children: [
+                              // Net Worth Hero Card - Adaptive size
+                              _buildNetWorthCard(netWorth, totalAssets, totalDebt, fmt),
+                              const SizedBox(height: 16),
+                              // Account Cards - Adaptive size
+                              ..._buildGrouped(fmt),
+                            ],
+                          ),
                         ),
                       ),
                   ],
@@ -637,6 +639,16 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Widget _buildNetWorthCard(double netWorth, double assets, double debt, NumberFormat fmt) {
+    // Adaptive sizing based on total account count
+    final totalAccounts = _accounts.length;
+    final double cardPadding = totalAccounts <= 3 ? 16 : totalAccounts <= 6 ? 14 : 12;
+    final double titleSize = totalAccounts <= 3 ? 13 : totalAccounts <= 6 ? 12 : 11;
+    final double netWorthSize = totalAccounts <= 3 ? 32 : totalAccounts <= 6 ? 28 : 24;
+    final double assetDebtSize = totalAccounts <= 3 ? 15 : totalAccounts <= 6 ? 14 : 13;
+    final double iconSize = totalAccounts <= 3 ? 18 : totalAccounts <= 6 ? 16 : 14;
+    final double innerPadding = totalAccounts <= 3 ? 10 : totalAccounts <= 6 ? 8 : 6;
+    final double spacing = totalAccounts <= 3 ? 6 : totalAccounts <= 6 ? 4 : 3;
+    
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 600),
@@ -653,187 +665,129 @@ class _AccountsScreenState extends State<AccountsScreen> {
       child: Container(
         decoration: BoxDecoration(
           gradient: AppTheme.emeraldBlueGradient,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: AppTheme.emerald.withValues(alpha: 0.3),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: -50,
-              right: -50,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: EdgeInsets.all(cardPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Net Worth',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      Icon(Icons.visibility, color: Colors.white70, size: 20),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                   Text(
-                    fmt.format(netWorth),
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w300,
-                      color: Colors.white,
-                      letterSpacing: -1,
+                    'Total Net Worth',
+                    style: TextStyle(
+                      fontSize: titleSize,
+                      color: Colors.white70,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.trending_up, color: Colors.white, size: 16),
-                            const SizedBox(width: 6),
-                            const Text(
-                              '+8.3% this month',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
+                  Icon(Icons.visibility, color: Colors.white70, size: iconSize),
+                ],
+              ),
+              SizedBox(height: spacing),
+              Text(
+                fmt.format(netWorth),
+                style: TextStyle(
+                  fontSize: netWorthSize,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.white,
+                  letterSpacing: -1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.visible,
+              ),
+              SizedBox(height: spacing + 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(innerPadding),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              fmt.format((netWorth * 0.083).abs()),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.trending_up, color: Colors.white, size: iconSize - 4),
+                              SizedBox(width: spacing),
+                              Text(
+                                'Assets',
+                                style: TextStyle(
+                                  fontSize: titleSize - 2,
+                                  color: Colors.white70,
+                                ),
                               ),
+                            ],
+                          ),
+                          SizedBox(height: spacing),
+                          Text(
+                            fmt.format(assets),
+                            style: TextStyle(
+                              fontSize: assetDebtSize,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
                             ),
-                          ],
-                        ),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(innerPadding),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.trending_up, color: Colors.white, size: 16),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    'Assets',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
+                              Icon(Icons.trending_down, color: Colors.white, size: iconSize - 4),
+                              SizedBox(width: spacing),
                               Text(
-                                fmt.format(assets),
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                'Debt',
+                                style: TextStyle(
+                                  fontSize: titleSize - 2,
+                                  color: Colors.white70,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
+                          SizedBox(height: spacing),
+                          Text(
+                            fmt.format(debt),
+                            style: TextStyle(
+                              fontSize: assetDebtSize,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.trending_down, color: Colors.white, size: 16),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    'Debt',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                fmt.format(debt),
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -847,16 +801,25 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final widgets = <Widget>[];
     int cardIndex = 0;
     
+    // Calculate dynamic sizing based on total account count
+    final totalAccounts = _accounts.length;
+    final double iconSize = totalAccounts <= 3 ? 40 : totalAccounts <= 6 ? 36 : 32;
+    final double cardPadding = totalAccounts <= 3 ? 16 : totalAccounts <= 6 ? 12 : 10;
+    final double titleSize = totalAccounts <= 3 ? 15 : totalAccounts <= 6 ? 14 : 13;
+    final double balanceSize = totalAccounts <= 3 ? 18 : totalAccounts <= 6 ? 16 : 14;
+    final double subtitleSize = totalAccounts <= 3 ? 11 : totalAccounts <= 6 ? 10 : 9;
+    final double spacing = totalAccounts <= 3 ? 12 : totalAccounts <= 6 ? 10 : 8;
+    
     for (final type in Account.types) {
       if (!groups.containsKey(type)) continue;
       widgets.add(Padding(
-        padding: const EdgeInsets.only(bottom: 12, top: 8),
+        padding: const EdgeInsets.only(bottom: 8, top: 6),
         child: Text(
           type[0].toUpperCase() + type.substring(1),
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             color: AppTheme.slate600,
-            fontSize: 13,
+            fontSize: 12,
             letterSpacing: 0.5,
           ),
         ),
@@ -882,178 +845,107 @@ class _AccountsScreenState extends State<AccountsScreen> {
               );
             },
             child: GlassCard(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(20),
-              borderRadius: 16,
+              margin: EdgeInsets.only(bottom: spacing),
+              padding: EdgeInsets.symmetric(horizontal: cardPadding, vertical: cardPadding),
+              borderRadius: 12,
               child: InkWell(
                 onTap: () => _showForm(a),
-                borderRadius: BorderRadius.circular(16),
-                child: Column(
+                borderRadius: BorderRadius.circular(12),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: _typeGradient(a.type),
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _typeColor(a.type).withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            _typeIcon(a.type),
-                            color: Colors.white,
-                            size: 28,
-                          ),
+                    Container(
+                      width: iconSize,
+                      height: iconSize,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: _typeGradient(a.type),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                a.name,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.slate900,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  if (a.last4 != null) ...[
-                                    Text(
-                                      '•••• ${a.last4}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.slate500,
-                                      ),
-                                    ),
-                                    if (isCredit && daysUntil != null)
-                                      const Text(' · ', style: TextStyle(color: AppTheme.slate400)),
-                                  ],
-                                  if (isCredit && daysUntil != null)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: daysUntil <= 3
-                                            ? AppTheme.error.withValues(alpha: 0.1)
-                                            : AppTheme.slate200,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            daysUntil <= 3 ? Icons.warning_amber : Icons.calendar_today,
-                                            size: 10,
-                                            color: daysUntil <= 3 ? AppTheme.error : AppTheme.slate600,
-                                          ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            daysUntil == 0
-                                                ? 'Due today'
-                                                : daysUntil < 0
-                                                    ? 'Overdue'
-                                                    : 'Due in $daysUntil days',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: daysUntil <= 3 ? AppTheme.error : AppTheme.slate600,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              if (isCredit && a.creditLimit != null) ...[
-                                const SizedBox(height: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: (bal / a.creditLimit!).clamp(0.0, 1.0),
-                                    minHeight: 4,
-                                    backgroundColor: AppTheme.slate200,
-                                    valueColor: AlwaysStoppedAnimation(
-                                      bal / a.creditLimit! > 0.8 ? AppTheme.error : AppTheme.indigo,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${((bal / a.creditLimit!) * 100).toStringAsFixed(0)}% of ${fmt.format(a.creditLimit)} limit',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: AppTheme.slate500,
-                                  ),
-                                ),
-                              ],
-                            ],
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _typeColor(a.type).withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              fmt.format(bal),
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: isCredit
-                                    ? (bal > 0 ? AppTheme.error : AppTheme.emerald)
-                                    : AppTheme.slate900,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              isCredit ? 'outstanding' : 'available',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppTheme.slate500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Icon(
+                        _typeIcon(a.type),
+                        color: Colors.white,
+                        size: iconSize * 0.5,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
+                    SizedBox(width: cardPadding),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            a.name,
+                            style: TextStyle(
+                              fontSize: titleSize,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.slate900,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (totalAccounts <= 6) SizedBox(height: 2),
+                          if (totalAccounts <= 6)
+                            Row(
+                              children: [
+                                if (a.last4 != null)
+                                  Text(
+                                    '•••• ${a.last4}',
+                                    style: TextStyle(
+                                      fontSize: subtitleSize,
+                                      color: AppTheme.slate500,
+                                    ),
+                                  ),
+                                if (isCredit && daysUntil != null && daysUntil <= 3) ...[
+                                  if (a.last4 != null) Text(' · ', style: TextStyle(color: AppTheme.slate400, fontSize: subtitleSize)),
+                                  Icon(
+                                    Icons.warning_amber,
+                                    size: subtitleSize,
+                                    color: AppTheme.error,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    daysUntil == 0 ? 'Due today' : 'Due soon',
+                                    style: TextStyle(
+                                      fontSize: subtitleSize,
+                                      color: AppTheme.error,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: cardPadding),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _showForm(a),
-                            icon: const Icon(Icons.edit, size: 16),
-                            label: const Text('Edit'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.slate700,
-                              side: const BorderSide(color: AppTheme.slate300),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
+                        Text(
+                          fmt.format(bal),
+                          style: TextStyle(
+                            fontSize: balanceSize,
+                            fontWeight: FontWeight.w600,
+                            color: isCredit
+                                ? (bal > 0 ? AppTheme.error : AppTheme.emerald)
+                                : AppTheme.slate900,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: () => _showTransactions(a),
-                            icon: const Icon(Icons.receipt_long, size: 16),
-                            label: const Text('Transactions'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _typeColor(a.type),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                        if (totalAccounts <= 6)
+                          Text(
+                            isCredit ? 'owed' : 'balance',
+                            style: TextStyle(
+                              fontSize: subtitleSize - 1,
+                              color: AppTheme.slate500,
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ],

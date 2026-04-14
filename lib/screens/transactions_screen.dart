@@ -336,223 +336,274 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     ),
                   ),
                   Expanded(
-                    child: ListView(
+                    child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      children: [
-                  TweenAnimationBuilder(
-                    duration: const Duration(milliseconds: 500),
-                    tween: Tween<double>(begin: 0, end: 1),
-                    builder: (context, double value, child) {
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, 20 * (1 - value)),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Column(
-                      children: [
-                        GlassCard(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: TextField(
-                            onChanged: (v) => setState(() => _searchQuery = v),
-                            decoration: const InputDecoration(
-                              hintText: 'Search transactions...',
-                              prefixIcon: Icon(Icons.search, color: AppTheme.slate400),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
-                        ),
-                        if (_filterType != null || _filterAccountId != null) ...[
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              if (_filterType != null)
-                                Chip(
-                                  label: Text(_filterType == 'income' ? 'Income' : 'Expense'),
-                                  onDeleted: () => setState(() => _filterType = null),
-                                  deleteIcon: const Icon(Icons.close, size: 16),
-                                  backgroundColor: AppTheme.indigo.withValues(alpha: 0.1),
-                                ),
-                              if (_filterAccountId != null)
-                                Chip(
-                                  label: Text(_accounts.where((a) => a.id == _filterAccountId).firstOrNull?.name ?? 'Account'),
-                                  onDeleted: () => setState(() => _filterAccountId = null),
-                                  deleteIcon: const Icon(Icons.close, size: 16),
-                                  backgroundColor: AppTheme.emerald.withValues(alpha: 0.1),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Transactions list
-                  if (filtered.isEmpty)
-                    const Center(
-                        child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text('No transactions found.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey)),
-                    ))
-                  else
-                    GlassCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: filtered.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final t = entry.value;
-                          final account = _accounts
-                              .where((a) => a.id == t.accountId)
-                              .firstOrNull;
-                          final isIncome = t.type == 'income';
-
-                          return TweenAnimationBuilder(
-                            duration: Duration(milliseconds: 600 + (index * 30)),
-                            tween: Tween<double>(begin: 0, end: 1),
-                            builder: (context, double value, child) {
-                              return Opacity(
-                                opacity: value,
-                                child: Transform.translate(
-                                  offset: Offset(-20 * (1 - value), 0),
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: InkWell(
-                              onTap: () => _showEditTransaction(t),
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  border: index < filtered.length - 1
-                                      ? const Border(
-                                          bottom: BorderSide(
-                                              color: Color(0xFFF1F5F9)))
-                                      : null,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 56,
-                                      height: 56,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: isIncome
-                                              ? [
-                                                  const Color(0xFFD1FAE5),
-                                                  const Color(0xFFA7F3D0)
-                                                ]
-                                              : [
-                                                  const Color(0xFFF3F4F6),
-                                                  const Color(0xFFE5E7EB)
-                                                ],
+                      child: filtered.length <= 15
+                          ? SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  TweenAnimationBuilder(
+                                    duration: const Duration(milliseconds: 500),
+                                    tween: Tween<double>(begin: 0, end: 1),
+                                    builder: (context, double value, child) {
+                                      return Opacity(
+                                        opacity: value,
+                                        child: Transform.translate(
+                                          offset: Offset(0, 20 * (1 - value)),
+                                          child: child,
                                         ),
-                                        borderRadius: BorderRadius.circular(
-                                            AppTheme.radiusMedium),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black
-                                                .withValues(alpha: 0.05),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
+                                      );
+                                    },
+                                    child: Column(
+                                      children: [
+                                        GlassCard(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                                          child: TextField(
+                                            onChanged: (v) => setState(() => _searchQuery = v),
+                                            decoration: const InputDecoration(
+                                              hintText: 'Search transactions...',
+                                              prefixIcon: Icon(Icons.search, color: AppTheme.slate400),
+                                              border: InputBorder.none,
+                                              contentPadding: EdgeInsets.symmetric(vertical: 16),
+                                            ),
+                                          ),
+                                        ),
+                                        if (_filterType != null || _filterAccountId != null) ...[
+                                          const SizedBox(height: 12),
+                                          Wrap(
+                                            spacing: 8,
+                                            children: [
+                                              if (_filterType != null)
+                                                Chip(
+                                                  label: Text(_filterType == 'income' ? 'Income' : 'Expense'),
+                                                  onDeleted: () => setState(() => _filterType = null),
+                                                  deleteIcon: const Icon(Icons.close, size: 16),
+                                                  backgroundColor: AppTheme.indigo.withValues(alpha: 0.1),
+                                                ),
+                                              if (_filterAccountId != null)
+                                                Chip(
+                                                  label: Text(_accounts.where((a) => a.id == _filterAccountId).firstOrNull?.name ?? 'Account'),
+                                                  onDeleted: () => setState(() => _filterAccountId = null),
+                                                  deleteIcon: const Icon(Icons.close, size: 16),
+                                                  backgroundColor: AppTheme.emerald.withValues(alpha: 0.1),
+                                                ),
+                                            ],
                                           ),
                                         ],
-                                      ),
-                                      child: Icon(
-                                        isIncome
-                                            ? Icons.arrow_downward
-                                            : Icons.arrow_upward,
-                                        color: isIncome
-                                            ? const Color(0xFF059669)
-                                            : const Color(0xFF6B7280),
-                                        size: 24,
-                                      ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
+                                  ),
+                                  const SizedBox(height: 24),
+                                  if (filtered.isEmpty)
+                                    const Center(
+                                        child: Padding(
+                                      padding: EdgeInsets.all(32),
+                                      child: Text('No transactions found.',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(color: Colors.grey)),
+                                    ))
+                                  else
+                                    GlassCard(
+                                      padding: EdgeInsets.zero,
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                t.category,
-                                                style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: AppTheme.slate900),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              if (t.note != null) ...[
-                                                Text(
-                                                  t.note!,
-                                                  style: const TextStyle(
-                                                      fontSize: 13,
-                                                      color: AppTheme.slate500),
-                                                ),
-                                                const Text(' • ',
-                                                    style: TextStyle(
-                                                        color:
-                                                            AppTheme.slate500)),
-                                              ],
-                                              if (account != null) ...[
-                                                Text(
-                                                  account.name,
-                                                  style: const TextStyle(
-                                                      fontSize: 13,
-                                                      color: AppTheme.slate500),
-                                                ),
-                                                const Text(' • ',
-                                                    style: TextStyle(
-                                                        color:
-                                                            AppTheme.slate500)),
-                                              ],
-                                              Text(
-                                                '${dateFmt.format(t.date)} at ${timeFmt.format(t.date)}',
-                                                style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: AppTheme.slate500),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                        children: filtered.asMap().entries.map((entry) {
+                                          return _buildTransactionTile(entry.key, entry.value, filtered.length, fmt, dateFmt, timeFmt);
+                                        }).toList(),
                                       ),
                                     ),
-                                    Text(
-                                      '${isIncome ? "+" : ""}${fmt.format(t.amount)}',
-                                      style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w500,
-                                          color: isIncome
-                                              ? AppTheme.emerald
-                                              : AppTheme.slate900),
-                                    ),
-                                  ],
-                                ),
+                                ],
                               ),
+                            )
+                          : ListView(
+                              children: [
+                                TweenAnimationBuilder(
+                                  duration: const Duration(milliseconds: 500),
+                                  tween: Tween<double>(begin: 0, end: 1),
+                                  builder: (context, double value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: Transform.translate(
+                                        offset: Offset(0, 20 * (1 - value)),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Column(
+                                    children: [
+                                      GlassCard(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        child: TextField(
+                                          onChanged: (v) => setState(() => _searchQuery = v),
+                                          decoration: const InputDecoration(
+                                            hintText: 'Search transactions...',
+                                            prefixIcon: Icon(Icons.search, color: AppTheme.slate400),
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.symmetric(vertical: 16),
+                                          ),
+                                        ),
+                                      ),
+                                      if (_filterType != null || _filterAccountId != null) ...[
+                                        const SizedBox(height: 12),
+                                        Wrap(
+                                          spacing: 8,
+                                          children: [
+                                            if (_filterType != null)
+                                              Chip(
+                                                label: Text(_filterType == 'income' ? 'Income' : 'Expense'),
+                                                onDeleted: () => setState(() => _filterType = null),
+                                                deleteIcon: const Icon(Icons.close, size: 16),
+                                                backgroundColor: AppTheme.indigo.withValues(alpha: 0.1),
+                                              ),
+                                            if (_filterAccountId != null)
+                                              Chip(
+                                                label: Text(_accounts.where((a) => a.id == _filterAccountId).firstOrNull?.name ?? 'Account'),
+                                                onDeleted: () => setState(() => _filterAccountId = null),
+                                                deleteIcon: const Icon(Icons.close, size: 16),
+                                                backgroundColor: AppTheme.emerald.withValues(alpha: 0.1),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                if (filtered.isEmpty)
+                                  const Center(
+                                      child: Padding(
+                                    padding: EdgeInsets.all(32),
+                                    child: Text('No transactions found.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: Colors.grey)),
+                                  ))
+                                else
+                                  GlassCard(
+                                    padding: EdgeInsets.zero,
+                                    child: Column(
+                                      children: filtered.asMap().entries.map((entry) {
+                                        return _buildTransactionTile(entry.key, entry.value, filtered.length, fmt, dateFmt, timeFmt);
+                                      }).toList(),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                      ],
                     ),
                   ),
                 ],
               ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionTile(int index, model.Transaction t, int totalCount, NumberFormat fmt, DateFormat dateFmt, DateFormat timeFmt) {
+    final account = _accounts.where((a) => a.id == t.accountId).firstOrNull;
+    final isIncome = t.type == 'income';
+    
+    // Calculate dynamic sizing based on item count
+    final double iconSize = totalCount <= 5 ? 56 : totalCount <= 10 ? 48 : 40;
+    final double padding = totalCount <= 5 ? 20 : totalCount <= 10 ? 16 : 12;
+    final double titleSize = totalCount <= 5 ? 16 : totalCount <= 10 ? 15 : 14;
+    final double subtitleSize = totalCount <= 5 ? 13 : totalCount <= 10 ? 12 : 11;
+    final double amountSize = totalCount <= 5 ? 20 : totalCount <= 10 ? 18 : 16;
+
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 600 + (index * 30)),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(-20 * (1 - value), 0),
+            child: child,
+          ),
+        );
+      },
+      child: InkWell(
+        onTap: () => _showEditTransaction(t),
+        child: Container(
+          padding: EdgeInsets.all(padding),
+          decoration: BoxDecoration(
+            border: index < totalCount - 1
+                ? const Border(bottom: BorderSide(color: Color(0xFFF1F5F9)))
+                : null,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: iconSize,
+                height: iconSize,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isIncome
+                        ? [const Color(0xFFD1FAE5), const Color(0xFFA7F3D0)]
+                        : [const Color(0xFFF3F4F6), const Color(0xFFE5E7EB)],
+                  ),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                  color: isIncome ? const Color(0xFF059669) : const Color(0xFF6B7280),
+                  size: iconSize * 0.42,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.category,
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.slate900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (account != null) ...[
+                          Flexible(
+                            child: Text(
+                              account.name,
+                              style: TextStyle(fontSize: subtitleSize, color: AppTheme.slate500),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(' • ', style: TextStyle(color: AppTheme.slate500, fontSize: subtitleSize)),
+                        ],
+                        Flexible(
+                          child: Text(
+                            dateFmt.format(t.date),
+                            style: TextStyle(fontSize: subtitleSize, color: AppTheme.slate500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${isIncome ? "+" : ""}${fmt.format(t.amount)}',
+                style: TextStyle(
+                  fontSize: amountSize,
+                  fontWeight: FontWeight.w500,
+                  color: isIncome ? AppTheme.emerald : AppTheme.slate900,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

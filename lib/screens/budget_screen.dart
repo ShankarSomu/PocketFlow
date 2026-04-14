@@ -201,7 +201,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   children: [
                     // Fixed Header
                     Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -218,7 +218,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                     child: const Text(
                                       'Budget',
                                       style: TextStyle(
-                                        fontSize: 36,
+                                        fontSize: 28,
                                         fontWeight: FontWeight.w300,
                                         letterSpacing: -1,
                                         color: Colors.white,
@@ -230,7 +230,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                     'Track spending by category',
                                     style: TextStyle(
                                       color: Color(0xFF94A3B8),
-                                      fontSize: 14,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ],
@@ -302,7 +302,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                     // Scrollable Content
                     Expanded(
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                         children: [
                           _IncomeSummaryCard(
                             income: _income,
@@ -310,7 +310,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                             spent: totalSpent,
                             unallocated: unallocated,
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                           if (_budgets.isEmpty)
                             const Center(
                               child: Padding(
@@ -323,12 +323,19 @@ class _BudgetScreenState extends State<BudgetScreen> {
                               ),
                             )
                           else
-                            ...(_budgets.map((b) => _BudgetCard(
-                                  budget: b,
-                                  spent: _spent[b.category] ?? 0,
-                                  emoji: _getEmojiForCategory(b.category),
-                                  onEdit: () => _showEditDialog(b),
-                                ))),
+                            ...(_budgets.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final b = entry.value;
+                              final totalBudgets = _budgets.length;
+                              return _BudgetCard(
+                                budget: b,
+                                spent: _spent[b.category] ?? 0,
+                                emoji: _getEmojiForCategory(b.category),
+                                onEdit: () => _showEditDialog(b),
+                                totalBudgets: totalBudgets,
+                                index: index,
+                              );
+                            })),
                           const SizedBox(height: 80),
                         ],
                       ),
@@ -583,9 +590,17 @@ class _BudgetCard extends StatelessWidget {
   final double spent;
   final String emoji;
   final VoidCallback onEdit;
+  final int totalBudgets;
+  final int index;
 
-  const _BudgetCard(
-      {required this.budget, required this.spent, required this.emoji, required this.onEdit});
+  const _BudgetCard({
+    required this.budget,
+    required this.spent,
+    required this.emoji,
+    required this.onEdit,
+    required this.totalBudgets,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -602,9 +617,17 @@ class _BudgetCard extends StatelessWidget {
                 ? const Color(0xFFF59E0B)
                 : AppTheme.emerald;
 
+    // Dynamic sizing based on budget count
+    final double iconSize = totalBudgets <= 5 ? 48 : totalBudgets <= 10 ? 40 : 36;
+    final double cardPadding = totalBudgets <= 5 ? 20 : totalBudgets <= 10 ? 16 : 12;
+    final double titleSize = totalBudgets <= 5 ? 16 : totalBudgets <= 10 ? 15 : 14;
+    final double amountSize = totalBudgets <= 5 ? 13 : totalBudgets <= 10 ? 12 : 11;
+    final double progressHeight = totalBudgets <= 5 ? 10 : totalBudgets <= 10 ? 8 : 6;
+    final double spacing = totalBudgets <= 5 ? 12 : totalBudgets <= 10 ? 10 : 8;
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 700),
+      duration: Duration(milliseconds: 700 + (index * 50)),
       curve: Curves.easeOut,
       builder: (context, value, child) {
         return Opacity(
@@ -617,7 +640,7 @@ class _BudgetCard extends StatelessWidget {
       },
       child: GlassCard(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(cardPadding),
         borderRadius: 16,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,8 +651,8 @@ class _BudgetCard extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: iconSize,
+                      height: iconSize,
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -637,7 +660,7 @@ class _BudgetCard extends StatelessWidget {
                       alignment: Alignment.center,
                       child: Text(
                         emoji,
-                        style: const TextStyle(fontSize: 24),
+                        style: TextStyle(fontSize: iconSize * 0.5),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -646,22 +669,23 @@ class _BudgetCard extends StatelessWidget {
                       children: [
                         Text(
                           budget.category,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                            fontSize: titleSize,
                             color: AppTheme.slate900,
                           ),
                         ),
-                        const Text(
-                          'This month',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppTheme.slate400,
+                        if (totalBudgets <= 10)
+                          const Text(
+                            'This month',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.slate400,
+                            ),
                           ),
-                        ),
                       ],
                     ),
-                    if (isUnbudgeted)
+                    if (isUnbudgeted && totalBudgets <= 10)
                       Container(
                         margin: const EdgeInsets.only(left: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -678,51 +702,60 @@ class _BudgetCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    if (over)
+                    if (over && totalBudgets <= 10)
                       Icon(Icons.warning_amber, color: AppTheme.error, size: 18),
                     IconButton(
-                      icon: const Icon(Icons.edit, size: 18),
+                      icon: Icon(Icons.edit, size: totalBudgets <= 10 ? 18 : 16),
                       onPressed: onEdit,
                       color: AppTheme.slate600,
+                      padding: EdgeInsets.all(totalBudgets <= 10 ? 8 : 4),
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: spacing),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: ratio,
-                minHeight: 10,
+                minHeight: progressHeight,
                 backgroundColor: color.withValues(alpha: 0.15),
                 valueColor: AlwaysStoppedAnimation(color),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: spacing),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Spent: ${fmt.format(spent)}',
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                Flexible(
+                  child: Text(
+                    'Spent: ${fmt.format(spent)}',
+                    style: TextStyle(
+                      color: color,
+                      fontSize: amountSize,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text(
-                  isUnbudgeted
-                      ? 'Tap edit to set limit'
-                      : 'Limit: ${fmt.format(budget.limit)}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.slate500,
+                Flexible(
+                  child: Text(
+                    isUnbudgeted
+                        ? (totalBudgets <= 10 ? 'Tap edit to set limit' : 'No limit')
+                        : 'Limit: ${fmt.format(budget.limit)}',
+                    style: TextStyle(
+                      fontSize: amountSize,
+                      color: AppTheme.slate500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
-            if (over)
+            if (over && totalBudgets <= 10)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
@@ -734,7 +767,7 @@ class _BudgetCard extends StatelessWidget {
                   ),
                 ),
               ),
-            if (!isUnbudgeted && !over)
+            if (!isUnbudgeted && !over && totalBudgets <= 10)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(

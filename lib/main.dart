@@ -39,6 +39,7 @@ class PocketFlowApp extends StatefulWidget {
 class _PocketFlowAppState extends State<PocketFlowApp> {
   bool _showWelcome = true;
   bool _loading = true;
+  bool _isFirstTime = false;
 
   @override
   void initState() {
@@ -49,11 +50,25 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
   Future<void> _checkFirstLaunch() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
-    if (mounted) {
-      setState(() {
-        _showWelcome = !hasSeenWelcome;
-        _loading = false;
-      });
+    
+    if (hasSeenWelcome) {
+      // Returning user - show splash briefly
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (mounted) {
+        setState(() {
+          _showWelcome = false;
+          _loading = false;
+        });
+      }
+    } else {
+      // First time user - show full welcome
+      if (mounted) {
+        setState(() {
+          _isFirstTime = true;
+          _showWelcome = true;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -72,9 +87,29 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: _loading
-          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+          ? Scaffold(
+              body: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.account_balance_wallet_rounded, size: 64, color: Colors.white),
+                      SizedBox(height: 24),
+                      CircularProgressIndicator(color: Colors.white),
+                    ],
+                  ),
+                ),
+              ),
+            )
           : _showWelcome
-              ? WelcomeScreen(onGetStarted: _onGetStarted)
+              ? WelcomeScreen(onGetStarted: _onGetStarted, isFirstTime: _isFirstTime)
               : const _RootNav(),
     );
   }

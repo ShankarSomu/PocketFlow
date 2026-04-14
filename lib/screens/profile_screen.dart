@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
 import '../db/database.dart';
 import '../services/auth_service.dart';
 import '../services/refresh_notifier.dart';
@@ -122,32 +123,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _showFolderPicker() async {
     setState(() { _loading = true; _message = null; });
-    List<DriveFolder> folders = [];
+    
     try {
-      folders = await AuthService.listFolders();
+      // Use native file picker to select directory
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+      
+      if (selectedDirectory != null) {
+        // Extract folder name from path
+        final folderName = selectedDirectory.split('/').last;
+        final folder = DriveFolder(
+          id: selectedDirectory, // Use path as ID for local folders
+          name: folderName,
+          path: selectedDirectory,
+        );
+        
+        await AuthService.saveSelectedFolder(folder);
+        if (!mounted) return;
+        setState(() {
+          _folder = folder;
+          _message = 'Backup location set';
+          _isError = false;
+          _loading = false;
+        });
+      } else {
+        if (!mounted) return;
+        setState(() => _loading = false);
+      }
     } catch (e) {
       if (!mounted) return;
-      setState(() { _loading = false; _message = 'Failed to load folders: $e'; _isError = true; });
-      return;
-    }
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    final picked = await showModalBottomSheet<DriveFolder>(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => _FolderPickerSheet(folders: folders),
-    );
-
-    if (picked != null) {
-      await AuthService.saveSelectedFolder(picked);
-      if (!mounted) return;
       setState(() {
-        _folder = picked;
-        _message = 'Backup folder set';
-        _isError = false;
+        _loading = false;
+        _message = 'Failed to select folder: $e';
+        _isError = true;
       });
     }
+  }
+
+  Future<void> _showProfileMenu() async {
+    final user = AuthService.currentUser;
+    final isSignedIn = AuthService.isSignedIn;
+    
+    await showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isSignedIn) ...[
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: user?.photoUrl != null
+                      ? NetworkImage(user!.photoUrl!)
+                      : null,
+                  child: user?.photoUrl == null ? const Icon(Icons.person) : null,
+                ),
+                title: Text(user?.displayName ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(user?.email ?? '',
+                    style: const TextStyle(fontSize: 12)),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _signOut();
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.delete_forever, color: Colors.red),
+                title: const Text('Delete All Data', style: TextStyle(color: Colors.red)),
+                subtitle: const Text('Permanently delete all data', style: TextStyle(fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _deleteAllData();
+                },
+              ),
+            ] else ...[
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Sign in to access more features',
+                    style: TextStyle(color: Colors.grey)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.login, color: Colors.blue),
+                title: const Text('Sign in with Google'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _signIn();
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteAllData() async {
@@ -285,28 +358,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: AppTheme.emeraldBlueGradient,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.emerald.withValues(alpha: 0.4),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
+                        GestureDetector(
+                          onTap: () => _showProfileMenu(),
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppTheme.emeraldBlueGradient,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.emerald.withValues(alpha: 0.4),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: user?.photoUrl != null
+                                ? ClipOval(
+                                    child: Image.network(
+                                      user!.photoUrl!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : const Icon(Icons.person, size: 40, color: Colors.white),
                           ),
-                          child: user?.photoUrl != null
-                              ? ClipOval(
-                                  child: Image.network(
-                                    user!.photoUrl!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : const Icon(Icons.person, size: 40, color: Colors.white),
                         ),
                         const SizedBox(width: 20),
                         Expanded(
@@ -448,149 +524,283 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             GlassCard(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Google Account',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-                const SizedBox(height: 16),
-                if (isSignedIn) ...[
-                  Row(children: [
-                    CircleAvatar(
-                      backgroundImage: user?.photoUrl != null
-                          ? NetworkImage(user!.photoUrl!)
-                          : null,
-                      child: user?.photoUrl == null
-                          ? const Icon(Icons.person)
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(user?.displayName ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
-                        Text(user?.email ?? '',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      ]),
-                    ),
-                  ]),
-                  const SizedBox(height: 12),
-                  TextButton.icon(
-                    onPressed: _signOut,
-                    icon: const Icon(Icons.logout, color: Colors.red),
-                    label: const Text('Sign Out',
-                        style: TextStyle(color: Colors.red)),
+              padding: EdgeInsets.zero,
+              child: Column(children: [
+                ListTile(
+                  leading: const Icon(Icons.category_outlined,
+                      color: AppTheme.indigo),
+                  title: const Text('Manage Categories'),
+                  subtitle: const Text('Add, edit or delete categories',
+                      style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CategoryScreen()),
                   ),
-                ] else ...[
-                  const Text('Sign in with Google to backup and restore your data.',
-                      style: TextStyle(color: Colors.grey, fontSize: 13)),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _loading ? null : _signIn,
-                    icon: const Icon(Icons.login),
-                    label: const Text('Sign in with Google'),
+                ),
+                const Divider(height: 1),
+                ExpansionTile(
+                  leading: const Icon(Icons.cloud_outlined,
+                      color: AppTheme.blue),
+                  title: const Text('Google Drive Backup'),
+                  subtitle: Text(
+                    isSignedIn
+                        ? (_folder != null ? 'Location: ${_folder!.path}' : 'No location selected')
+                        : 'Sign in to backup',
+                    style: const TextStyle(fontSize: 12),
                   ),
-                ],
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (!isSignedIn) ...[
+                            const Text('Sign in with Google to backup and restore your data.',
+                                style: TextStyle(color: Colors.grey, fontSize: 13)),
+                            const SizedBox(height: 12),
+                            FilledButton.icon(
+                              onPressed: _loading ? null : _signIn,
+                              icon: const Icon(Icons.login),
+                              label: const Text('Sign in with Google'),
+                            ),
+                          ] else ...[
+                            const Row(
+                              children: [
+                                Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Choose where to save backups on your Google Drive',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            if (_folder != null)
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                                ),
+                                child: Row(children: [
+                                  const Icon(Icons.folder, color: Colors.amber, size: 20),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(_folder!.name,
+                                            style: const TextStyle(
+                                                fontSize: 14, fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 2),
+                                        Text(_folder!.path,
+                                            style: const TextStyle(
+                                                fontSize: 11, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: _loading ? null : _showFolderPicker,
+                                    child: const Text('Change'),
+                                  ),
+                                ]),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                                ),
+                                child: Row(children: [
+                                  const Icon(Icons.warning_amber, color: Colors.orange, size: 20),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text('No backup location selected',
+                                        style: TextStyle(fontSize: 13)),
+                                  ),
+                                  FilledButton.icon(
+                                    onPressed: _loading ? null : _showFolderPicker,
+                                    icon: const Icon(Icons.folder_open, size: 16),
+                                    label: const Text('Choose'),
+                                  ),
+                                ]),
+                              ),
+                            const SizedBox(height: 12),
+                            const Divider(),
+                            const SizedBox(height: 12),
+                            if (_lastBackup != null)
+                              Text(
+                                  'Last backup: ${DateFormat('MMM d, yyyy h:mm a').format(DateTime.parse(_lastBackup!))}',
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey))
+                            else
+                              const Text('No backup yet',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            const SizedBox(height: 12),
+                            Row(children: [
+                              const Text('Auto-backup: ',
+                                  style: TextStyle(fontSize: 13)),
+                              const SizedBox(width: 8),
+                              DropdownButton<String>(
+                                value: _backupFreq,
+                                isDense: true,
+                                items: const [
+                                  DropdownMenuItem(value: 'manual', child: Text('Manual only')),
+                                  DropdownMenuItem(value: 'hourly', child: Text('Every hour')),
+                                  DropdownMenuItem(value: 'daily', child: Text('Daily')),
+                                ],
+                                onChanged: (v) async {
+                                  if (v == null) return;
+                                  await AuthService.setBackupFrequency(v);
+                                  setState(() => _backupFreq = v);
+                                },
+                              ),
+                            ]),
+                            const SizedBox(height: 16),
+                            if (_loading)
+                              const Center(child: CircularProgressIndicator())
+                            else
+                              Row(children: [
+                                Expanded(
+                                  child: FilledButton.icon(
+                                    onPressed: _backup,
+                                    icon: const Icon(Icons.cloud_upload),
+                                    label: const Text('Backup Now'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: _folder != null ? _restore : null,
+                                    icon: const Icon(Icons.cloud_download),
+                                    label: const Text('Restore'),
+                                  ),
+                                ),
+                              ]),
+                          ],
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 1),
+                ExpansionTile(
+                  leading: const Icon(Icons.settings_outlined,
+                      color: AppTheme.emerald),
+                  title: const Text('Preferences'),
+                  subtitle: const Text('Logging, default accounts',
+                      style: TextStyle(fontSize: 12)),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Column(
+                        children: [
+                          Row(children: [
+                            const Icon(Icons.analytics_outlined, size: 20, color: Colors.grey),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text('Logging Level',
+                                  style: TextStyle(fontSize: 13)),
+                            ),
+                            DropdownButton<LogLevel>(
+                              value: _logLevel,
+                              isDense: true,
+                              underline: const SizedBox(),
+                              items: const [
+                                DropdownMenuItem(value: LogLevel.error, child: Text('Errors only')),
+                                DropdownMenuItem(value: LogLevel.warning, child: Text('Warnings')),
+                                DropdownMenuItem(value: LogLevel.info, child: Text('Normal')),
+                                DropdownMenuItem(value: LogLevel.debug, child: Text('Verbose')),
+                              ],
+                              onChanged: (v) async {
+                                if (v == null) return;
+                                await AppLogger.setLevel(v);
+                                setState(() => _logLevel = v);
+                              },
+                            ),
+                          ]),
+                          const SizedBox(height: 12),
+                          const Divider(),
+                          const SizedBox(height: 12),
+                          Row(children: [
+                            const Icon(Icons.arrow_upward, size: 20, color: Colors.red),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text('Default Expense Account',
+                                  style: TextStyle(fontSize: 13)),
+                            ),
+                            DropdownButton<int?>(
+                              value: _defaultExpenseAccount,
+                              isDense: true,
+                              underline: const SizedBox(),
+                              items: [
+                                const DropdownMenuItem(value: null, child: Text('None')),
+                                ..._accounts.map((a) => DropdownMenuItem(
+                                  value: a.id,
+                                  child: Text(a.name, style: const TextStyle(fontSize: 13)),
+                                )),
+                              ],
+                              onChanged: (v) async {
+                                await ChatParser.setDefaultExpenseAccount(v);
+                                setState(() => _defaultExpenseAccount = v);
+                              },
+                            ),
+                          ]),
+                          const SizedBox(height: 12),
+                          Row(children: [
+                            const Icon(Icons.arrow_downward, size: 20, color: Colors.green),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text('Default Income Account',
+                                  style: TextStyle(fontSize: 13)),
+                            ),
+                            DropdownButton<int?>(
+                              value: _defaultIncomeAccount,
+                              isDense: true,
+                              underline: const SizedBox(),
+                              items: [
+                                const DropdownMenuItem(value: null, child: Text('None')),
+                                ..._accounts.map((a) => DropdownMenuItem(
+                                  value: a.id,
+                                  child: Text(a.name, style: const TextStyle(fontSize: 13)),
+                                )),
+                              ],
+                              onChanged: (v) async {
+                                await ChatParser.setDefaultIncomeAccount(v);
+                                setState(() => _defaultIncomeAccount = v);
+                              },
+                            ),
+                          ]),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.bug_report_outlined,
+                      color: Colors.orange),
+                  title: const Text('Diagnostics'),
+                  subtitle: const Text('View app logs and debug info',
+                      style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const DiagnosticsScreen()),
+                  ),
+                ),
               ]),
             ),
-            const SizedBox(height: 16),
-
-            if (isSignedIn) ...[
-              GlassCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Backup Location',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-                  const SizedBox(height: 12),
-                  if (_folder != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [
-                          const Icon(Icons.folder, color: Colors.amber, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(_folder!.name,
-                                style: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w600)),
-                          ),
-                          TextButton(
-                            onPressed: _loading ? null : _showFolderPicker,
-                            child: const Text('Change'),
-                          ),
-                        ]),
-                      ],
-                    )
-                  else
-                    Row(children: [
-                      const Text('No folder selected',
-                          style: TextStyle(color: Colors.grey, fontSize: 13)),
-                      const Spacer(),
-                      FilledButton.icon(
-                        onPressed: _loading ? null : _showFolderPicker,
-                        icon: const Icon(Icons.folder_open, size: 16),
-                        label: const Text('Choose'),
-                      ),
-                    ]),
-                ]),
-              ),
-              const SizedBox(height: 16),
-
-              GlassCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Google Drive Backup',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-                  const SizedBox(height: 12),
-                  if (_lastBackup != null)
-                    Text(
-                        'Last backup: ${DateFormat('MMM d, yyyy h:mm a').format(DateTime.parse(_lastBackup!))}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey))
-                  else
-                    const Text('No backup yet',
-                        style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    const Text('Auto-backup: ',
-                        style: TextStyle(fontSize: 13)),
-                    const SizedBox(width: 8),
-                    DropdownButton<String>(
-                      value: _backupFreq,
-                      isDense: true,
-                      items: const [
-                        DropdownMenuItem(value: 'manual', child: Text('Manual only')),
-                        DropdownMenuItem(value: 'hourly', child: Text('Every hour')),
-                        DropdownMenuItem(value: 'daily', child: Text('Daily')),
-                      ],
-                      onChanged: (v) async {
-                        if (v == null) return;
-                        await AuthService.setBackupFrequency(v);
-                        setState(() => _backupFreq = v);
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
-                  if (_loading)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    Row(children: [
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: _backup,
-                          icon: const Icon(Icons.cloud_upload),
-                          label: const Text('Backup Now'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _folder != null ? _restore : null,
-                          icon: const Icon(Icons.cloud_download),
-                          label: const Text('Restore'),
-                        ),
-                      ),
-                    ]),
-                ]),
-              ),
-            ],
 
             if (_message != null) ...[
               const SizedBox(height: 16),
@@ -617,170 +827,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
 
-            const SizedBox(height: 24),
-            GlassCard(
-              padding: EdgeInsets.zero,
-              child: Column(children: [
-                ListTile(
-                  leading: const Icon(Icons.category_outlined,
-                      color: AppTheme.indigo),
-                  title: const Text('Manage Categories'),
-                  subtitle: const Text('Add, edit or delete categories',
-                      style: TextStyle(fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CategoryScreen()),
-                  ),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.bug_report_outlined,
-                      color: Colors.orange),
-                  title: const Text('Diagnostics'),
-                  subtitle: const Text('View app logs and debug info',
-                      style: TextStyle(fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const DiagnosticsScreen()),
-                  ),
-                ),
-              ]),
-            ),
-            const SizedBox(height: 16),
-
-            GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Preferences',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-                  const SizedBox(height: 16),
-                  Row(children: [
-                    const Icon(Icons.analytics_outlined, size: 20, color: Colors.grey),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('Logging Level',
-                          style: TextStyle(fontSize: 13)),
-                    ),
-                    DropdownButton<LogLevel>(
-                      value: _logLevel,
-                      isDense: true,
-                      underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: LogLevel.error, child: Text('Errors only')),
-                        DropdownMenuItem(value: LogLevel.warning, child: Text('Warnings')),
-                        DropdownMenuItem(value: LogLevel.info, child: Text('Normal')),
-                        DropdownMenuItem(value: LogLevel.debug, child: Text('Verbose')),
-                      ],
-                      onChanged: (v) async {
-                        if (v == null) return;
-                        await AppLogger.setLevel(v);
-                        setState(() => _logLevel = v);
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    const Icon(Icons.arrow_upward, size: 20, color: Colors.red),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('Default Expense Account',
-                          style: TextStyle(fontSize: 13)),
-                    ),
-                    DropdownButton<int?>(
-                      value: _defaultExpenseAccount,
-                      isDense: true,
-                      underline: const SizedBox(),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('None')),
-                        ..._accounts.map((a) => DropdownMenuItem(
-                          value: a.id,
-                          child: Text(a.name, style: const TextStyle(fontSize: 13)),
-                        )),
-                      ],
-                      onChanged: (v) async {
-                        await ChatParser.setDefaultExpenseAccount(v);
-                        setState(() => _defaultExpenseAccount = v);
-                      },
-                    ),
-                  ]),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    const Icon(Icons.arrow_downward, size: 20, color: Colors.green),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('Default Income Account',
-                          style: TextStyle(fontSize: 13)),
-                    ),
-                    DropdownButton<int?>(
-                      value: _defaultIncomeAccount,
-                      isDense: true,
-                      underline: const SizedBox(),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('None')),
-                        ..._accounts.map((a) => DropdownMenuItem(
-                          value: a.id,
-                          child: Text(a.name, style: const TextStyle(fontSize: 13)),
-                        )),
-                      ],
-                      onChanged: (v) async {
-                        await ChatParser.setDefaultIncomeAccount(v);
-                        setState(() => _defaultIncomeAccount = v);
-                      },
-                    ),
-                  ]),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Danger Zone',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.red)),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Backup your data before deleting. This cannot be undone.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: isSignedIn && _folder != null
-                            ? _backup
-                            : null,
-                        icon: const Icon(Icons.cloud_upload, size: 16),
-                        label: const Text('Backup First'),
-                        style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.indigo),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _loading ? null : _deleteAllData,
-                        icon: const Icon(Icons.delete_forever, size: 16),
-                        label: const Text('Delete All Data'),
-                        style: FilledButton.styleFrom(
-                            backgroundColor: Colors.red),
-                      ),
-                    ),
-                  ]),
-                ],
-              ),
-            ),
                   ],
                 ),
               ),

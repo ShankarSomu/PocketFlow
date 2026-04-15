@@ -41,112 +41,112 @@ class WelcomeScreen extends StatelessWidget {
               duration: const Duration(seconds: 10),
               alignment: const Alignment(0.5, 0.8),
             ),
-            
-            // Content
+            // Content scrollable above button
             SafeArea(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Logo
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.elasticOut,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            child: child,
-                          );
-                        },
-                        child: _buildLogo(),
-                      ),
-                      
-                      const SizedBox(height: 48),
-                      
-                      // Title
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeOut,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
-                            child: Transform.translate(
-                              offset: Offset(0, 20 * (1 - value)),
-                              child: child,
-                            ),
-                          );
-                        },
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
                         child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            ShaderMask(
-                              shaderCallback: (bounds) => const LinearGradient(
-                                colors: [Colors.white, Color(0xFFD1FAE5), Color(0xFFDEEBFF)],
-                              ).createShader(bounds),
+                            // Logo
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 800),
+                              curve: Curves.elasticOut,
+                              builder: (context, value, child) {
+                                return Transform.scale(
+                                  scale: value,
+                                  child: child,
+                                );
+                              },
+                              child: _buildLogo(),
+                            ),
+                            const SizedBox(height: 48),
+                            // Title
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 600),
+                              curve: Curves.easeOut,
+                              builder: (context, value, child) {
+                                return Opacity(
+                                  opacity: value,
+                                  child: Transform.translate(
+                                    offset: Offset(0, 20 * (1 - value)),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: Column(
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (bounds) => const LinearGradient(
+                                      colors: [Colors.white, Color(0xFFD1FAE5), Color(0xFFDEEBFF)],
+                                    ).createShader(bounds),
+                                    child: const Text(
+                                      'Pocket Flow',
+                                      style: TextStyle(
+                                        fontSize: 56,
+                                        fontWeight: FontWeight.w300,
+                                        color: Colors.white,
+                                        letterSpacing: -1,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.auto_awesome, color: AppTheme.emerald, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'PREMIUM FINANCE MANAGER',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.emerald,
+                                          letterSpacing: 2,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            // Subtitle
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 800),
+                              curve: Curves.easeOut,
+                              builder: (context, value, child) {
+                                return Opacity(opacity: value, child: child);
+                              },
                               child: const Text(
-                                'Pocket Flow',
+                                'Experience financial clarity with intelligent\ntracking, beautiful insights, and effortless control',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontSize: 56,
-                                  fontWeight: FontWeight.w300,
-                                  color: Colors.white,
-                                  letterSpacing: -1,
+                                  fontSize: 18,
+                                  color: Color(0xFFCBD5E1),
+                                  height: 1.5,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.auto_awesome, color: AppTheme.emerald, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'PREMIUM FINANCE MANAGER',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppTheme.emerald,
-                                    letterSpacing: 2,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            const SizedBox(height: 64),
+                            // Features - only for first time
+                            if (isFirstTime) _buildFeatures(),
+                            if (isFirstTime) const SizedBox(height: 64),
                           ],
                         ),
                       ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Subtitle
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 800),
-                        curve: Curves.easeOut,
-                        builder: (context, value, child) {
-                          return Opacity(opacity: value, child: child);
-                        },
-                        child: const Text(
-                          'Experience financial clarity with intelligent\ntracking, beautiful insights, and effortless control',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Color(0xFFCBD5E1),
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 64),
-                      
-                      // Features - only for first time
-                      if (isFirstTime) _buildFeatures(),
-                      
-                      if (isFirstTime) const SizedBox(height: 64),
-                      
-                      // CTA Button - only for first time
-                      if (isFirstTime)
+                    ),
+                    // CTA Button - only for first time
+                    if (isFirstTime)
                       TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
                         duration: const Duration(milliseconds: 1000),
@@ -174,8 +174,7 @@ class WelcomeScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),

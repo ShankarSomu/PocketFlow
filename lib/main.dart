@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/home_screen.dart';
+import 'screens/figma/home_screen.dart';
 import 'screens/chat_screen.dart';
-import 'screens/budget_screen.dart';
-import 'screens/savings_screen.dart';
-import 'screens/accounts_screen.dart';
-import 'screens/recurring_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/transactions_screen.dart';
+import 'screens/figma/budget_screen.dart';
+import 'screens/figma/savings_screen.dart';
+import 'screens/figma/accounts_screen.dart';
+import 'screens/figma/recurring_screen.dart';
+import 'screens/figma/profile_screen.dart';
+import 'screens/figma/transactions_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'services/recurring_scheduler.dart';
 import 'services/auth_service.dart';
@@ -133,7 +133,6 @@ class _RootNavState extends State<_RootNav> {
     SavingsScreen(),
     RecurringScreen(),
     TransactionsScreen(),
-    ProfileScreen(),
   ];
 
   @override
@@ -143,7 +142,7 @@ class _RootNavState extends State<_RootNav> {
       bottomNavigationBar: _BottomNav(
         index: _index,
         onTap: (i) {
-          final screens = ['Home','Accounts','Budget','Chat','Savings','Recurring','Transactions','Profile'];
+          final screens = ['Home','Accounts','Budget','Chat','Savings','Recurring','Transactions'];
           AppLogger.nav(i < screens.length ? screens[i] : 'Screen$i');
           setState(() => _index = i);
         },
@@ -173,8 +172,6 @@ class _BottomNav extends StatelessWidget {
       _NavItem(Icons.repeat_rounded, Icons.repeat_rounded, 'Recurring'),
       _NavItem(Icons.receipt_long_outlined,
           Icons.receipt_long_rounded, 'Transactions'),
-      _NavItem(Icons.person_outline_rounded,
-          Icons.person_rounded, 'Profile'),
     ];
 
     return Container(

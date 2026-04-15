@@ -65,7 +65,6 @@ class AppDatabase {
             'is_default INTEGER NOT NULL DEFAULT 0, '
             'icon TEXT NOT NULL DEFAULT "📁", '
             'color TEXT NOT NULL DEFAULT "#6C63FF")');
-          await _seedCategories(db);
         }
         if (oldVersion < 6) {
           await db.execute(
@@ -141,7 +140,6 @@ class AppDatabase {
         icon TEXT NOT NULL DEFAULT '📁',
         color TEXT NOT NULL DEFAULT '#6C63FF'
       )''');
-    await _seedCategories(db);
     await db.execute('''
       CREATE TABLE savings_goals(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -154,27 +152,6 @@ class AppDatabase {
   }
 
   // ── Categories ────────────────────────────────────────────────────────────
-
-  static Future<void> _seedCategories(Database db) async {
-    for (final cat in kDefaultCategories) {
-      final parentId = await db.insert('categories', {
-        'name': cat.name,
-        'parent_id': null,
-        'is_default': 1,
-        'icon': cat.icon,
-        'color': cat.color,
-      });
-      for (final sub in cat.subs) {
-        await db.insert('categories', {
-          'name': sub,
-          'parent_id': parentId,
-          'is_default': 1,
-          'icon': cat.icon,
-          'color': cat.color,
-        });
-      }
-    }
-  }
 
   static Future<List<Category>> getCategories() async {
     final rows = await (await db).query('categories',

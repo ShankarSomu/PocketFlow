@@ -1,33 +1,37 @@
+﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../db/database.dart';
-import '../models/transaction.dart' as model;
-import '../models/account.dart';
-import '../services/refresh_notifier.dart';
-import '../theme/app_theme.dart';
-import '../widgets/glass_card.dart';
-
+import 'package:path_provider/path_provider.dart';
+import '../../db/database.dart';
+import '../../models/transaction.dart' as model;
+import '../../models/account.dart';
+import '../../services/refresh_notifier.dart';
+import '../../theme/app_theme.dart';
+import 'shared.dart';
 
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key});
+  final String? initialFilterType;
+  final int? initialAccountId;
+  const TransactionsScreen({super.key, this.initialFilterType, this.initialAccountId});
+
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
-  List<model.Transaction> _transactions = [];
-  List<Account> _accounts = [];
   bool _loading = true;
   bool _searchVisible = false;
+  List<model.Transaction> _transactions = [];
+  List<Account> _accounts = [];
   String _searchQuery = '';
-  String? _filterType; // 'income', 'expense', or null for all
+  String? _filterType;
   int? _filterAccountId;
-  DateTime? _filterStartDate;
-  DateTime? _filterEndDate;
 
   @override
   void initState() {
     super.initState();
+    _filterType = widget.initialFilterType;
+    _filterAccountId = widget.initialAccountId;
     _load();
     appRefresh.addListener(_load);
   }
@@ -39,11 +43,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Future<void> _load() async {
-    final txns = await AppDatabase.getTransactions();
+    final transactions = await AppDatabase.getTransactions();
     final accounts = await AppDatabase.getAccounts();
     if (!mounted) return;
     setState(() {
-      _transactions = txns;
+      _transactions = transactions;
       _accounts = accounts;
       _loading = false;
     });
@@ -51,8 +55,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   List<model.Transaction> get _filteredTransactions {
     var filtered = _transactions;
-    
-    // Search query
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       filtered = filtered.where((t) {
@@ -60,25 +62,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             (t.note?.toLowerCase().contains(query) ?? false);
       }).toList();
     }
-    
-    // Type filter
     if (_filterType != null) {
       filtered = filtered.where((t) => t.type == _filterType).toList();
     }
-    
-    // Account filter
     if (_filterAccountId != null) {
       filtered = filtered.where((t) => t.accountId == _filterAccountId).toList();
     }
-    
-    // Date range filter
-    if (_filterStartDate != null) {
-      filtered = filtered.where((t) => t.date.isAfter(_filterStartDate!) || t.date.isAtSameMomentAs(_filterStartDate!)).toList();
-    }
-    if (_filterEndDate != null) {
-      filtered = filtered.where((t) => t.date.isBefore(_filterEndDate!) || t.date.isAtSameMomentAs(_filterEndDate!)).toList();
-    }
-    
     return filtered;
   }
 
@@ -93,10 +82,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Filters',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-              ),
+              const Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
               const SizedBox(height: 20),
               const Text('Type', style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
@@ -125,16 +111,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               const SizedBox(height: 8),
               DropdownButtonFormField<int?>(
                 value: _filterAccountId,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
+                decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('All accounts')),
-                  ..._accounts.map((a) => DropdownMenuItem(
-                    value: a.id,
-                    child: Text(a.name),
-                  )),
+                  ..._accounts.map((a) => DropdownMenuItem(value: a.id, child: Text(a.name))),
                 ],
                 onChanged: (v) => setLocal(() => _filterAccountId = v),
               ),
@@ -147,8 +127,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         setLocal(() {
                           _filterType = null;
                           _filterAccountId = null;
-                          _filterStartDate = null;
-                          _filterEndDate = null;
                         });
                       },
                       child: const Text('Clear All'),
@@ -176,16 +154,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   Future<void> _exportTransactions() async {
     final filtered = _filteredTransactions;
     if (filtered.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No transactions to export')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No transactions to export')));
       return;
     }
 
-    // Generate CSV content
     final buffer = StringBuffer();
     buffer.writeln('Date,Type,Category,Amount,Note,Account');
-    
     for (final t in filtered) {
       final account = _accounts.where((a) => a.id == t.accountId).firstOrNull;
       buffer.writeln(
@@ -198,56 +172,31 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       );
     }
 
-    // Show export dialog with preview
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Export Transactions'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('${filtered.length} transactions ready to export as CSV'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.slate100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                buffer.toString().split('\n').take(5).join('\n') + '\n...',
-                style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
-                maxLines: 6,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Copy the data above and paste into a spreadsheet app.',
-              style: TextStyle(fontSize: 12, color: AppTheme.slate500),
-            ),
-          ],
+    try {
+      Directory? dir;
+      try {
+        dir = await getDownloadsDirectory();
+      } catch (_) {
+        dir = await getApplicationDocumentsDirectory();
+      }
+      dir ??= await getApplicationDocumentsDirectory();
+
+      final fileName = 'transactions_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.csv';
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsString(buffer.toString());
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Saved: ${file.path}'),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-          FilledButton(
-            onPressed: () {
-              // In a real app, you'd use share_plus or file_picker to save
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('CSV data copied to clipboard')),
-              );
-              Navigator.pop(ctx);
-            },
-            child: const Text('Copy CSV'),
-          ),
-        ],
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
   }
 
   Map<String, List<model.Transaction>> _groupByDate(List<model.Transaction> txns) {
@@ -267,7 +216,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final groupKeys = groups.keys.toList();
     final totalIncome = filtered.where((t) => t.type == 'income').fold(0.0, (s, t) => s + t.amount);
     final totalExpense = filtered.where((t) => t.type == 'expense').fold(0.0, (s, t) => s + t.amount);
-    final firstAccount = _accounts.isNotEmpty ? _accounts.first : null;
+    final selectedAccount = _filterAccountId == null ? null : _accounts.where((a) => a.id == _filterAccountId).firstOrNull;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F5F0),
@@ -370,46 +319,55 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       ],
                     ),
                   ),
+                  // ── Account Carousel ──
+                  if (_accounts.isNotEmpty)
+                    Container(
+                      height: 38,
+                      margin: const EdgeInsets.fromLTRB(0, 12, 0, 0),
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        children: [
+                          _AccountChip(
+                            label: 'All',
+                            selected: _filterAccountId == null,
+                            onTap: () => setState(() => _filterAccountId = null),
+                          ),
+                          ..._accounts.map((a) => _AccountChip(
+                            label: a.name,
+                            selected: _filterAccountId == a.id,
+                            onTap: () => setState(() => _filterAccountId = a.id),
+                          )),
+                        ],
+                      ),
+                    ),
                   // ── Card Summary ──
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: _CardSummary(
-                      account: firstAccount,
+                      account: selectedAccount,
                       totalIncome: totalIncome,
                       totalExpense: totalExpense,
                       transactionCount: filtered.length,
                       fmt: fmt,
                     ),
                   ),
-                  // ── Active filter chips ──
-                  if (_filterType != null || _filterAccountId != null)
+                  // ── Active filter chips (type only) ──
+                  if (_filterType != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                       child: Wrap(
                         spacing: 8,
                         children: [
-                          if (_filterType != null)
-                            Chip(
-                              label: Text(_filterType == 'income' ? '↑ Income' : '↓ Expense',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                              onDeleted: () => setState(() => _filterType = null),
-                              deleteIcon: const Icon(Icons.close, size: 14),
-                              backgroundColor: AppTheme.emeraldLight,
-                              side: BorderSide.none,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                            ),
-                          if (_filterAccountId != null)
-                            Chip(
-                              label: Text(
-                                _accounts.where((a) => a.id == _filterAccountId).firstOrNull?.name ?? 'Account',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                              ),
-                              onDeleted: () => setState(() => _filterAccountId = null),
-                              deleteIcon: const Icon(Icons.close, size: 14),
-                              backgroundColor: AppTheme.blueLight,
-                              side: BorderSide.none,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                            ),
+                          Chip(
+                            label: Text(_filterType == 'income' ? '↑ Income' : '↓ Expense',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            onDeleted: () => setState(() => _filterType = null),
+                            deleteIcon: const Icon(Icons.close, size: 14),
+                            backgroundColor: AppTheme.emeraldLight,
+                            side: BorderSide.none,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                          ),
                         ],
                       ),
                     ),
@@ -452,91 +410,119 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
-  void _showEditTransaction(model.Transaction t) {
-    final amtCtrl = TextEditingController(text: t.amount.toStringAsFixed(2));
-    final catCtrl = TextEditingController(text: t.category);
-    final noteCtrl = TextEditingController(text: t.note ?? '');
+  void _showEditTransaction(model.Transaction transaction) {
+    final amtCtrl = TextEditingController(text: transaction.amount.toStringAsFixed(2));
+    final catCtrl = TextEditingController(text: transaction.category);
+    final noteCtrl = TextEditingController(text: transaction.note ?? '');
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-            20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('Edit ${t.type[0].toUpperCase()}${t.type.substring(1)}',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 18)),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () async {
-                await AppDatabase.deleteTransaction(t.id!);
-                notifyDataChanged();
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Edit ${transaction.type[0].toUpperCase()}${transaction.type.substring(1)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () async {
+                    await AppDatabase.deleteTransaction(transaction.id!);
+                    notifyDataChanged();
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                ),
+              ],
             ),
-          ]),
-          const SizedBox(height: 12),
-          TextField(
-            controller: amtCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-                labelText: 'Amount',
-                prefixText: '\$',
-                border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: catCtrl,
-            decoration: const InputDecoration(
-                labelText: 'Category', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: noteCtrl,
-            decoration: const InputDecoration(
-                labelText: 'Note (optional)', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 16),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: () async {
-                final amount = double.tryParse(amtCtrl.text);
-                final cat = catCtrl.text.trim().toLowerCase();
-                if (amount == null || amount <= 0 || cat.isEmpty) return;
-                await AppDatabase.updateTransaction(model.Transaction(
-                  id: t.id,
-                  type: t.type,
-                  amount: amount,
-                  category: cat,
-                  note: noteCtrl.text.trim().isEmpty
-                      ? null
-                      : noteCtrl.text.trim(),
-                  date: t.date,
-                  accountId: t.accountId,
-                ));
-                notifyDataChanged();
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: amtCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Amount', prefixText: '\$', border: OutlineInputBorder()),
             ),
-          ]),
-        ]),
+            const SizedBox(height: 12),
+            TextField(
+              controller: catCtrl,
+              decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteCtrl,
+              decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () async {
+                  final amount = double.tryParse(amtCtrl.text);
+                  final category = catCtrl.text.trim();
+                  if (amount == null || amount <= 0 || category.isEmpty) return;
+                  await AppDatabase.updateTransaction(model.Transaction(
+                    id: transaction.id,
+                    type: transaction.type,
+                    amount: amount,
+                    category: category,
+                    note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
+                    date: transaction.date,
+                    accountId: transaction.accountId,
+                  ));
+                  notifyDataChanged();
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Save'),
+              ),
+            ]),
+          ],
+        ),
       ),
     );
   }
 }
-// ───────────────────────────────────────────────────────────────────────────
-// Reusable Components
-// ───────────────────────────────────────────────────────────────────────────
 
-/// CardSummary — gradient highlight card showing balance and income/expense split.
+// ──────────────────────────────────────────────────────────────────────────────
+// Reusable Components
+// ──────────────────────────────────────────────────────────────────────────────
+
+class _AccountChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _AccountChip({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.emerald : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppTheme.cardShadow,
+          border: selected ? null : Border.all(color: AppTheme.slate200),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : AppTheme.slate700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// CardSummary — gradient card showing net balance and income/expense split.
 class _CardSummary extends StatelessWidget {
   final Account? account;
   final double totalIncome;
@@ -557,7 +543,7 @@ class _CardSummary extends StatelessWidget {
     final net = totalIncome - totalExpense;
     final masked = account != null && account!.last4 != null
         ? '**** ${account!.last4}'
-        : '**** ————';
+        : '**** ────';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -579,7 +565,6 @@ class _CardSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Card info row
           Row(
             children: [
               Container(
@@ -612,13 +597,11 @@ class _CardSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Net balance
           Text('Net Balance', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
           const SizedBox(height: 4),
           Text(fmt.format(net),
               style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
           const SizedBox(height: 14),
-          // Income / Expense split
           Row(
             children: [
               Expanded(
@@ -690,9 +673,7 @@ class _SummaryPill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────
-
-/// DateSection — date group header + list of TransactionItem.
+/// DateSection — date group header + list of TransactionItems in a white card.
 class _DateSection extends StatelessWidget {
   final String dateLabel;
   final List<model.Transaction> transactions;
@@ -749,8 +730,6 @@ class _DateSection extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────
 
 /// TransactionItem — single row: icon circle | title + subtitle | amount.
 class _TransactionItem extends StatelessWidget {
@@ -819,7 +798,6 @@ class _TransactionItem extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Icon circle
                 Container(
                   width: 44,
                   height: 44,
@@ -830,7 +808,6 @@ class _TransactionItem extends StatelessWidget {
                   child: Icon(icon, color: color, size: 20),
                 ),
                 const SizedBox(width: 12),
-                // Title + subtitle
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -853,7 +830,6 @@ class _TransactionItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Amount
                 Text(
                   '${isIncome ? '+' : '−'}${fmt.format(transaction.amount.abs())}',
                   style: TextStyle(

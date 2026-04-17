@@ -494,6 +494,20 @@ class _BackupTabState extends State<_BackupTab> {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        ListTile(
+          leading: Icon(Icons.data_usage, color: Theme.of(context).colorScheme.primary),
+          title: Text('Load Sample Data',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onBackground,
+                  fontWeight: FontWeight.w600)),
+          onTap: () async {
+            await SeedData.load();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Sample data loaded successfully!')),
+            );
+          },
+        ),
       ],
     );
   }

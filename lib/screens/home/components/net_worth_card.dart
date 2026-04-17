@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/color_extensions.dart';
 import '../../../theme/app_theme.dart';
 
 class NetWorthCard extends StatelessWidget {
@@ -43,7 +44,7 @@ class NetWorthCard extends StatelessWidget {
                 height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
+                  color: context.colors.onPrimary.veryFaint,
                 ),
               ),
             ),
@@ -59,10 +60,10 @@ class NetWorthCard extends StatelessWidget {
                         'Total Net Worth',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                          color: context.colors.onPrimary.lighter,
                         ),
                       ),
-                      Icon(Icons.visibility_outlined, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7), size: 20),
+                      Icon(Icons.visibility_outlined, color: context.colors.onPrimary.lighter, size: 20),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -84,7 +85,7 @@ class NetWorthCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+                            color: context.colors.onPrimary.faint,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -98,7 +99,7 @@ class NetWorthCard extends StatelessWidget {
                                     'Assets',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                                      color: context.colors.onPrimary.lighter,
                                     ),
                                   ),
                                 ],
@@ -123,7 +124,7 @@ class NetWorthCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+                            color: context.colors.onPrimary.faint,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -137,7 +138,7 @@ class NetWorthCard extends StatelessWidget {
                                     'Debt',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                                      color: context.colors.onPrimary.lighter,
                                     ),
                                   ),
                                 ],

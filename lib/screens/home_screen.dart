@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../core/color_extensions.dart';
+import '../core/formatters.dart';
 import '../db/database.dart';
 import '../models/transaction.dart' as model;
 import '../models/account.dart';
@@ -174,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
           width: selected ? 18 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.25),
+            color: selected ? context.colors.onPrimary : context.colors.onPrimary.faint,
             borderRadius: BorderRadius.circular(8),
           ),
         );
@@ -246,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Text(
                                   '$greeting, $userName 👋',
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                    color: context.colors.onSurface.lighter,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -284,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15)),
+                              border: Border.all(color: context.colors.onPrimary.veryFaint),
                             ),
                             child: Text(
                               monthLabel,
@@ -302,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
+                                color: context.colors.onPrimary.veryFaint,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(Icons.notifications_none, color: Theme.of(context).colorScheme.onPrimary, size: 22),

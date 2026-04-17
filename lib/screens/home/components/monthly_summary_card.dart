@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/color_extensions.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 import 'stat_card.dart';
@@ -54,14 +55,14 @@ class MonthlySummaryCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
+                      color: context.colors.secondary.veryFaint,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       'Projected',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: context.colors.secondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -88,8 +89,8 @@ class MonthlySummaryCard extends StatelessWidget {
                     icon: Icons.arrow_upward_rounded,
                     gradient: LinearGradient(
                       colors: [
-                        Theme.of(context).colorScheme.error,
-                        Theme.of(context).colorScheme.error.withValues(alpha: 0.8),
+                        context.colors.error,
+                        context.colors.error.lighter,
                       ],
                     ),
                     fmt: fmt,
@@ -103,8 +104,8 @@ class MonthlySummaryCard extends StatelessWidget {
                     icon: net >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
                     gradient: net >= 0 ? AppTheme.blueGradient : LinearGradient(
                       colors: [
-                        Theme.of(context).colorScheme.secondary,
-                        Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
+                        context.colors.secondary,
+                        context.colors.secondary.lighter,
                       ],
                     ),
                     fmt: fmt,
@@ -118,7 +119,7 @@ class MonthlySummaryCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: spentRatio,
                 minHeight: 12,
-                backgroundColor: AppTheme.emerald.withValues(alpha: 0.15),
+                backgroundColor: AppTheme.emerald.veryFaint,
                 valueColor: AlwaysStoppedAnimation(
                   expenses > income ? AppTheme.error : AppTheme.emerald,
                 ),

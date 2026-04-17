@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../core/color_extensions.dart';
+import '../core/formatters.dart';
 import '../db/database.dart';
 import '../models/transaction.dart' as model;
 import '../services/chat_parser.dart';
@@ -132,15 +133,13 @@ class ChatScreenState extends State<ChatScreen> {
   Future<String> _localRespond(String input) async {
     final lower = input.toLowerCase();
     final now = DateTime.now();
-    final fmt = NumberFormat.currency(symbol: r'$', decimalDigits: 2);
-    final fmtC = NumberFormat.compactCurrency(symbol: r'$');
 
     if (lower.contains('balance') || lower.contains('net worth')) {
       final accounts = await AppDatabase.getAccounts();
       if (accounts.isEmpty) return 'No accounts added yet. Add one in the Accounts tab.';
       double total = 0;
       for (final a in accounts) { total += await AppDatabase.accountBalance(a.id!, a); }
-      return 'Your total balance across ${accounts.length} account${accounts.length == 1 ? '' : 's'} is **${fmt.format(total)}**.';
+      return 'Your total balance across ${accounts.length} account${accounts.length == 1 ? '' : 's'} is **${CurrencyFormatter.format(total)}**.';
     }
 
     if (lower.contains('spend') || lower.contains('spent') || lower.contains('expense')) {
@@ -149,13 +148,13 @@ class ChatScreenState extends State<ChatScreen> {
       final cats = await AppDatabase.monthlyExpenseByCategory(now.month, now.year);
       if (cats.isEmpty) return 'No expenses recorded this month yet.';
       final top = cats.entries.reduce((a, b) => a.value > b.value ? a : b);
-      return 'This month: **${fmt.format(expenses)}** spent, **${fmt.format(income)}** earned.\nTop category: **${top.key}** (${fmtC.format(top.value)}).';
+      return 'This month: **${CurrencyFormatter.format(expenses)}** spent, **${CurrencyFormatter.format(income)}** earned.\nTop category: **${top.key}** (${CurrencyFormatter.formatCompact(top.value)}).';
     }
 
     if (lower.contains('income') || lower.contains('earn') || lower.contains('salary')) {
       final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
       final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
-      return 'This month\'s income: **${fmt.format(income)}**. After **${fmt.format(expenses)}** in expenses, net is **${fmt.format(income - expenses)}**.';
+      return 'This month\'s income: **${CurrencyFormatter.format(income)}**. After **${CurrencyFormatter.format(expenses)}** in expenses, net is **${CurrencyFormatter.format(income - expenses)}**.';
     }
 
     if (lower.contains('budget')) {
@@ -171,14 +170,14 @@ class ChatScreenState extends State<ChatScreen> {
       final goals = await AppDatabase.getGoals();
       if (goals.isEmpty) return 'No savings goals yet. Try "create savings goal vacation \$1000".';
       final saved = goals.fold(0.0, (s, g) => s + g.saved);
-      return 'You have ${goals.length} savings goal${goals.length == 1 ? '' : 's'} with **${fmt.format(saved)}** saved in total.';
+      return 'You have ${goals.length} savings goal${goals.length == 1 ? '' : 's'} with **${CurrencyFormatter.format(saved)}** saved in total.';
     }
 
     if (lower.contains('recent') || lower.contains('last') || lower.contains('latest')) {
       final txns = await AppDatabase.getTransactions();
       if (txns.isEmpty) return 'No transactions recorded yet.';
       final t = txns.first;
-      return 'Last transaction: **${t.type} ${fmt.format(t.amount)}** in ${t.category}${t.note != null ? ' (${t.note})' : ''} on ${DateFormat('d MMM').format(t.date)}.';
+      return 'Last transaction: **${t.type} ${CurrencyFormatter.format(t.amount)}** in ${t.category}${t.note != null ? ' (${t.note})' : ''} on ${DateFormatter.short(t.date)}.';
     }
 
     if (lower.contains('summar') || lower.contains('overview') || lower.contains('how am i doing')) {
@@ -186,7 +185,7 @@ class ChatScreenState extends State<ChatScreen> {
       final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
       final net = income - expenses;
       final savRate = income > 0 ? (net / income * 100).toStringAsFixed(0) : '0';
-      return 'Month summary:\n• Income: **${fmt.format(income)}**\n• Expenses: **${fmt.format(expenses)}**\n• Net: **${fmt.format(net)}**\n• Savings rate: **$savRate%**';
+      return 'Month summary:\n• Income: **${CurrencyFormatter.format(income)}**\n• Expenses: **${CurrencyFormatter.format(expenses)}**\n• Net: **${CurrencyFormatter.format(net)}**\n• Savings rate: **$savRate%**';
     }
 
     if (lower.contains('help') || lower.contains('what can') || lower.contains('how do')) {
@@ -438,18 +437,18 @@ class ChatScreenState extends State<ChatScreen> {
                       const SizedBox(height: 1),
                       Text(
                         'Smart Finance Assistant',
-                        style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                        style: TextStyle(fontSize: 11, color: context.colors.onSurface.subtle),
                       ),
                     ],
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                    icon: Icon(Icons.refresh, color: context.colors.onSurface.subtle),
                     tooltip: 'New chat',
                     onPressed: () => setState(() { _messages.clear(); _aiHistory.clear(); }),
                   ),
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                    icon: Icon(Icons.more_vert, color: context.colors.onSurface.subtle),
                     itemBuilder: (context) => [
                       const PopupMenuItem(value: 'settings', child: Text('Change AI Key')),
                       const PopupMenuItem(value: 'clear', child: Text('Clear chat')),

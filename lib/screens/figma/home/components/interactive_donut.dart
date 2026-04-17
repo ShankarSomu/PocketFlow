@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import '../../../../core/color_extensions.dart';
+import '../../../../core/formatters.dart';
 import '../../shared.dart';
 
 /// Interactive donut chart showing spending by category
@@ -76,8 +77,6 @@ class _InteractiveDonutState extends State<InteractiveDonut>
   Widget build(BuildContext context) {
     final items = _buildItems();
     final total = items.fold(0.0, (s, e) => s + e.value);
-    final fmtC = NumberFormat.compactCurrency(symbol: r'$');
-    final fmtF = NumberFormat.currency(symbol: r'$', decimalDigits: 0);
 
     return FigmaPanel(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
@@ -100,7 +99,7 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                         color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(20)),
                     child: Icon(Icons.close_rounded,
-                        size: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                        size: 12, color: context.colors.onSurface.subtle),
                   ),
                 ),
             ],
@@ -111,10 +110,10 @@ class _InteractiveDonutState extends State<InteractiveDonut>
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.pie_chart_outline_rounded,
-                      size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+                      size: 40, color: context.colors.onSurface.faint),
                   const SizedBox(height: 8),
                   Text('No expenses recorded',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 12)),
+                      style: TextStyle(color: context.colors.onSurface.faint, fontSize: 12)),
                 ]),
               ),
             )
@@ -147,15 +146,15 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                                       key: const ValueKey('total'),
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(fmtC.format(total),
+                                        Text(CurrencyFormatter.formatCompact(total),
                                             style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w800,
-                                                color: Theme.of(context).colorScheme.onSurface)),
+                                                color: context.colors.onSurface)),
                                         Text('expenses',
                                             style: TextStyle(
                                                 fontSize: 9,
-                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                                                color: context.colors.onSurface.subtle)),
                                       ],
                                     )
                                   : Column(
@@ -178,7 +177,7 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                                             _titleCase(items[_selectedIdx!].key),
                                             style: TextStyle(
                                                 fontSize: 9,
-                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                                color: context.colors.onSurface.subtle,
                                                 fontWeight: FontWeight.w600),
                                             textAlign: TextAlign.center,
                                             maxLines: 2,
@@ -186,11 +185,11 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                                           ),
                                         ),
                                         Text(
-                                          fmtF.format(
+                                          CurrencyFormatter.formatNoDecimals(
                                               items[_selectedIdx!].value),
                                           style: TextStyle(
                                               fontSize: 9,
-                                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                                              color: context.colors.onSurface.subtle),
                                         ),
                                       ],
                                     ),
@@ -224,12 +223,12 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                                 horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? color.withValues(alpha: 0.1)
+                                  ? color.veryFaint
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               border: isSelected
                                   ? Border.all(
-                                      color: color.withValues(alpha: 0.3))
+                                      color: color.faint)
                                   : null,
                             ),
                             child: Row(
@@ -240,7 +239,7 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                                   height: isSelected ? 10 : 8,
                                   decoration: BoxDecoration(
                                     color: isOtherSel
-                                        ? color.withValues(alpha: 0.35)
+                                        ? color.faint
                                         : color,
                                     shape: BoxShape.circle,
                                   ),
@@ -255,8 +254,8 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                                           ? FontWeight.w600
                                           : FontWeight.normal,
                                       color: isOtherSel
-                                          ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
-                                          : Theme.of(context).colorScheme.onSurface,
+                                          ? context.colors.onSurface.faint
+                                          : context.colors.onSurface,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -266,7 +265,7 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         color: isOtherSel
-                                            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.3)
+                                            ? context.colors.onSurface.faint
                                             : color)),
                               ],
                             ),
@@ -344,7 +343,7 @@ class InteractiveDonutPainter extends CustomPainter {
           (sweep - _gap).clamp(0.01, sweep),
           false,
           Paint()
-            ..color = color.withValues(alpha: 0.22)
+            ..color = color.faint
             ..style = PaintingStyle.stroke
             ..strokeWidth = _strokeWidth + 8
             ..strokeCap = StrokeCap.round,
@@ -357,7 +356,7 @@ class InteractiveDonutPainter extends CustomPainter {
         (sweep - _gap).clamp(0.01, sweep),
         false,
         Paint()
-          ..color = isOtherSel ? color.withValues(alpha: 0.3) : color
+          ..color = isOtherSel ? color.faint : color
           ..style = PaintingStyle.stroke
           ..strokeWidth = _strokeWidth
           ..strokeCap = StrokeCap.round,

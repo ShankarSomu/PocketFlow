@@ -1,3 +1,4 @@
+﻿import '../../services/time_filter.dart';
 import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../models/budget.dart';
 import '../../models/transaction.dart' as model;
 import '../../services/auth_service.dart';
 import '../../services/refresh_notifier.dart';
+import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
 import 'accounts_screen.dart';
 import 'profile_screen.dart';
@@ -24,6 +26,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _carouselController = PageController();
+    _carousel2Controller = PageController();
+    _load();
+    appRefresh.addListener(_load);
+    appTimeFilter.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    appRefresh.removeListener(_load);
+    appTimeFilter.removeListener(_load);
+    _carouselController.dispose();
+    _carousel2Controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
   bool _loading = true;
   double _totalBalance = 0;
   double _income = 0;
@@ -43,40 +64,18 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   int _budgetAnimKey = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _carouselController = PageController();
-    _carousel2Controller = PageController();
-    _load();
-    appRefresh.addListener(_load);
-  }
-
-  @override
-  void dispose() {
-    appRefresh.removeListener(_load);
-    _carouselController.dispose();
-    _carousel2Controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   Future<void> _load() async {
-    final now = DateTime.now();
-    final prevMonth = now.month == 1
-        ? DateTime(now.year - 1, 12, 1)
-        : DateTime(now.year, now.month - 1, 1);
+    final filter = appTimeFilter.current;
+    final prevFrom = filter.prevFrom;
+    final prevTo = filter.prevTo;
     final accounts = await AppDatabase.getAccounts();
-    final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
-    final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
-    final prevIncome = await AppDatabase.monthlyTotal('income', prevMonth.month, prevMonth.year);
-    final prevExpenses = await AppDatabase.monthlyTotal('expense', prevMonth.month, prevMonth.year);
-    final categorySpend = await AppDatabase.monthlyExpenseByCategory(now.month, now.year);
-    final budgets = await AppDatabase.getBudgets(now.month, now.year);
-    final transactions = await AppDatabase.getTransactions(
-      from: DateTime(now.year, now.month, 1),
-      to: DateTime(now.year, now.month + 1, 1).subtract(const Duration(seconds: 1)),
-    );
+    final income = await AppDatabase.rangeTotal('income', filter.from, filter.to);
+    final expenses = await AppDatabase.rangeTotal('expense', filter.from, filter.to);
+    final prevIncome = await AppDatabase.rangeTotal('income', prevFrom, prevTo);
+    final prevExpenses = await AppDatabase.rangeTotal('expense', prevFrom, prevTo);
+    final categorySpend = await AppDatabase.rangeExpenseByCategory(filter.from, filter.to);
+    final budgets = await AppDatabase.getBudgets(filter.budgetMonth, filter.budgetYear);
+    final transactions = await AppDatabase.getTransactions(from: filter.from, to: filter.to);
 
     double totalBalance = 0;
     final balances = <int, double>{};
@@ -145,25 +144,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F0),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.emerald))
-            : Column(
+        child: Stack(
+          children: [
+            _loading
+                ? Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
+                : Column(
                 children: [
                   // ── Fixed header ──
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-                    child: _buildHeader(fmt),
+                    child: _buildHeader(),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   // ── Scrollable body ──
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
                         controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(14, 0, 14, 20),
+                        padding: const EdgeInsets.fromLTRB(14, 0, 14, 80),
                         children: [
                           _buildCarousel(fmt),
                           const SizedBox(height: 10),
@@ -176,6 +177,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+            const Positioned(
+              bottom: 16,
+              left: 16,
+              child: CalendarFab(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -188,210 +196,200 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
     final labels = ['Overview', 'Accounts', 'Insights'];
 
-    return SizedBox(
-      height: 210,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _carouselController,
-            itemCount: pages.length,
-            onPageChanged: (i) => setState(() => _carouselPage = i),
-            itemBuilder: (context, index) => pages[index],
-          ),
-        // Dots overlaid at top-right of the card
-        Positioned(
-          top: 14,
-          right: 18,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Animated label
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Text(
-                  labels[_carouselPage],
-                  key: ValueKey(_carouselPage),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.slate400,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ...List.generate(pages.length, (i) {
-                final active = i == _carouselPage;
-                return GestureDetector(
+    return ClipRect(
+      child: SizedBox(
+        height: 260,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _carouselController,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: pages.length,
+              onPageChanged: (i) => setState(() => _carouselPage = i),
+              itemBuilder: (context, index) => pages[index],
+            ),
+            // Left arrow (circular)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _CarouselArrow(
+                  icon: Icons.chevron_left_rounded,
                   onTap: () => _carouselController.animateToPage(
-                    i,
+                    (_carouselPage - 1 + pages.length) % pages.length,
                     duration: const Duration(milliseconds: 350),
                     curve: Curves.easeInOut,
                   ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.only(left: 4),
-                    width: active ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: active ? AppTheme.emerald : AppTheme.slate300,
-                      borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+            // Right arrow (circular)
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _CarouselArrow(
+                  icon: Icons.chevron_right_rounded,
+                  onTap: () => _carouselController.animateToPage(
+                    (_carouselPage + 1) % pages.length,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                  ),
+                ),
+              ),
+            ),
+            // Page label + dots (top-right, compact)
+            Positioned(
+              top: 0,
+              right: 6,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      labels[_carouselPage],
+                      key: ValueKey(_carouselPage),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                     ),
                   ),
-                );
-              }),
-            ],
-          ),
+                  const SizedBox(width: 6),
+                  ...List.generate(pages.length, (i) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.only(left: 3),
+                    width: i == _carouselPage ? 14 : 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: i == _carouselPage ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  )),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
       ),
     );
   }
 
-  Widget _buildHeader(NumberFormat fmt) {
+  Widget _buildHeader() {
     final user = AuthService.currentUser;
     final firstName = user?.displayName?.split(' ').first;
     final userName = firstName ?? 'there';
     final photoUrl = user?.photoUrl;
 
-    return Stack(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(28)),
+        // Avatar → taps to Profile
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
           ),
-          padding: const EdgeInsets.all(14),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.12),
+            backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+            child: photoUrl == null
+                ? Icon(Icons.person_rounded, color: Theme.of(context).colorScheme.onSecondary, size: 22)
+                : null,
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Greeting + name
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const ProfileScreen()),
-                        ),
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          backgroundImage:
-                              photoUrl != null ? NetworkImage(photoUrl) : null,
-                          child: photoUrl == null
-                              ? const Icon(Icons.person,
-                                  color: Colors.white, size: 22)
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(_greeting, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                          const SizedBox(height: 2),
-                          Text(userName, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      InkWell(
-                        onTap: _showNotifications,
-                        borderRadius: BorderRadius.circular(30),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.16),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: const [
-                              Icon(Icons.notifications_none, color: Colors.white, size: 20),
-                              Positioned(top: 6, right: 6, child: CircleAvatar(radius: 4, backgroundColor: Colors.red)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
-                        borderRadius: BorderRadius.circular(30),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.16),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.settings, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Text(
+                _greeting,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Text('Total Balance', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => setState(() => _showBalance = !_showBalance),
-                    child: Icon(_showBalance ? Icons.visibility : Icons.visibility_off, color: Colors.white60, size: 20),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _showBalance
-                    ? Text(fmt.format(_totalBalance), key: const ValueKey('shown'), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w300))
-                    : const Text('••••••', key: ValueKey('hidden'), style: TextStyle(color: Colors.white, fontSize: 28, letterSpacing: 6)),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.trending_up, color: Colors.white, size: 18),
-                        const SizedBox(width: 6),
-                        Text('${((_income - _expenses) / (_income == 0 ? 1 : _income) * 100).toStringAsFixed(1)}%', style: const TextStyle(color: Colors.white)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('this month', style: TextStyle(color: Colors.white70)),
-                ],
+              const SizedBox(height: 1),
+              Text(
+                userName,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
               ),
             ],
           ),
         ),
-        Positioned(
-          top: -30,
-          right: -30,
-          child: IgnorePointer(
+        // Time filter pill
+        AnimatedBuilder(
+          animation: appTimeFilter,
+          builder: (ctx, _) => GestureDetector(
+            onTap: () => showTimeFilterSheet(context),
             child: Container(
-              width: 140,
-              height: 140,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2563EB).withOpacity(0.30),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_rounded, color: Colors.white, size: 13),
+                  const SizedBox(width: 5),
+                  Text(
+                    appTimeFilter.current.shortLabel,
+                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                  Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white70, size: 15),
+                ],
               ),
             ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Notifications
+        GestureDetector(
+          onTap: _showNotifications,
+          child: Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              shape: BoxShape.circle,
+              boxShadow: AppTheme.cardShadow,
+            ),
+            child: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 20),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Settings
+        GestureDetector(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+          child: Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              shape: BoxShape.circle,
+              boxShadow: AppTheme.cardShadow,
+            ),
+            child: Icon(Icons.settings_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 20),
           ),
         ),
       ],
@@ -404,12 +402,29 @@ class _HomeScreenState extends State<HomeScreen> {
     final prevSavings = _prevIncome <= 0 ? 0.0 : ((_prevIncome - _prevExpenses) / _prevIncome).clamp(0.0, 1.0);
     final savingsDiff = ((_savingsRate - prevSavings) * 100);
     final savingsChg = '${savingsDiff >= 0 ? '+' : ''}${savingsDiff.toStringAsFixed(1)}pp';
+    final netBalanceChg = _totalBalance >= 0 ? 'Total assets' : 'Net negative';
     return Column(
       children: [
         Row(
           children: [
             Expanded(child: _buildMiniStat(
-              'Income', fmt.format(_income), incomeChg, AppTheme.emerald,
+              'Net Balance', fmt.format(_totalBalance), netBalanceChg, ThemeService.instance.primaryColor,
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const AccountsScreen())),
+            )),
+            const SizedBox(width: 8),
+            Expanded(child: _buildMiniStat(
+              'Savings Rate', '${(_savingsRate * 100).toStringAsFixed(0)}%', savingsChg, ThemeService.instance.primaryColor,
+              onTap: () => Navigator.push(context, MaterialPageRoute(
+                builder: (_) => const SavingsScreen())),
+            )),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: _buildMiniStat(
+              'Income', fmt.format(_income), incomeChg, ThemeService.instance.primaryColor,
               onTap: () => Navigator.push(context, MaterialPageRoute(
                 builder: (_) => const TransactionsScreen(initialFilterType: 'income'))),
             )),
@@ -421,22 +436,6 @@ class _HomeScreenState extends State<HomeScreen> {
             )),
           ],
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _buildMiniStat(
-              'Savings Rate', '${(_savingsRate * 100).toStringAsFixed(0)}%', savingsChg, AppTheme.blue,
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const SavingsScreen())),
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: _buildMiniStat(
-              'Accounts', '${_accounts.length}', '${_accounts.length} total', AppTheme.indigo,
-              onTap: () => Navigator.push(context, MaterialPageRoute(
-                builder: (_) => const AccountsScreen())),
-            )),
-          ],
-        ),
       ],
     );
   }
@@ -444,20 +443,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMiniStat(String title, String value, String change, Color accent, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: FigmaPanel(
+      child: Container(
         padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: ThemeService.instance.cardGradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: ThemeService.instance.primaryShadow,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(fontSize: 11, color: AppTheme.slate700)),
+                Text(title, style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500)),
                 Container(
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: accent.withOpacity(0.12),
+                    color: Colors.white.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.trending_up, color: accent, size: 14),
@@ -465,9 +469,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 6),
-            Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
+            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
             const SizedBox(height: 3),
-            Text(change, style: const TextStyle(fontSize: 10, color: AppTheme.slate500)),
+            Text(change, style: TextStyle(fontSize: 12, color: Colors.white60)),
           ],
         ),
       ),
@@ -489,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Spending Trend', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
+              Text('Spending Trend', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           SizedBox(
             height: 110,
@@ -504,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       getTitlesWidget: (value, meta) {
                         const labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
                         if (value.toInt() < 0 || value.toInt() >= labels.length) return const SizedBox.shrink();
-                        return Text(labels[value.toInt()], style: const TextStyle(color: AppTheme.slate500, fontSize: 10));
+                        return Text(labels[value.toInt()], style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 11));
                       },
                     ),
                   ),
@@ -516,11 +520,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    gradient: const LinearGradient(colors: [AppTheme.emerald, AppTheme.blue]),
+                    gradient: LinearGradient(colors: [ThemeService.instance.primaryColor, ThemeService.instance.primaryDark]),
                     barWidth: 3,
                     belowBarData: BarAreaData(
                       show: true,
-                      gradient: LinearGradient(colors: [AppTheme.emerald.withOpacity(0.28), AppTheme.blue.withOpacity(0.0)]),
+                      gradient: LinearGradient(colors: [ThemeService.instance.primaryColor.withOpacity(0.28), ThemeService.instance.primaryColor.withOpacity(0.0)]),
                     ),
                     dotData: FlDotData(show: false),
                   ),
@@ -542,59 +546,81 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
     final labels = ['Spending', 'Budgets'];
 
-    return SizedBox(
-      height: 320,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _carousel2Controller,
-            itemCount: pages.length,
-            onPageChanged: (i) => setState(() => _carousel2Page = i),
-            itemBuilder: (context, index) => pages[index],
-          ),
-          Positioned(
-            top: 14,
-            right: 18,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    labels[_carousel2Page],
-                    key: ValueKey(_carousel2Page),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.slate400,
-                    ),
+    return ClipRect(
+      child: SizedBox(
+        height: 280,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _carousel2Controller,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: pages.length,
+              onPageChanged: (i) => setState(() => _carousel2Page = i),
+              itemBuilder: (context, index) => pages[index],
+            ),
+            // Left arrow (circular)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _CarouselArrow(
+                  icon: Icons.chevron_left_rounded,
+                  onTap: () => _carousel2Controller.animateToPage(
+                    (_carousel2Page - 1 + pages.length) % pages.length,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
                   ),
                 ),
-                const SizedBox(width: 8),
-                ...List.generate(pages.length, (i) {
-                  final active = i == _carousel2Page;
-                  return GestureDetector(
-                    onTap: () => _carousel2Controller.animateToPage(
-                      i,
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                    ),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.only(left: 4),
-                      width: active ? 16 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: active ? AppTheme.emerald : AppTheme.slate300,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  );
-                }),
-              ],
+              ),
             ),
-          ),
-        ],
+            // Right arrow (circular)
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _CarouselArrow(
+                  icon: Icons.chevron_right_rounded,
+                  onTap: () => _carousel2Controller.animateToPage(
+                    (_carousel2Page + 1) % pages.length,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                  ),
+                ),
+              ),
+            ),
+            // Page label + dots (top-right, compact)
+            Positioned(
+              top: 0,
+              right: 6,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      labels[_carousel2Page],
+                      key: ValueKey(_carousel2Page),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  ...List.generate(pages.length, (i) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.only(left: 3),
+                    width: i == _carousel2Page ? 14 : 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: i == _carousel2Page ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  )),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -616,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildRecentTransactions(NumberFormat fmt) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppTheme.cardShadow,
       ),
@@ -628,23 +654,23 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Recent Activity',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
+                Text('Recent Activity',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
                 TextButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(
                     builder: (_) => const TransactionsScreen())),
-                  child: const Text('See All',
-                      style: TextStyle(fontSize: 12, color: AppTheme.emerald, fontWeight: FontWeight.w600)),
+                  child: Text('See All',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF2563EB), fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
           ),
           if (_recentTransactions.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
               child: Center(
                   child: Text('No transactions yet',
-                      style: TextStyle(color: AppTheme.slate400, fontSize: 13))),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 13))),
             )
           else
             ...List.generate(_recentTransactions.length, (i) {
@@ -683,14 +709,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(t.category,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-                                            color: AppTheme.slate900)),
+                                            color: Theme.of(context).colorScheme.onSurface)),
                                     const SizedBox(height: 3),
                                     Text(subtitle,
-                                        style: const TextStyle(
-                                            fontSize: 12, color: AppTheme.slate400),
+                                        style: TextStyle(
+                                            fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                                         overflow: TextOverflow.ellipsis),
                                   ],
                                 ),
@@ -701,7 +727,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: isIncome ? const Color(0xFF059669) : AppTheme.slate900,
+                                  color: isIncome ? const Color(0xFF059669) : Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -712,9 +738,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.only(left: 56),
                               child: Text(
                                 t.note!,
-                                style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.slate400,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                                     fontStyle: FontStyle.italic),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -726,7 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   if (i < _recentTransactions.length - 1)
-                    Divider(height: 1, indent: 70, endIndent: 16, color: AppTheme.slate100),
+                    Divider(height: 1, indent: 70, endIndent: 16, color: Theme.of(context).colorScheme.outlineVariant),
                 ],
               );
             }),
@@ -758,19 +784,19 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Accounts',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
+          Text('Accounts',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
           Expanded(
             child: _accounts.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text('No accounts yet',
-                        style: TextStyle(fontSize: 12, color: AppTheme.slate400)))
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))))
                 : ListView.separated(
                     physics: const ClampingScrollPhysics(),
                     itemCount: _accounts.length,
                     separatorBuilder: (_, __) =>
-                        Divider(height: 1, color: AppTheme.slate100),
+                        Divider(height: 1, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.08)),
                     itemBuilder: (_, i) {
                       final account = _accounts[i];
                       final bal = _accountBalances[account.id] ?? 0.0;
@@ -797,23 +823,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(account.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 13,
-                                          color: AppTheme.slate900),
+                                          color: Theme.of(context).colorScheme.onSurface),
                                       overflow: TextOverflow.ellipsis),
                                   Text(typeLabel,
-                                      style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppTheme.slate500)),
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                                 ],
                               ),
                             ),
                             Text(fmt.format(bal),
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
-                                    color: AppTheme.slate900)),
+                                    color: Theme.of(context).colorScheme.onSurface)),
                           ],
                         ),
                       );
@@ -869,7 +895,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final good = _savingsRate >= 0.2;
       list.add({
         'icon': Icons.savings_rounded,
-        'color': good ? AppTheme.emerald : AppTheme.blue,
+        'color': good ? AppTheme.emerald : ThemeService.instance.primaryColor,
         'message': good
             ? 'Great! You\'re saving $sz% of income this month.'
             : 'Savings at $sz%. Aim for 20% to build a safety net.',
@@ -881,7 +907,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (list.isEmpty) {
       list.add({
         'icon': Icons.lightbulb_rounded,
-        'color': AppTheme.blue,
+        'color': ThemeService.instance.primaryColor,
         'message': 'Add transactions to unlock personalized insights.',
         'cta': 'Start',
         'route': 'none',
@@ -898,11 +924,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.auto_awesome_rounded, color: AppTheme.emerald, size: 15),
-              SizedBox(width: 6),
-              Text('Smart Insights', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
+              Icon(Icons.auto_awesome_rounded, color: Color(0xFF2563EB), size: 15),
+              const SizedBox(width: 6),
+              Text('Smart Insights', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
             ],
           ),
           const SizedBox(height: 8),
@@ -925,7 +951,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Icon(insight['icon'] as IconData, color: color, size: 14),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(insight['message'] as String, style: const TextStyle(fontSize: 11, color: AppTheme.slate700))),
+                  Expanded(child: Text(insight['message'] as String, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8)))),
                   const SizedBox(width: 8),
                   TextButton(
                     style: TextButton.styleFrom(
@@ -947,7 +973,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           builder: (_) => const TransactionsScreen()));
                       }
                     },
-                    child: Text(insight['cta'] as String, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+                    child: Text(insight['cta'] as String, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
@@ -1034,11 +1060,10 @@ class _InteractiveDonutState extends State<_InteractiveDonut>
         children: [
           Row(
             children: [
-              const Text('Spend by Category',
+              Text('Spend by Category',
                   style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.slate900)),
+                      fontWeight: FontWeight.w700)),
               const Spacer(),
               if (_selectedIdx != null)
                 GestureDetector(
@@ -1046,24 +1071,24 @@ class _InteractiveDonutState extends State<_InteractiveDonut>
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                        color: AppTheme.slate100,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(20)),
-                    child: const Icon(Icons.close_rounded,
-                        size: 12, color: AppTheme.slate500),
+                    child: Icon(Icons.close_rounded,
+                        size: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 8),
           if (items.isEmpty)
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.pie_chart_outline_rounded,
-                      size: 40, color: AppTheme.slate300),
-                  SizedBox(height: 8),
+                      size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+                  const SizedBox(height: 8),
                   Text('No expenses recorded',
-                      style: TextStyle(color: AppTheme.slate400, fontSize: 12)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 12)),
                 ]),
               ),
             )
@@ -1096,14 +1121,14 @@ class _InteractiveDonutState extends State<_InteractiveDonut>
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(fmtC.format(total),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w800,
-                                                color: AppTheme.slate900)),
-                                        const Text('expenses',
+                                                color: Theme.of(context).colorScheme.onSurface)),
+                                        Text('expenses',
                                             style: TextStyle(
                                                 fontSize: 9,
-                                                color: AppTheme.slate400)),
+                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
                                       ],
                                     )
                                   : Column(
@@ -1124,9 +1149,9 @@ class _InteractiveDonutState extends State<_InteractiveDonut>
                                           width: 60,
                                           child: Text(
                                             _titleCase(items[_selectedIdx!].key),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 9,
-                                                color: AppTheme.slate500,
+                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                                 fontWeight: FontWeight.w600),
                                             textAlign: TextAlign.center,
                                             maxLines: 2,
@@ -1136,9 +1161,9 @@ class _InteractiveDonutState extends State<_InteractiveDonut>
                                         Text(
                                           fmtF.format(
                                               items[_selectedIdx!].value),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                               fontSize: 9,
-                                              color: AppTheme.slate400),
+                                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                                         ),
                                       ],
                                     ),
@@ -1203,18 +1228,18 @@ class _InteractiveDonutState extends State<_InteractiveDonut>
                                           ? FontWeight.w600
                                           : FontWeight.normal,
                                       color: isOtherSel
-                                          ? AppTheme.slate400
-                                          : AppTheme.slate700,
+                                          ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
+                                          : Theme.of(context).colorScheme.onSurface,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 Text('$pct%',
                                     style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         color: isOtherSel
-                                            ? AppTheme.slate300
+                                            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.3)
                                             : color)),
                               ],
                             ),
@@ -1355,11 +1380,11 @@ class _BudgetProgressPage extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('Budget Progress',
+              Text('Budget Progress',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.slate900)),
+                      color: Theme.of(context).colorScheme.onSurface)),
               const Spacer(),
               if (hasOver)
                 Container(
@@ -1369,7 +1394,7 @@ class _BudgetProgressPage extends StatelessWidget {
                     color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('Over Budget!',
+                  child: Text('Over Budget!',
                       style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
@@ -1379,15 +1404,15 @@ class _BudgetProgressPage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (items.isEmpty)
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.bar_chart_rounded, size: 40,
-                      color: AppTheme.slate300),
-                  SizedBox(height: 8),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+                  const SizedBox(height: 8),
                   Text('No budgets set',
                       style:
-                          TextStyle(color: AppTheme.slate400, fontSize: 12)),
+                          TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 12)),
                 ]),
               ),
             )
@@ -1410,7 +1435,7 @@ class _BudgetProgressPage extends StatelessWidget {
                       Row(
                         children: [
                           if (isOver)
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(right: 3),
                               child: Icon(Icons.warning_amber_rounded,
                                   size: 11, color: Color(0xFFEF4444)),
@@ -1425,7 +1450,7 @@ class _BudgetProgressPage extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: isOver
                                     ? const Color(0xFFEF4444)
-                                    : AppTheme.slate900,
+                                    : Theme.of(context).colorScheme.onSurface,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1433,7 +1458,7 @@ class _BudgetProgressPage extends StatelessWidget {
                           Text(
                             '${fmt.format(e.spent)} / ${fmt.format(e.budget.limit)}',
                             style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: color),
                           ),
@@ -1449,7 +1474,7 @@ class _BudgetProgressPage extends StatelessWidget {
                             Container(
                               height: 9,
                               decoration: BoxDecoration(
-                                color: AppTheme.slate100,
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                             ),
@@ -1486,7 +1511,7 @@ class _BudgetProgressPage extends StatelessWidget {
                             fontSize: 9,
                             color: isOver
                                 ? const Color(0xFFEF4444)
-                                : AppTheme.slate400),
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                       ),
                     ],
                   );
@@ -1535,5 +1560,29 @@ class _HomeTransactionItem {
     if (c.contains('coffee') || c.contains('cafe')) return const Color(0xFFB45309);
     if (c.contains('education') || c.contains('school')) return const Color(0xFF7C3AED);
     return const Color(0xFF6366F1);
+  }
+}
+
+// ── Transparent carousel arrow FAB ──────────────────────────────────────────
+
+class _CarouselArrow extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _CarouselArrow({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32,
+        height: 56,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.10),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: Colors.white.withOpacity(0.85), size: 26),
+      ),
+    );
   }
 }

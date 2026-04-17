@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../db/database.dart';
 import '../models/transaction.dart' as model;
@@ -10,8 +12,9 @@ import '../services/chat_parser.dart';
 import '../services/groq_service.dart';
 import '../services/refresh_notifier.dart';
 import '../services/app_logger.dart';
+import '../services/theme_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/gradient_text.dart';
+// import '../widgets/gradient_text.dart'; // unused
 // import '../widgets/category_picker.dart'; // reserved for future use
 
 // Suggestion chips widget for empty state and above input
@@ -19,11 +22,12 @@ class _SuggestionChips extends StatelessWidget {
   final List<String> suggestions;
   const _SuggestionChips({
     this.suggestions = const [
-      'Summarize text',
-      'Generate ideas',
-      'Answer questions',
-      'Explain this',
-      'Make it shorter',
+      'Add expense \$25 lunch @checking',
+      'What did I spend this month?',
+      'Show budget progress',
+      'Create savings goal vacation \$1000',
+      'Add income \$3000 salary',
+      'Show recent transactions',
     ],
   });
 
@@ -36,7 +40,7 @@ class _SuggestionChips extends StatelessWidget {
       children: suggestions.map((text) {
         return ActionChip(
           label: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-          backgroundColor: AppTheme.slate100,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           labelPadding: const EdgeInsets.symmetric(horizontal: 2),
           side: const BorderSide(color: Colors.transparent),
@@ -70,157 +74,95 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _aiThinking = false;
   bool _showRecent = false;
   
-  // Voice input
-  late stt.SpeechToText _speech;
-  bool _isListening = false;
-  bool _speechAvailable = false;
+  // Voice input (Whisper via Groq)
+  final AudioRecorder _recorder = AudioRecorder();
+  bool _isRecording = false;
+  bool _isTranscribing = false;
 
   @override
   void initState() {
     super.initState();
-    _checkApiKey();
     _loadRecent();
-    _initSpeech();
     appRefresh.addListener(_loadRecent);
   }
 
   @override
   void dispose() {
     appRefresh.removeListener(_loadRecent);
-    try {
-      _speech.stop();
-    } catch (e) {
-      AppLogger.err('speech_dispose', e);
-    }
+    _recorder.dispose();
     super.dispose();
   }
 
-  Future<void> _initSpeech() async {
-    // Request permission FIRST
-    try {
-      final micStatus = await Permission.microphone.request();
-      AppLogger.userAction('mic_permission_requested', detail: 'result: ${micStatus.name}, isGranted: ${micStatus.isGranted}');
-      
-      if (!micStatus.isGranted) {
-        AppLogger.err('mic_permission_denied', micStatus.name);
-        _speechAvailable = false;
-        if (mounted) setState(() {});
-        return;
-      }
-      
-      // Wait for permission to register
-      await Future.delayed(const Duration(milliseconds: 2000));
-    } catch (e) {
-      AppLogger.err('permission_request_failed', e);
-      _speechAvailable = false;
-      if (mounted) setState(() {});
-      return;
-    }
-    
-    try {
-      _speech = stt.SpeechToText();
-      AppLogger.userAction('speech_object_created');
-    } catch (e) {
-      AppLogger.err('speech_constructor_failed', e);
-      _speechAvailable = false;
-      if (mounted) setState(() {});
-      return;
-    }
-    
-    try {
-      AppLogger.userAction('speech_initialize_starting');
-      
-      final initialized = await _speech.initialize(
-        onError: (error) {
-          AppLogger.err('speech_error', 'msg: ${error.errorMsg}, permanent: ${error.permanent}');
-        },
-        onStatus: (status) {
-          AppLogger.userAction('speech_status', detail: status);
-          // Auto-submit when recognition stops after pause timeout
-          if ((status == 'done' || status == 'notListening') && _isListening) {
-            if (mounted) {
-              final text = _controller.text.trim();
-              setState(() => _isListening = false);
-              if (text.isNotEmpty) {
-                Future.delayed(const Duration(milliseconds: 150), _submit);
-              }
-            }
-          }
-        },
-      );
-      
-      _speechAvailable = initialized;
-      AppLogger.userAction('speech_init_result', detail: 'available: $_speechAvailable, hasError: ${_speech.hasError}, lastError: ${_speech.lastError}');
-      
-      if (_speechAvailable) {
-        final locales = await _speech.locales();
-        AppLogger.userAction('speech_locales_found', detail: 'count: ${locales.length}');
-      }
-      
-      if (mounted) setState(() {});
-    } catch (e) {
-      AppLogger.err('speech_init_exception', e);
-      _speechAvailable = false;
-      if (mounted) setState(() {});
-    }
-  }
+  // ── Whisper voice recording ──────────────────────────────────────────────────
 
-  Future<void> _toggleListening() async {
-    if (_isListening) {
-      AppLogger.userAction('user_stopped_listening');
-      _speech.stop();
-      if (mounted) setState(() => _isListening = false);
-      return;
-    }
-
-    if (!_speechAvailable) {
-      AppLogger.warn('speech_not_available');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Speech recognition not available'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-      return;
-    }
-
-    setState(() => _isListening = true);
-    AppLogger.userAction('starting_listen');
-
-    _speech.listen(
-      onResult: (result) {
-        final words = result.recognizedWords;
-        final isFinal = result.finalResult;
-        AppLogger.userAction('got_speech_result', detail: 'words="$words" final=$isFinal');
-        
-        if (mounted) {
-          setState(() => _controller.text = words);
-          
-          if (isFinal && words.isNotEmpty) {
-            AppLogger.userAction('final_result_submitting');
-            _speech.stop();
-            setState(() => _isListening = false);
-            Future.delayed(const Duration(milliseconds: 200), _submit);
-          }
+  Future<void> _toggleRecording() async {
+    if (_isRecording) {
+      // Stop recording and transcribe via Whisper
+      setState(() { _isRecording = false; _isTranscribing = true; });
+      try {
+        final path = await _recorder.stop();
+      final hasKey = await AiService.hasApiKey();
+      if (path != null && path.isNotEmpty) {
+        if (!hasKey) {
+          if (mounted) setState(() => _isTranscribing = false);
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Voice transcription needs an API key — tap ⋮ → Setup AI')),
+          );
+          return;
         }
-      },
-      onSoundLevelChange: (level) {
-        AppLogger.db('sound_level', detail: level.toStringAsFixed(1));
-      },
-      listenFor: const Duration(seconds: 30),
-      pauseFor: const Duration(seconds: 3),
-      partialResults: true,
-      listenMode: stt.ListenMode.dictation,
-    );
+        final transcript = await GroqService.transcribeAudio(path);
+            if (transcript.isNotEmpty && mounted) {
+            _controller.text = transcript;
+            _controller.selection = TextSelection.collapsed(offset: transcript.length);
+            setState(() => _isTranscribing = false);
+            Future.delayed(const Duration(milliseconds: 150), _submit);
+          } else {
+            if (mounted) setState(() => _isTranscribing = false);
+          }
+        } else {
+          if (mounted) setState(() => _isTranscribing = false);
+        }
+        try { if (path != null) File(path).deleteSync(); } catch (_) {}
+      } catch (e) {
+        AppLogger.err('whisper_transcribe', e);
+        if (mounted) {
+          setState(() => _isTranscribing = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Transcription failed: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+      return;
+    }
+
+    // Start recording
+    final micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Microphone permission required')),
+      );
+      return;
+    }
+    try {
+      final dir = await getTemporaryDirectory();
+      final path = '${dir.path}/pf_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _recorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000, sampleRate: 16000),
+        path: path,
+      );
+      if (mounted) setState(() => _isRecording = true);
+    } catch (e) {
+      AppLogger.err('record_start', e);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not start recording: $e')),
+      );
+    }
   }
 
   Future<void> _checkApiKey() async {
     final has = await GroqService.hasApiKey();
     if (!mounted) return;
     setState(() => _hasApiKey = has);
-    if (!has) _showSetup();
   }
 
   Future<void> _loadRecent() async {
@@ -229,12 +171,80 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _recent = txns.take(20).toList());
   }
 
+  // Local rule-based responder — works fully offline without API key
+  Future<String> _localRespond(String input) async {
+    final lower = input.toLowerCase();
+    final now = DateTime.now();
+    final fmt = NumberFormat.currency(symbol: r'$', decimalDigits: 2);
+    final fmtC = NumberFormat.compactCurrency(symbol: r'$');
+
+    if (lower.contains('balance') || lower.contains('net worth')) {
+      final accounts = await AppDatabase.getAccounts();
+      if (accounts.isEmpty) return 'No accounts added yet. Add one in the Accounts tab.';
+      double total = 0;
+      for (final a in accounts) { total += await AppDatabase.accountBalance(a.id!, a); }
+      return 'Your total balance across ${accounts.length} account${accounts.length == 1 ? '' : 's'} is **${fmt.format(total)}**.';
+    }
+
+    if (lower.contains('spend') || lower.contains('spent') || lower.contains('expense')) {
+      final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
+      final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
+      final cats = await AppDatabase.monthlyExpenseByCategory(now.month, now.year);
+      if (cats.isEmpty) return 'No expenses recorded this month yet.';
+      final top = cats.entries.reduce((a, b) => a.value > b.value ? a : b);
+      return 'This month: **${fmt.format(expenses)}** spent, **${fmt.format(income)}** earned.\nTop category: **${top.key}** (${fmtC.format(top.value)}).';
+    }
+
+    if (lower.contains('income') || lower.contains('earn') || lower.contains('salary')) {
+      final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
+      final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
+      return 'This month\'s income: **${fmt.format(income)}**. After **${fmt.format(expenses)}** in expenses, net is **${fmt.format(income - expenses)}**.';
+    }
+
+    if (lower.contains('budget')) {
+      final budgets = await AppDatabase.getBudgets(now.month, now.year);
+      if (budgets.isEmpty) return 'No budgets set yet. Try "budget groceries \$400".';
+      final cats = await AppDatabase.monthlyExpenseByCategory(now.month, now.year);
+      final overBudget = budgets.where((b) => (cats[b.category] ?? 0) > b.limit).toList();
+      if (overBudget.isEmpty) return 'All ${budgets.length} budgets are within limit — great job! 🎉';
+      return '${overBudget.length} budget${overBudget.length == 1 ? '' : 's'} over limit: ${overBudget.map((b) => b.category).join(', ')}.';
+    }
+
+    if (lower.contains('saving') || lower.contains('goal')) {
+      final goals = await AppDatabase.getGoals();
+      if (goals.isEmpty) return 'No savings goals yet. Try "create savings goal vacation \$1000".';
+      final saved = goals.fold(0.0, (s, g) => s + g.saved);
+      return 'You have ${goals.length} savings goal${goals.length == 1 ? '' : 's'} with **${fmt.format(saved)}** saved in total.';
+    }
+
+    if (lower.contains('recent') || lower.contains('last') || lower.contains('latest')) {
+      final txns = await AppDatabase.getTransactions();
+      if (txns.isEmpty) return 'No transactions recorded yet.';
+      final t = txns.first;
+      return 'Last transaction: **${t.type} ${fmt.format(t.amount)}** in ${t.category}${t.note != null ? ' (${t.note})' : ''} on ${DateFormat('d MMM').format(t.date)}.';
+    }
+
+    if (lower.contains('summar') || lower.contains('overview') || lower.contains('how am i doing')) {
+      final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
+      final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
+      final net = income - expenses;
+      final savRate = income > 0 ? (net / income * 100).toStringAsFixed(0) : '0';
+      return 'Month summary:\n• Income: **${fmt.format(income)}**\n• Expenses: **${fmt.format(expenses)}**\n• Net: **${fmt.format(net)}**\n• Savings rate: **$savRate%**';
+    }
+
+    if (lower.contains('help') || lower.contains('what can') || lower.contains('how do')) {
+      return 'I can help you:\n\n• **Log** — "spent \$25 on lunch"\n• **Balance** — "what\'s my balance?"\n• **Spending** — "how much did I spend?"\n• **Budget** — "budget food \$500"\n• **Goals** — "show savings goals"\n\nFor enhanced AI (Groq/Gemini), tap ⋮ → Setup AI.';
+    }
+
+    return 'I can log transactions and answer finance questions. Try:\n• "spent \$30 on groceries"\n• "what\'s my balance?"\n• "show spending this month"';
+  }
+
   void _showSetup({bool isChange = false}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      isDismissible: isChange, // only dismissible when changing key
-      enableDrag: isChange,
+      isDismissible: true,
+      enableDrag: true,
       builder: (ctx) => _ApiKeySetup(
         isChange: isChange,
         onSaved: () {
@@ -261,10 +271,10 @@ class _ChatScreenState extends State<ChatScreen> {
       return; // don't add to AI history — it was a direct command
     }
 
-    // If not a command and has API key — send to Groq
-    if (_hasApiKey) {
-      setState(() => _aiThinking = true);
-      // Add user message to history ONLY for AI conversations
+    // Not a command — try API if key is set, otherwise use local response
+    setState(() => _aiThinking = true);
+    final hasKey = await AiService.hasApiKey();
+    if (hasKey) {
       _aiHistory.add({'role': 'user', 'content': input});
       if (_aiHistory.length > 10) _aiHistory.removeRange(0, 2);
       try {
@@ -322,9 +332,21 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
     } else {
-      // No API key — show command error
-      setState(() => _messages
-          .add(_ChatMessage('⚠ ${(result as ParseError).message}', false)));
+      // No API key — use local intelligent response
+      try {
+        final localReply = await _localRespond(input);
+        if (!mounted) return;
+        setState(() {
+          _aiThinking = false;
+          _messages.add(_ChatMessage(localReply, false, isAi: true));
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _aiThinking = false;
+          _messages.add(_ChatMessage('I couldn\'t understand that. Try saying "spent \$25 on lunch" or "what\'s my balance?"', false, isAi: true));
+        });
+      }
     }
     _scrollToBottom();
   }
@@ -342,52 +364,53 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildAssistantHeader() {
+    final theme = Theme.of(context);
+    final themeService = ThemeService.instance;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.96),
+      child: Card(
+        elevation: 0,
+        color: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.slate200),
-          boxShadow: AppTheme.cardShadow,
+          side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
         ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.emeraldGradient,
-                  borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: themeService.cardGradient,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: themeService.primaryShadow,
+                  ),
+                  child: const Icon(Icons.auto_awesome, color: Colors.white),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('PocketFlow Assistant',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.slate900)),
-                    SizedBox(height: 4),
-                    Text(
-                      'Ask about spending, budgets, savings, or log transactions quickly.',
-                      style: TextStyle(
-                          fontSize: 13, color: AppTheme.slate600),
-                    ),
-                  ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('PocketFlow Assistant', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Ask about spending, budgets, savings, or log transactions quickly.',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ]),
-            const SizedBox(height: 16),
-            _buildSuggestionChips(),
-          ],
+              ]),
+              const SizedBox(height: 16),
+              _buildSuggestionChips(),
+            ],
+          ),
         ),
       ),
     );
@@ -407,7 +430,7 @@ class _ChatScreenState extends State<ChatScreen> {
       children: suggestions.map((text) {
         return ActionChip(
           label: Text(text, style: const TextStyle(fontSize: 12)),
-          backgroundColor: AppTheme.slate100,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           labelPadding: const EdgeInsets.symmetric(horizontal: 4),
           side: const BorderSide(color: Colors.transparent),
@@ -477,20 +500,19 @@ class _ChatScreenState extends State<ChatScreen> {
             FilledButton(
               onPressed: () async {
                 final amount = double.tryParse(amtCtrl.text);
-                final cat = catCtrl.text.trim().toLowerCase();
-                if (amount == null || amount <= 0 || cat.isEmpty) return;
+                final category = catCtrl.text.trim();
+                if (amount == null || amount <= 0 || category.isEmpty) return;
                 await AppDatabase.updateTransaction(model.Transaction(
                   id: t.id,
                   type: t.type,
                   amount: amount,
-                  category: cat,
-                  note: noteCtrl.text.trim().isEmpty
-                      ? null
-                      : noteCtrl.text.trim(),
+                  category: category,
+                  note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
                   date: t.date,
                   accountId: t.accountId,
                 ));
                 notifyDataChanged();
+                await _loadRecent();
                 if (ctx.mounted) Navigator.pop(ctx);
               },
               child: const Text('Save'),
@@ -504,13 +526,14 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF0F172A),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
             border: Border(
-              bottom: BorderSide(color: Color(0x14FFFFFF)),
+              bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
             ),
           ),
           child: SafeArea(
@@ -520,32 +543,35 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      gradient: AppTheme.emeraldGradient,
+                      gradient: ThemeService.instance.cardGradient,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.all(8),
-                    child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                    child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text('AI Assistant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
-                      SizedBox(height: 2),
-                      Text('Ask me anything', style: TextStyle(fontSize: 12, color: AppTheme.slate400)),
+                    children: [
+                      Text('AI Assistant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Theme.of(context).colorScheme.onSurface)),
+                      const SizedBox(height: 1),
+                      Text(
+                        'Smart Finance Assistant',
+                        style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                      ),
                     ],
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.refresh, color: AppTheme.slate400),
+                    icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                     tooltip: 'New chat',
                     onPressed: () => setState(() { _messages.clear(); _aiHistory.clear(); }),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: AppTheme.slate400),
+                    icon: Icon(Icons.more_vert, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'settings', child: Text('Settings')),
+                      const PopupMenuItem(value: 'settings', child: Text('Change AI Key')),
                       const PopupMenuItem(value: 'clear', child: Text('Clear chat')),
                     ],
                     onSelected: (value) {
@@ -559,17 +585,9 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
+      body: SafeArea(
+        child: Column(
+          children: [
               // Suggestion chips above input
               if (_messages.isEmpty) ...[
                 Expanded(
@@ -579,16 +597,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            gradient: AppTheme.emeraldGradient,
-                            borderRadius: BorderRadius.circular(16),
+                            gradient: ThemeService.instance.cardGradient,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: ThemeService.instance.primaryShadow,
                           ),
                           padding: const EdgeInsets.all(18),
                           child: const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
                         ),
                         const SizedBox(height: 16),
-                        const Text('How can I help you today?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white)),
+                        Text('How can I help you today?', style: Theme.of(context).textTheme.headlineSmall),
                         const SizedBox(height: 10),
-                        _SuggestionChips(),
+                        const _SuggestionChips(),
                       ],
                     ),
                   ),
@@ -643,12 +662,11 @@ class _ChatScreenState extends State<ChatScreen> {
             _InputBar(
               controller: _controller,
               onSubmit: _submit,
-              isListening: _isListening,
-              speechAvailable: _speechAvailable,
-              onVoiceToggle: _toggleListening,
+              isRecording: _isRecording,
+              isTranscribing: _isTranscribing,
+              onVoiceToggle: _toggleRecording,
             ),
           ],
-          ),
         ),
       ),
     );
@@ -924,59 +942,59 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment:
-          msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding:
-            const EdgeInsets.all(16),
-        constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.85),
-        decoration: BoxDecoration(
-          gradient: msg.isUser
-              ? const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF059669)],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                )
-              : null,
-          color: msg.isUser
-              ? null
-              : msg.isAi
-                  ? Colors.white
-                  : AppTheme.slate50,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(msg.isUser ? 20 : 18),
-            topRight: Radius.circular(msg.isUser ? 18 : 20),
-            bottomLeft: const Radius.circular(20),
-            bottomRight: const Radius.circular(20),
-          ),
-          border: msg.isAi
-              ? Border.all(color: AppTheme.emerald.withValues(alpha: 0.18))
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    final theme = Theme.of(context);
+    final themeService = ThemeService.instance;
+
+    final userBubble = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: themeService.cardGradient,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(4),
         ),
+        boxShadow: themeService.primaryShadow,
+      ),
+      child: SelectableText(
+        msg.text,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+
+    final assistantBubble = Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      color: msg.isAi ? theme.colorScheme.surface : theme.colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(4),
+          topRight: const Radius.circular(20),
+          bottomLeft: const Radius.circular(20),
+          bottomRight: const Radius.circular(20),
+        ),
+        side: msg.isAi ? BorderSide(color: theme.colorScheme.primary.withOpacity(0.18)) : BorderSide.none,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (msg.isAi)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: Row(children: [
                     Icon(Icons.auto_awesome,
-                        size: 12, color: AppTheme.emerald),
-                    SizedBox(width: 4),
+                        size: 12, color: theme.colorScheme.primary),
+                    const SizedBox(width: 4),
                     Text('AI',
                         style: TextStyle(
                             fontSize: 10,
-                            color: AppTheme.emerald,
+                            color: theme.colorScheme.primary,
                             fontWeight: FontWeight.bold)),
                   ]),
                 ),
@@ -991,8 +1009,8 @@ class _Bubble extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () => onConfirm!(false),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.slate600,
-                        side: BorderSide(color: AppTheme.slate300),
+                        foregroundColor: theme.colorScheme.onSurface,
+                        side: BorderSide(color: theme.colorScheme.outlineVariant),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                       child: const Text('No', style: TextStyle(fontSize: 12)),
@@ -1011,6 +1029,18 @@ class _Bubble extends StatelessWidget {
                 ]),
               ],
             ]),
+      ),
+    );
+
+    return Align(
+      alignment:
+          msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6.0),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
+          child: msg.isUser ? userBubble : assistantBubble,
+        ),
       ),
     );
   }
@@ -1044,28 +1074,25 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: AppTheme.emerald.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.3)),
       ),
-      child: FadeTransition(
-        opacity: _anim,
-        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.auto_awesome, size: 14, color: AppTheme.emerald),
-          SizedBox(width: 8),
-          Text('AI is thinking...',
-              style: TextStyle(fontSize: 13, color: AppTheme.emerald)),
-        ]),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: FadeTransition(
+          opacity: _anim,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.auto_awesome, size: 14, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text('AI is thinking...',
+                style: TextStyle(fontSize: 13, color: theme.colorScheme.primary)),
+          ]),
+        ),
       ),
     );
   }
@@ -1078,8 +1105,10 @@ class _TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final fmt = NumberFormat.currency(symbol: '\$');
     final isIncome = t.type == 'income';
+    final color = isIncome ? theme.colorScheme.primary : theme.colorScheme.error;
     return ListTile(
       dense: true,
       onLongPress: onLongPress,
@@ -1087,171 +1116,98 @@ class _TransactionTile extends StatelessWidget {
           isIncome
               ? Icons.add_circle_outline
               : Icons.remove_circle_outline,
-          color: isIncome ? AppTheme.emerald : AppTheme.error,
+        color: color,
           size: 20),
-      title: Text(t.category, style: const TextStyle(fontSize: 13)),
+      title: Text(t.category,
+        style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface)),
       subtitle: t.note != null
-          ? Text(t.note!, style: const TextStyle(fontSize: 11))
+        ? Text(t.note!,
+          style: TextStyle(
+            fontSize: 11,
+            color: theme.colorScheme.onSurface.withOpacity(0.6)))
           : null,
       trailing: Text(fmt.format(t.amount),
           style: TextStyle(
-              color: isIncome ? AppTheme.emerald : AppTheme.error,
+          color: color,
               fontWeight: FontWeight.w600,
               fontSize: 13)),
     );
   }
 }
 
-class _InputBar extends StatefulWidget {
+class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSubmit;
-  final bool isListening;
-  final bool speechAvailable;
+  final bool isRecording;
+  final bool isTranscribing;
   final VoidCallback onVoiceToggle;
-  
+
   const _InputBar({
     required this.controller,
     required this.onSubmit,
-    required this.isListening,
-    required this.speechAvailable,
+    required this.isRecording,
+    required this.isTranscribing,
     required this.onVoiceToggle,
   });
 
   @override
-  State<_InputBar> createState() => _InputBarState();
-}
-
-class _InputBarState extends State<_InputBar> with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-        child: Row(children: [
-          // Voice input button - only show if speech is available
-          if (widget.speechAvailable)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              child: widget.isListening
-                  ? Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        ScaleTransition(
-                          scale: _pulseAnimation,
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFFF6584), Color(0xFFFF8FA3)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.red.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: widget.onVoiceToggle,
-                          icon: const Icon(Icons.mic, color: Colors.white),
-                          tooltip: 'Stop listening',
-                        ),
-                      ],
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey.withValues(alpha: 0.1),
-                      ),
-                      child: IconButton(
-                        onPressed: widget.onVoiceToggle,
-                        icon: const Icon(Icons.mic_none, color: Colors.grey),
-                        tooltip: 'Voice input',
-                      ),
-                    ),
-            ),
-          Expanded(
-            child: TextField(
-              controller: widget.controller,
-              onSubmitted: (_) => widget.onSubmit(),
-              enabled: !widget.isListening,
-              keyboardType: TextInputType.text,
-              textInputAction: TextInputAction.send,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                hintText: widget.isListening
-                    ? 'Listening...' 
-                    : 'Ask PocketFlow or type a command...',
-                hintStyle: TextStyle(
-                  color: widget.isListening
-                      ? Colors.red.withOpacity(0.65)
-                      : AppTheme.slate400,
-                ),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18, vertical: 12),
-                suffixIcon: !widget.speechAvailable
-                    ? Tooltip(
-                        message: 'Use keyboard mic button for voice input',
-                        child: Icon(Icons.keyboard_voice,
-                            color: Colors.grey.withOpacity(0.5)),
-                      )
-                    : null,
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        color: theme.colorScheme.surface,
+        child: Row(
+          children: [
+            // Voice input button
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: IconButton(
+                onPressed: onVoiceToggle,
+                icon: isTranscribing
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Icon(isRecording ? Icons.stop_rounded : Icons.mic_none_rounded),
+                color: isRecording ? Colors.red : theme.colorScheme.primary,
+                iconSize: 26,
               ),
             ),
-          ),
-          if (widget.isListening) ...[
-            const SizedBox(width: 8),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.blue.withValues(alpha: 0.1),
-              ),
-              child: Center(
-                child: Text(
-                  '🎤',
-                  style: TextStyle(fontSize: 20),
+            // Text field
+            Expanded(
+              child: TextField(
+                controller: controller,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: isRecording
+                      ? 'Listening...'
+                      : isTranscribing
+                          ? 'Transcribing...'
+                          : 'Type or hold mic to talk...',
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
+                onSubmitted: (_) => onSubmit(),
+              ),
+            ),
+            // Submit button
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: IconButton(
+                onPressed: onSubmit,
+                icon: const Icon(Icons.send_rounded),
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
-          const SizedBox(width: 8),
-          IconButton.filled(
-              onPressed: widget.onSubmit, icon: const Icon(Icons.send)),
-        ]),
+        ),
       ),
     );
   }

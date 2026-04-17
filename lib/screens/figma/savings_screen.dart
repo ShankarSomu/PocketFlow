@@ -1,9 +1,11 @@
+import '../../services/time_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../models/savings_goal.dart';
 import '../../services/refresh_notifier.dart';
+import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
 import 'shared.dart';
 
@@ -25,11 +27,13 @@ class _SavingsScreenState extends State<SavingsScreen> {
     super.initState();
     _load();
     appRefresh.addListener(_load);
+    appTimeFilter.addListener(_load);
   }
 
   @override
   void dispose() {
     appRefresh.removeListener(_load);
+    appTimeFilter.removeListener(_load);
     super.dispose();
   }
 
@@ -49,24 +53,12 @@ class _SavingsScreenState extends State<SavingsScreen> {
     });
   }
 
-  String _emojiForGoal(String name) {
-    final n = name.toLowerCase();
-    if (n.contains('emergency') || n.contains('fund')) return '🛡️';
-    if (n.contains('car')) return '🚗';
-    if (n.contains('vacation') || n.contains('travel')) return '✈️';
-    if (n.contains('home')) return '🏡';
-    if (n.contains('wedding')) return '💍';
-    if (n.contains('education')) return '🎓';
-    return '🎯';
-  }
-
   void _showForm([SavingsGoal? existing]) {
-    final nameCtrl = TextEditingController(text: existing?.name ?? '');
-    final targetCtrl = TextEditingController(text: existing?.target.toStringAsFixed(2) ?? '');
-    final savedCtrl = TextEditingController(text: existing?.saved.toStringAsFixed(2) ?? '0');
     int? accountId = existing?.accountId;
-    int priority = existing?.priority ?? (_goals.length + 1);
-
+    int priority = existing?.priority ?? 5;
+    final nameCtrl = TextEditingController(text: existing?.name ?? '');
+    final targetCtrl = TextEditingController(text: existing != null ? existing.target.toStringAsFixed(2) : '');
+    final savedCtrl = TextEditingController(text: existing != null ? existing.saved.toStringAsFixed(2) : '');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -78,8 +70,8 @@ class _SavingsScreenState extends State<SavingsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(existing == null ? 'Create Savings Goal' : 'Edit Savings Goal',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text(existing == null ? 'New Goal' : 'Edit Goal',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameCtrl,
@@ -103,13 +95,13 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   decoration: const InputDecoration(labelText: 'Linked Account (optional)', border: OutlineInputBorder()),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('No account')),
-                    ..._accounts.map((a) => DropdownMenuItem(value: a.id, child: Text('${a.name} (${_accountBalances[a.id] != null ? '\$${_accountBalances[a.id]!.toStringAsFixed(0)}' : '0'})'))),
+                    ..._accounts.map((a) => DropdownMenuItem(value: a.id, child: Text('${a.name} (\$${_accountBalances[a.id]?.toStringAsFixed(0) ?? '0'})'))),
                   ],
                   onChanged: (v) => setLocal(() => accountId = v),
                 ),
                 const SizedBox(height: 12),
                 Row(children: [
-                  const Text('Priority: ', style: TextStyle(fontSize: 14)),
+                  Text('Priority: ', style: TextStyle(fontSize: 14)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Slider(
@@ -124,7 +116,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   Container(
                     width: 32,
                     alignment: Alignment.center,
-                    child: Text('$priority', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text('$priority', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ]),
                 const SizedBox(height: 16),
@@ -135,14 +127,14 @@ class _SavingsScreenState extends State<SavingsScreen> {
                         final confirm = await showDialog<bool>(
                           context: ctx,
                           builder: (c) => AlertDialog(
-                            title: const Text('Delete Goal?'),
+                            title: Text('Delete Goal?'),
                             content: Text('Delete "${existing.name}"?'),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: Text('Cancel')),
                               FilledButton(
                                 onPressed: () => Navigator.pop(c, true),
                                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                                child: const Text('Delete'),
+                                child: Text('Delete'),
                               ),
                             ],
                           ),
@@ -152,11 +144,11 @@ class _SavingsScreenState extends State<SavingsScreen> {
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      label: Text('Delete', style: TextStyle(color: Colors.red)),
                     ),
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () async {
@@ -191,6 +183,20 @@ class _SavingsScreenState extends State<SavingsScreen> {
     );
   }
 
+  String _emojiForGoal(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('car')) return '🚗';
+    if (n.contains('home') || n.contains('house')) return '🏠';
+    if (n.contains('vacation') || n.contains('travel') || n.contains('trip')) return '✈️';
+    if (n.contains('education') || n.contains('school') || n.contains('college')) return '🎓';
+    if (n.contains('phone') || n.contains('tech') || n.contains('laptop') || n.contains('computer')) return '💻';
+    if (n.contains('wedding') || n.contains('ring')) return '💍';
+    if (n.contains('emergency') || n.contains('fund')) return '🆘';
+    if (n.contains('retire')) return '🏖️';
+    if (n.contains('baby') || n.contains('child')) return '👶';
+    return '🎯';
+  }
+
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
@@ -201,51 +207,16 @@ class _SavingsScreenState extends State<SavingsScreen> {
     final inProgress = _goals.where((g) => g.saved < g.target).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F0),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.emerald))
-            : Column(
+        child: Stack(
+          children: [
+            _loading
+                ? Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
+                : Column(
                 children: [
-                  // ── Header ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: AppTheme.cardShadow,
-                          ),
-                          child: const Icon(Icons.savings_rounded, color: AppTheme.slate700, size: 20),
-                        ),
-                        const Expanded(
-                          child: Text(
-                            'Goals',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.slate900),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => _showForm(null),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              gradient: AppTheme.emeraldGradient,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: AppTheme.cardShadow,
-                            ),
-                            child: const Icon(Icons.add, color: Colors.white, size: 22),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // ── Summary Card ──
+                  const ScreenHeader('Goals'),
+                  // -- Summary Card --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: _GoalsSummaryCard(
@@ -257,27 +228,28 @@ class _SavingsScreenState extends State<SavingsScreen> {
                       fmt: fmt,
                     ),
                   ),
-                  // ── List ──
+                  // -- List --
                   Expanded(
                     child: _goals.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.emoji_events_outlined, size: 56, color: AppTheme.slate300),
+                                Icon(Icons.emoji_events_outlined, size: 56, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
                                 const SizedBox(height: 12),
-                                const Text('No savings goals yet',
-                                    style: TextStyle(color: AppTheme.slate500, fontSize: 15)),
+                                Text('No savings goals yet',
+                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 15)),
                                 const SizedBox(height: 16),
                                 GestureDetector(
                                   onTap: () => _showForm(null),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                                     decoration: BoxDecoration(
-                                      gradient: AppTheme.emeraldGradient,
+                                      gradient: ThemeService.instance.cardGradient,
                                       borderRadius: BorderRadius.circular(12),
+                                      boxShadow: ThemeService.instance.primaryShadow,
                                     ),
-                                    child: const Text('Add your first goal',
+                                    child: Text('Add your first goal',
                                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
@@ -287,7 +259,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView(
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                               children: [
                                 if (inProgress.isNotEmpty)
                                   _GoalsSection(
@@ -311,16 +283,36 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   ),
                 ],
               ),
+            const Positioned(
+              bottom: 16,
+              left: 16,
+              child: CalendarFab(),
+            ),
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: SpeedDialFab(
+                actions: [
+                  SpeedDialAction(
+                    icon: Icons.add,
+                    label: 'Add Goal',
+                    onPressed: () => _showForm(null),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // Reusable Components
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
-/// Summary card — dark gradient, total saved vs target, overall progress bar.
+/// Summary card � dark gradient, total saved vs target, overall progress bar.
 class _GoalsSummaryCard extends StatelessWidget {
   final double totalSaved;
   final double totalTarget;
@@ -345,19 +337,9 @@ class _GoalsSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A2E22), Color(0xFF14532D), Color(0xFF0F766E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF10B981).withOpacity(0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: ThemeService.instance.primaryShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,16 +352,16 @@ class _GoalsSummaryCard extends StatelessWidget {
                   color: Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 18),
+                child: Icon(Icons.emoji_events_rounded, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Savings Goals',
                       style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                   Text('Track your financial targets',
-                      style: TextStyle(color: Colors.white60, fontSize: 11)),
+                      style: TextStyle(color: Colors.white60, fontSize: 12)),
                 ],
               ),
               const Spacer(),
@@ -390,24 +372,24 @@ class _GoalsSummaryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('$goalCount goals',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                    style: TextStyle(color: Colors.white70, fontSize: 12)),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('Total Saved', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+          Text('Total Saved', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(fmt.format(totalSaved),
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               const SizedBox(width: 6),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('/ ${fmt.format(totalTarget)}',
-                    style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 13)),
+                    style: TextStyle(color: Colors.white70, fontSize: 13)),
               ),
             ],
           ),
@@ -477,7 +459,7 @@ class _StatPill extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10)),
+                Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
                 Text(amount,
                     style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
                     overflow: TextOverflow.ellipsis),
@@ -490,9 +472,9 @@ class _StatPill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
-/// Section — label header + white card containing _GoalItem rows.
+/// Section � label header + white card containing _GoalItem rows.
 class _GoalsSection extends StatelessWidget {
   final String label;
   final List<SavingsGoal> goals;
@@ -517,20 +499,18 @@ class _GoalsSection extends StatelessWidget {
           padding: const EdgeInsets.only(top: 18, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: AppTheme.slate600,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               letterSpacing: 0.2,
             ),
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.cardShadow,
-          ),
+        Card(
+          elevation: 0,
+          color: Theme.of(context).colorScheme.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Column(
             children: goals.asMap().entries.map((e) {
               final isLast = e.key == goals.length - 1;
@@ -549,7 +529,7 @@ class _GoalsSection extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 /// Single goal row: emoji circle | name + saved/target | progress bar + % badge.
 class _GoalItem extends StatelessWidget {
@@ -582,7 +562,7 @@ class _GoalItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = goal.target <= 0 ? 0.0 : (goal.saved / goal.target).clamp(0.0, 1.0) as double;
     final isComplete = goal.saved >= goal.target;
-    final color = isComplete ? const Color(0xFF10B981) : _colorForGoal(goal.name);
+    final color = isComplete ? AppTheme.emerald : _colorForGoal(goal.name);
 
     return InkWell(
       onTap: onTap,
@@ -602,7 +582,7 @@ class _GoalItem extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(emoji, style: const TextStyle(fontSize: 20)),
+                    child: Text(emoji, style: TextStyle(fontSize: 20)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -613,13 +593,13 @@ class _GoalItem extends StatelessWidget {
                     children: [
                       Text(
                         goal.name,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.slate900),
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         '${fmt.format(goal.saved)} / ${fmt.format(goal.target)}',
-                        style: const TextStyle(fontSize: 12, color: AppTheme.slate400),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -634,7 +614,7 @@ class _GoalItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isComplete ? '✓ Done' : '${(progress * 100).toStringAsFixed(0)}%',
+                    isComplete ? 'Done' : '${(progress * 100).toStringAsFixed(0)}%',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -652,7 +632,7 @@ class _GoalItem extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 5,
-                  backgroundColor: AppTheme.slate100,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
@@ -660,7 +640,7 @@ class _GoalItem extends StatelessWidget {
             if (showDivider)
               Padding(
                 padding: const EdgeInsets.only(top: 10, left: 56),
-                child: Divider(height: 1, color: AppTheme.slate100),
+                child: Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
               ),
           ],
         ),

@@ -1,13 +1,106 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_theme.dart';
-import '../widgets/animated_blob.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   final VoidCallback onGetStarted;
   final bool isFirstTime;
 
   const WelcomeScreen({super.key, required this.onGetStarted, this.isFirstTime = true});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateMixin {
+  late AnimationController _bgController;
+  late AnimationController _entryController;
+  late AnimationController _pulseController;
+
+  late Animation<double> _logoScale;
+  late Animation<double> _logoOpacity;
+  late Animation<double> _titleSlide;
+  late Animation<double> _titleOpacity;
+  late Animation<double> _subtitleOpacity;
+  late Animation<double> _featuresOpacity;
+  late Animation<double> _btnSlide;
+  late Animation<double> _btnOpacity;
+  late Animation<double> _pulse;
+
+  int _currentPage = 0;
+  final PageController _pageController = PageController();
+
+  final List<_OnboardPage> _pages = const [
+    _OnboardPage(
+      icon: Icons.account_balance_wallet_rounded,
+      title: 'All Your Finances,\nOne Place',
+      subtitle: 'Track accounts, budgets, and bills with effortless clarity.',
+      gradient: [Color(0xFF0D9488), Color(0xFF2563EB)],
+    ),
+    _OnboardPage(
+      icon: Icons.insights_rounded,
+      title: 'Smart Insights,\nReal Results',
+      subtitle: 'AI-powered analytics that reveal where your money actually goes.',
+      gradient: [Color(0xFF6366F1), Color(0xFF2563EB)],
+    ),
+    _OnboardPage(
+      icon: Icons.flag_rounded,
+      title: 'Goals You\'ll\nActually Reach',
+      subtitle: 'Set savings goals and watch your progress in real time.',
+      gradient: [Color(0xFF0D9488), Color(0xFF0284C7)],
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 12))
+      ..repeat(reverse: true);
+
+    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))
+      ..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _entryController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+
+    _logoScale = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.0, 0.45, curve: Curves.elasticOut)),
+    );
+    _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.0, 0.3, curve: Curves.easeOut)),
+    );
+    _titleSlide = Tween<double>(begin: 30.0, end: 0.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.3, 0.6, curve: Curves.easeOut)),
+    );
+    _titleOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.3, 0.6, curve: Curves.easeOut)),
+    );
+    _subtitleOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.45, 0.7, curve: Curves.easeOut)),
+    );
+    _featuresOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.55, 0.85, curve: Curves.easeOut)),
+    );
+    _btnSlide = Tween<double>(begin: 40.0, end: 0.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.7, 1.0, curve: Curves.easeOut)),
+    );
+    _btnOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _entryController, curve: const Interval(0.7, 1.0, curve: Curves.easeOut)),
+    );
+
+    _entryController.forward();
+  }
+
+  @override
+  void dispose() {
+    _bgController.dispose();
+    _entryController.dispose();
+    _pulseController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,320 +109,419 @@ class WelcomeScreen extends StatelessWidget {
       statusBarIconBrightness: Brightness.light,
       statusBarBrightness: Brightness.dark,
     ));
-    
+
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Animated background blobs
-            AnimatedBlob(
-              color: AppTheme.emerald.withOpacity(0.2),
-              size: 800,
-              duration: const Duration(seconds: 8),
-              alignment: const Alignment(-0.5, -0.8),
+      body: AnimatedBuilder(
+        animation: _bgController,
+        builder: (context, _) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: const [Color(0xFF060E2D), Color(0xFF0F2044), Color(0xFF0A1628)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                stops: [0.0, 0.5 + _bgController.value * 0.2, 1.0],
+              ),
             ),
-            AnimatedBlob(
-              color: AppTheme.blue.withOpacity(0.2),
-              size: 900,
-              duration: const Duration(seconds: 10),
-              alignment: const Alignment(0.5, 0.8),
-            ),
-            // Content scrollable above button
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Logo
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 800),
-                              curve: Curves.elasticOut,
-                              builder: (context, value, child) {
-                                return Transform.scale(
-                                  scale: value,
-                                  child: child,
-                                );
-                              },
-                              child: _buildLogo(),
-                            ),
-                            const SizedBox(height: 48),
-                            // Title
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 600),
-                              curve: Curves.easeOut,
-                              builder: (context, value, child) {
-                                return Opacity(
-                                  opacity: value,
-                                  child: Transform.translate(
-                                    offset: Offset(0, 20 * (1 - value)),
-                                    child: child,
+            child: Stack(
+              children: [
+                _Orb(
+                  size: size.width * 1.2,
+                  color: const Color(0xFF0D9488),
+                  opacity: 0.12 + _bgController.value * 0.06,
+                  dx: -size.width * 0.3,
+                  dy: -size.height * 0.15 + _bgController.value * 40,
+                ),
+                _Orb(
+                  size: size.width * 1.0,
+                  color: const Color(0xFF2563EB),
+                  opacity: 0.10 + _bgController.value * 0.05,
+                  dx: size.width * 0.5,
+                  dy: size.height * 0.55 - _bgController.value * 40,
+                ),
+                _Orb(
+                  size: size.width * 0.6,
+                  color: const Color(0xFF6366F1),
+                  opacity: 0.08 + _bgController.value * 0.04,
+                  dx: size.width * 0.3,
+                  dy: size.height * 0.3 + _bgController.value * 20,
+                ),
+                CustomPaint(
+                  size: size,
+                  painter: _GridPainter(),
+                ),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 40),
+                                AnimatedBuilder(
+                                  animation: _entryController,
+                                  builder: (_, __) => Opacity(
+                                    opacity: _logoOpacity.value,
+                                    child: Transform.scale(
+                                      scale: _logoScale.value,
+                                      child: _buildLogo(),
+                                    ),
                                   ),
-                                );
-                              },
-                              child: Column(
-                                children: [
-                                  ShaderMask(
-                                    shaderCallback: (bounds) => const LinearGradient(
-                                      colors: [Colors.white, Color(0xFFD1FAE5), Color(0xFFDEEBFF)],
-                                    ).createShader(bounds),
+                                ),
+                                const SizedBox(height: 36),
+                                AnimatedBuilder(
+                                  animation: _entryController,
+                                  builder: (_, __) => Opacity(
+                                    opacity: _titleOpacity.value,
+                                    child: Transform.translate(
+                                      offset: Offset(0, _titleSlide.value),
+                                      child: _buildTitle(),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                AnimatedBuilder(
+                                  animation: _entryController,
+                                  builder: (_, __) => Opacity(
+                                    opacity: _subtitleOpacity.value,
                                     child: const Text(
-                                      'Pocket Flow',
+                                      'Experience financial clarity with intelligent\ntracking, beautiful insights, and effortless control.',
+                                      textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        fontSize: 56,
-                                        fontWeight: FontWeight.w300,
-                                        color: Colors.white,
-                                        letterSpacing: -1,
+                                        fontSize: 16,
+                                        color: Color(0xFF94A3B8),
+                                        height: 1.6,
+                                        fontWeight: FontWeight.w400,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.auto_awesome, color: AppTheme.emerald, size: 20),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'PREMIUM FINANCE MANAGER',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.emerald,
-                                          letterSpacing: 2,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            // Subtitle
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 800),
-                              curve: Curves.easeOut,
-                              builder: (context, value, child) {
-                                return Opacity(opacity: value, child: child);
-                              },
-                              child: const Text(
-                                'Experience financial clarity with intelligent\ntracking, beautiful insights, and effortless control',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Color(0xFFCBD5E1),
-                                  height: 1.5,
                                 ),
-                              ),
+                                const SizedBox(height: 52),
+                                if (widget.isFirstTime)
+                                  AnimatedBuilder(
+                                    animation: _entryController,
+                                    builder: (_, __) => Opacity(
+                                      opacity: _featuresOpacity.value,
+                                      child: _buildFeatureCarousel(),
+                                    ),
+                                  ),
+                                if (widget.isFirstTime) const SizedBox(height: 52),
+                              ],
                             ),
-                            const SizedBox(height: 64),
-                            // Features - only for first time
-                            if (isFirstTime) _buildFeatures(),
-                            if (isFirstTime) const SizedBox(height: 64),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                    // CTA Button - only for first time
-                    if (isFirstTime)
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.easeOut,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
+                      if (widget.isFirstTime)
+                        AnimatedBuilder(
+                          animation: _entryController,
+                          builder: (_, __) => Opacity(
+                            opacity: _btnOpacity.value,
                             child: Transform.translate(
-                              offset: Offset(0, 20 * (1 - value)),
-                              child: child,
+                              offset: Offset(0, _btnSlide.value),
+                              child: _buildBottomCTA(context),
                             ),
-                          );
-                        },
-                        child: Column(
-                          children: [
-                            _buildGetStartedButton(context),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'No credit card required • Free forever',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF94A3B8),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildLogo() {
-    return Container(
-      width: 112,
-      height: 112,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.emerald.withOpacity(0.4),
-            blurRadius: 40,
-            spreadRadius: 0,
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (_, child) => Transform.scale(scale: _pulse.value, child: child),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 128,
+            height: 128,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  const Color(0xFF0D9488).withValues(alpha: 0.35),
+                  const Color(0xFF2563EB).withValues(alpha: 0.15),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+                  blurRadius: 36,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF0D9488).withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  spreadRadius: -4,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.account_balance_wallet_rounded, size: 52, color: Colors.white),
           ),
         ],
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.emeraldBlueGradient,
-          borderRadius: BorderRadius.circular(24),
+    );
+  }
+
+  Widget _buildTitle() {
+    return Column(
+      children: [
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Colors.white, Color(0xFFBAE6FD), Color(0xFF99F6E4)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ).createShader(bounds),
+          child: const Text(
+            'Pocket Flow',
+            style: TextStyle(
+              fontSize: 52,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: -1.5,
+              height: 1.0,
+            ),
+          ),
         ),
-        child: const Icon(
-          Icons.account_balance_wallet_rounded,
-          size: 56,
-          color: Colors.white,
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF2563EB)]),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.auto_awesome, color: Colors.white, size: 13),
+              SizedBox(width: 6),
+              Text(
+                'PREMIUM FINANCE MANAGER',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureCarousel() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _pages.length,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            itemBuilder: (_, i) => _buildPageCard(_pages[i]),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_pages.length, (i) {
+            final active = i == _currentPage;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: active ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                gradient: active
+                    ? const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF2563EB)])
+                    : null,
+                color: active ? null : const Color(0x33FFFFFF),
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: active
+                    ? [const BoxShadow(color: Color(0x802563EB), blurRadius: 8)]
+                    : null,
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPageCard(_OnboardPage page) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: const Color(0x0DFFFFFF),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0x14FFFFFF)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x33000000), blurRadius: 24, offset: Offset(0, 8)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: page.gradient),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: page.gradient.last.withValues(alpha: 0.45),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(page.icon, color: Colors.white, size: 34),
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  page.title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1.2,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  page.subtitle,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF94A3B8),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFeatures() {
-    final features = [
-      _Feature(Icons.trending_up_rounded, 'Smart\nAnalytics', AppTheme.emeraldGradient),
-      _Feature(Icons.track_changes_rounded, 'Goal\nTracking', AppTheme.blueGradient),
-      _Feature(Icons.calendar_month_rounded, 'Budget\nPlanning', const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF8B5CF6)])),
-      _Feature(Icons.account_balance_wallet_rounded, 'Account\nSync', const LinearGradient(colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)])),
-    ];
-
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      alignment: WrapAlignment.center,
-      children: features.map((f) => _buildFeatureCard(f)).toList(),
-    );
-  }
-
-  Widget _buildFeatureCard(_Feature feature) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Transform.translate(
-            offset: Offset(0, 20 * (1 - value)),
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        width: 160,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
+  Widget _buildBottomCTA(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: widget.onGetStarted,
+            child: Container(
+              height: 60,
               decoration: BoxDecoration(
-                gradient: feature.gradient,
-                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary.withOpacity(0.75),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              child: Icon(feature.icon, color: Colors.white, size: 28),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              feature.label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFFE2E8F0),
-                height: 1.3,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Get Started',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'No credit card required  •  Free forever',
+            style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildGetStartedButton(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onGetStarted,
-        child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 64),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669), Color(0xFF3B82F6)],
-            ),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.emerald.withOpacity(0.5),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Get Started',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 1500),
-                curve: Curves.easeInOut,
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(4 * value, 0),
-                    child: child,
-                  );
-                },
-                child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
-              ),
-            ],
+// ── Supporting types/widgets ──────────────────────────────────────────────────
+
+class _Orb extends StatelessWidget {
+  final double size, opacity, dx, dy;
+  final Color color;
+  const _Orb({required this.size, required this.color, required this.opacity, required this.dx, required this.dy});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: dx,
+      top: dy,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [color.withValues(alpha: opacity), Colors.transparent],
           ),
         ),
       ),
@@ -337,9 +529,29 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-class _Feature {
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0x07FFFFFF)
+      ..strokeWidth = 0.5;
+    const step = 48.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPainter _) => false;
+}
+
+class _OnboardPage {
   final IconData icon;
-  final String label;
-  final Gradient gradient;
-  _Feature(this.icon, this.label, this.gradient);
+  final String title;
+  final String subtitle;
+  final List<Color> gradient;
+  const _OnboardPage({required this.icon, required this.title, required this.subtitle, required this.gradient});
 }

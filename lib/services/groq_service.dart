@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../db/database.dart';
@@ -55,6 +56,7 @@ class AiService {
   static const _prefGeminiModel = 'gemini_model';
 
   static const _groqEndpoint = 'https://api.groq.com/openai/v1/chat/completions';
+  static const _whisperEndpoint = 'https://api.groq.com/openai/v1/audio/transcriptions';
   static const _geminiBaseEndpoint =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -118,6 +120,25 @@ class AiService {
     await prefs.setString(
         provider == AiProvider.gemini ? _prefGeminiModel : _prefGroqModel,
         model);
+  }
+
+  // ── Whisper voice transcription ─────────────────────────────────────────────
+
+  static Future<String> transcribeAudio(String audioFilePath) async {
+    final key = await getApiKey(AiProvider.groq);
+    if (key == null || key.isEmpty) throw Exception('No Groq API key for Whisper');
+    final file = File(audioFilePath);
+    if (!file.existsSync()) throw Exception('Audio file not found: $audioFilePath');
+    final request = http.MultipartRequest('POST', Uri.parse(_whisperEndpoint))
+      ..headers['Authorization'] = 'Bearer $key'
+      ..fields['model'] = 'whisper-large-v3-turbo'
+      ..fields['response_format'] = 'text'
+      ..fields['language'] = 'en'
+      ..files.add(await http.MultipartFile.fromPath('file', audioFilePath));
+    final streamed = await request.send().timeout(const Duration(seconds: 30));
+    final body = await streamed.stream.bytesToString();
+    if (streamed.statusCode != 200) throw Exception('Whisper error ${streamed.statusCode}: $body');
+    return body.trim();
   }
 
   // ── Chat ────────────────────────────────────────────────────────────────────
@@ -415,6 +436,8 @@ class GroqService {
   static Future<void> saveApiKey(String key) =>
       AiService.saveApiKey(key, AiProvider.groq);
   static Future<void> clearApiKey() => AiService.clearApiKey(AiProvider.groq);
+  static Future<String> transcribeAudio(String path) =>
+      AiService.transcribeAudio(path);
   static Future<AiResponse> chat(
           List<Map<String, String>> history, String userMessage) =>
       AiService.chat(history, userMessage);

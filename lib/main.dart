@@ -13,6 +13,7 @@ import 'screens/welcome_screen.dart';
 import 'services/recurring_scheduler.dart';
 import 'services/auth_service.dart';
 import 'services/app_logger.dart';
+import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -20,14 +21,21 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
   ));
   await AppLogger.load();
   await AppLogger.init();
   await AuthService.init();
+  await ThemeService.instance.init();
   AuthService.autoBackupIfDue();
   RecurringScheduler.processDue();
   runApp(const PocketFlowApp());
 }
+
+// Global nav-index notifier – updated by _RootNavState so the FAB in the
+// MaterialApp builder can react even when Profile/Settings are pushed on top.
+final _rootNavIndex = ValueNotifier<int>(0);
+VoidCallback? _rootGoHome;
 
 class PocketFlowApp extends StatefulWidget {
   const PocketFlowApp({super.key});
@@ -82,11 +90,77 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PocketFlow',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: _loading
+    return ListenableBuilder(
+      listenable: Listenable.merge([ThemeService.instance, _rootNavIndex]),
+      builder: (context, _) {
+        final ts = ThemeService.instance;
+        // Reactive system UI style based on effective brightness
+        final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+        final effectiveDark = ts.mode == AppThemeMode.dark ||
+            (ts.mode == AppThemeMode.system && platformBrightness == Brightness.dark);
+        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: effectiveDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: effectiveDark ? Brightness.dark : Brightness.light,
+        ));
+        return MaterialApp(
+          title: 'PocketFlow',
+          debugShowCheckedModeBanner: false,
+          theme: ts.buildLightTheme(),
+          darkTheme: ts.buildDarkTheme(),
+          themeMode: ts.flutterThemeMode,
+          builder: (context, child) {
+            final mq = MediaQuery.of(context);
+            Widget result = MediaQuery(
+              data: mq.copyWith(textScaler: TextScaler.linear(mq.textScaleFactor * ts.textSizeScale)),
+              child: child!,
+            );
+            // Floating home button — shown above ALL routes (incl. Profile/Settings)
+            final navIdx = _rootNavIndex.value;
+            if (navIdx != 0) {
+              result = Stack(
+                children: [
+                  result,
+                  Positioned(
+                    bottom: 140,
+                    left: ts.leftHanded ? 16 : null,
+                    right: ts.leftHanded ? null : 16,
+                    child: SafeArea(
+                      child: GestureDetector(
+                        onTap: () => _rootGoHome?.call(),
+                        child: Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(23),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.home_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+            return result;
+          },
+          home: _loading
           ? Scaffold(
               body: Container(
                 decoration: const BoxDecoration(
@@ -111,6 +185,8 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
           : _showWelcome
               ? WelcomeScreen(onGetStarted: _onGetStarted, isFirstTime: _isFirstTime)
               : const _RootNav(),
+        );
+      },
     );
   }
 }
@@ -122,32 +198,96 @@ class _RootNav extends StatefulWidget {
 }
 
 class _RootNavState extends State<_RootNav> {
+  late final PageController _pageCtrl;
   int _index = 0;
 
-  // Chat is index 3 — center of 7 items
+  // Order: Home | Transactions | Recurring | Chat (FAB) | Savings | Budget | Accounts
   final _screens = const [
     HomeScreen(),
-    AccountsScreen(),
-    BudgetScreen(),
+    TransactionsScreen(),
+    RecurringScreen(),
     ChatScreen(),
     SavingsScreen(),
-    RecurringScreen(),
-    TransactionsScreen(),
+    BudgetScreen(),
+    AccountsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageCtrl = PageController(initialPage: 7 * 500);
+    _rootGoHome = () => _goTo(0);
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  void _goTo(int i) {
+    const names = ['Home','Transactions','Recurring','Chat','Savings','Budget','Accounts'];
+    AppLogger.nav(names[i]);
+    final currentPage = _pageCtrl.page?.round() ?? (_screens.length * 500);
+    final currentSlot = currentPage % _screens.length;
+    int diff = (i - currentSlot) % _screens.length;
+    if (diff > _screens.length ~/ 2) diff -= _screens.length;
+    setState(() => _index = i);
+    _rootNavIndex.value = i;
+    if (diff == 0) return;
+    _pageCtrl.animateToPage(
+      currentPage + diff,
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeInOutCubic,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageCtrl,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            onPageChanged: (i) {
+              const names = ['Home','Transactions','Recurring','Chat','Savings','Budget','Accounts'];
+              final idx = i % _screens.length;
+              AppLogger.nav(names[idx]);
+              setState(() => _index = idx);
+              _rootNavIndex.value = idx;
+            },
+            itemBuilder: (_, i) => _KeepAlivePage(child: _screens[i % _screens.length]),
+          ),
+          // Home FAB is now in MaterialApp.builder (above all pushed routes)
+        ],
+      ),
       bottomNavigationBar: _BottomNav(
         index: _index,
-        onTap: (i) {
-          final screens = ['Home','Accounts','Budget','Chat','Savings','Recurring','Transactions'];
-          AppLogger.nav(i < screens.length ? screens[i] : 'Screen$i');
-          setState(() => _index = i);
-        },
+        onTap: _goTo,
       ),
     );
+  }
+}
+
+/// Keeps screen state alive while swiping through the PageView.
+class _KeepAlivePage extends StatefulWidget {
+  final Widget child;
+  const _KeepAlivePage({required this.child});
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }
 
@@ -158,25 +298,23 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = AppTheme.indigo;
-    const inactiveColor = AppTheme.slate400;
+    final activeColor = Theme.of(context).colorScheme.primary;
+    final inactiveColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.4);
 
     final items = [
       _NavItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
-      _NavItem(Icons.account_balance_wallet_outlined,
-          Icons.account_balance_wallet_rounded, 'Accounts'),
-      _NavItem(Icons.pie_chart_outline_rounded,
-          Icons.pie_chart_rounded, 'Budget'),
+      _NavItem(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Transactions'),
+      _NavItem(Icons.repeat_rounded, Icons.repeat_rounded, 'Recurring'),
       null, // centre FAB placeholder
       _NavItem(Icons.savings_outlined, Icons.savings_rounded, 'Savings'),
-      _NavItem(Icons.repeat_rounded, Icons.repeat_rounded, 'Recurring'),
-      _NavItem(Icons.receipt_long_outlined,
-          Icons.receipt_long_rounded, 'Transactions'),
+      _NavItem(Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded, 'Budget'),
+      _NavItem(Icons.account_balance_wallet_outlined,
+          Icons.account_balance_wallet_rounded, 'Accounts'),
     ];
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: AppTheme.cardShadow,
       ),
       child: SafeArea(
@@ -190,41 +328,35 @@ class _BottomNav extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => onTap(3),
                     child: Center(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: index == 3
-                              ? const LinearGradient(
-                                  colors: [
-                                    Color(0xFF10B981),
-                                    Color(0xFF059669),
-                                    Color(0xFF3B82F6)
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
-                              : const LinearGradient(
-                                  colors: [
-                                    Color(0xFF10B981),
-                                    Color(0xFF059669),
-                                    Color(0xFF3B82F6)
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                      child: ListenableBuilder(
+                        listenable: ThemeService.instance,
+                        builder: (context, _) {
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
                                 ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.indigo.withValues(alpha: 0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: const Icon(Icons.auto_awesome_rounded,
-                            color: Colors.white, size: 26),
+                            child: const Icon(Icons.auto_awesome_rounded,
+                                color: Colors.white, size: 26),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -258,7 +390,7 @@ class _BottomNav extends StatelessWidget {
                           width: isSelected ? 4 : 0,
                           height: isSelected ? 4 : 0,
                           margin: const EdgeInsets.only(top: 3),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: activeColor,
                             shape: BoxShape.circle,
                           ),

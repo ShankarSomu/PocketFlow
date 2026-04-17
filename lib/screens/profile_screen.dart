@@ -6,12 +6,12 @@ import '../services/auth_service.dart';
 import '../services/refresh_notifier.dart';
 import '../services/app_logger.dart';
 import '../services/chat_parser.dart';
+import '../services/sms_service.dart';
+import '../services/seed_data.dart';
 import '../models/account.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/gradient_text.dart';
-import 'category_screen.dart';
-import 'diagnostics_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -35,12 +35,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _goalsOnTrack = 0;
   int _totalGoals = 0;
 
+  // SMS settings
+  bool _smsEnabled = false;
+  SmsScanRange _smsScanRange = SmsScanRange.oneMonth;
+  DateTime? _smsLastScan;
+  bool _smsScanning = false;
+  String? _smsResult;
+
   @override
   void initState() {
     super.initState();
     _loadPrefs();
     _loadAccounts();
     _loadAccountHealth();
+    _loadSmsPrefs();
+  }
+
+  Future<void> _loadSmsPrefs() async {
+    final enabled = await SmsService.isEnabled();
+    final range = await SmsService.getScanRange();
+    final lastScan = await SmsService.getLastScan();
+    if (!mounted) return;
+    setState(() {
+      _smsEnabled = enabled;
+      _smsScanRange = range;
+      _smsLastScan = lastScan;
+    });
+  }
+
+  Future<void> _toggleSms(bool value) async {
+    if (value) {
+      final granted = await SmsService.requestPermission();
+      if (!granted) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SMS permission is required to enable this feature')),
+        );
+        return;
+      }
+    }
+    await SmsService.setEnabled(value);
+    if (!mounted) return;
+    setState(() => _smsEnabled = value);
+    if (value) _runSmsScan();
+  }
+
+  Future<void> _runSmsScan() async {
+    if (_smsScanning) return;
+    final granted = await SmsService.hasPermission();
+    if (!granted) {
+      final ok = await SmsService.requestPermission();
+      if (!ok) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SMS permission denied')),
+        );
+        return;
+      }
+    }
+    if (!mounted) return;
+    setState(() { _smsScanning = true; _smsResult = null; });
+    try {
+      final result = await SmsService.scanAndImport();
+      notifyDataChanged();
+      if (!mounted) return;
+      setState(() {
+        _smsScanning = false;
+        _smsLastScan = DateTime.now();
+        _smsResult = result.hasError ? result.error : result.toString();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _smsScanning = false;
+        _smsResult = 'Scan failed: $e';
+      });
+    }
   }
 
   Future<void> _loadAccountHealth() async {
@@ -259,6 +329,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _loading = false;
         _message = 'Delete failed: $e';
+        _isError = true;
+      });
+    }
+  }
+
+  Future<void> _loadSampleData() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Load Sample Data?'),
+        content: const Text(
+            'This will add demo accounts, transactions, budgets, and savings goals to your database. Existing data will not be deleted.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Load Data'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    setState(() { _loading = true; _message = null; });
+    try {
+      await SeedData.load();
+      notifyDataChanged();
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _message = 'Sample data loaded successfully!';
+        _isError = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _message = 'Failed to load sample data: $e';
         _isError = true;
       });
     }
@@ -527,19 +637,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             GlassCard(
               padding: EdgeInsets.zero,
               child: Column(children: [
-                ListTile(
-                  leading: const Icon(Icons.category_outlined,
-                      color: AppTheme.indigo),
-                  title: const Text('Manage Categories'),
-                  subtitle: const Text('Add, edit or delete categories',
-                      style: TextStyle(fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CategoryScreen()),
-                  ),
-                ),
                 const Divider(height: 1),
                 ExpansionTile(
                   leading: const Icon(Icons.cloud_outlined,
@@ -786,19 +883,171 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 const Divider(height: 1),
+                // ── SMS Auto-Import ────────────────────────────────────────
+                ExpansionTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6C5CE7), Color(0xFF0984E3)],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.sms_outlined, color: Colors.white, size: 18),
+                  ),
+                  title: const Text('SMS Auto-Import'),
+                  subtitle: Text(
+                    _smsEnabled ? 'Active — reads financial SMS' : 'Disabled',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _smsEnabled ? AppTheme.emerald : Colors.grey,
+                    ),
+                  ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Consent banner
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.blue.withValues(alpha: 0.25)),
+                            ),
+                            child: const Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.privacy_tip_outlined, size: 18, color: Colors.blue),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'PocketFlow reads only financial SMS (bank/wallet alerts) to record transactions automatically. Messages are processed locally on your device and never uploaded.',
+                                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Enable toggle
+                          Row(
+                            children: [
+                              const Icon(Icons.toggle_on_outlined, size: 20, color: Colors.white60),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text('Enable SMS Import',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              ),
+                              Switch.adaptive(
+                                value: _smsEnabled,
+                                activeColor: AppTheme.emerald,
+                                onChanged: _toggleSms,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Scan range
+                          Row(
+                            children: [
+                              const Icon(Icons.date_range_outlined, size: 20, color: Colors.white60),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text('Scan range',
+                                    style: TextStyle(fontSize: 13)),
+                              ),
+                              DropdownButton<SmsScanRange>(
+                                value: _smsScanRange,
+                                isDense: true,
+                                underline: const SizedBox(),
+                                dropdownColor: const Color(0xFF1E293B),
+                                style: const TextStyle(color: Colors.white, fontSize: 12),
+                                items: SmsScanRange.values
+                                    .map((r) => DropdownMenuItem(
+                                          value: r,
+                                          child: Text(r.label),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) async {
+                                  if (v == null) return;
+                                  await SmsService.setScanRange(v);
+                                  setState(() => _smsScanRange = v);
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Last scan info
+                          if (_smsLastScan != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.access_time, size: 14, color: Colors.white38),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Last scan: ${DateFormat('MMM d, h:mm a').format(_smsLastScan!)}',
+                                    style: const TextStyle(fontSize: 11, color: Colors.white38),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          // Result chip
+                          if (_smsResult != null)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.emerald.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppTheme.emerald.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                _smsResult!,
+                                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                              ),
+                            ),
+
+                          // Rescan button
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: _smsScanning ? null : _runSmsScan,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF6C5CE7),
+                              ),
+                              icon: _smsScanning
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Icon(Icons.refresh, size: 18),
+                              label: Text(_smsScanning ? 'Scanning…' : 'Rescan SMS'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.bug_report_outlined,
-                      color: Colors.orange),
-                  title: const Text('Diagnostics'),
-                  subtitle: const Text('View app logs and debug info',
+                  leading: const Icon(Icons.data_object, color: Colors.purple),
+                  title: const Text('Load Sample Data'),
+                  subtitle: const Text('Populate with demo transactions',
                       style: TextStyle(fontSize: 12)),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const DiagnosticsScreen()),
-                  ),
+                  onTap: _loadSampleData,
                 ),
+                const Divider(height: 1),
               ]),
             ),
 

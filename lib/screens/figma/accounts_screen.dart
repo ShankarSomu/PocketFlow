@@ -1,9 +1,12 @@
-﻿import 'package:flutter/material.dart';
+﻿import '../../services/time_filter.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../services/refresh_notifier.dart';
+import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
+import 'shared.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -23,11 +26,13 @@ class _AccountsScreenState extends State<AccountsScreen> {
     super.initState();
     _load();
     appRefresh.addListener(_load);
+    appTimeFilter.addListener(_load);
   }
 
   @override
   void dispose() {
     appRefresh.removeListener(_load);
+    appTimeFilter.removeListener(_load);
     super.dispose();
   }
 
@@ -46,13 +51,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   void _showForm([Account? existing]) {
-    final nameCtrl = TextEditingController(text: existing?.name);
-    final balCtrl = TextEditingController(text: existing?.balance.toStringAsFixed(2) ?? '0');
-    final last4Ctrl = TextEditingController(text: existing?.last4);
-    final limitCtrl = TextEditingController(text: existing?.creditLimit?.toStringAsFixed(2) ?? '');
-    String selectedType = existing?.type ?? 'checking';
+    String selectedType = existing?.type ?? 'debit';
     int? dueDateDay = existing?.dueDateDay;
-
+    final nameCtrl = TextEditingController(text: existing?.name ?? '');
+    final balCtrl = TextEditingController(text: existing != null ? existing.balance.toStringAsFixed(2) : '');
+    final last4Ctrl = TextEditingController(text: existing?.last4 ?? '');
+    final limitCtrl = TextEditingController(text: existing?.creditLimit != null ? existing!.creditLimit!.toStringAsFixed(2) : '');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -65,36 +69,33 @@ class _AccountsScreenState extends State<AccountsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(existing == null ? 'Add Account' : 'Edit Account',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: const InputDecoration(labelText: 'Account Type', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'checking', child: Text('Debit / Checking')),
+                    DropdownMenuItem(value: 'savings', child: Text('Savings')),
+                    DropdownMenuItem(value: 'credit', child: Text('Credit Card')),
+                    DropdownMenuItem(value: 'cash', child: Text('Cash')),
+                    DropdownMenuItem(value: 'investment', child: Text('Investment')),
+                  ],
+                  onChanged: (v) => setLocal(() => selectedType = v ?? 'debit'),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: nameCtrl,
                   decoration: const InputDecoration(labelText: 'Account Name', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedType,
-                  decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
-                  items: Account.types
-                      .map((t) => DropdownMenuItem(
-                            value: t,
-                            child: Row(children: [
-                              Icon(_typeIcon(t), size: 18),
-                              const SizedBox(width: 8),
-                              Text(t[0].toUpperCase() + t.substring(1)),
-                            ]),
-                          ))
-                      .toList(),
-                  onChanged: (v) => setLocal(() => selectedType = v!),
-                ),
-                const SizedBox(height: 12),
                 TextField(
                   controller: balCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: selectedType == 'credit' ? 'Current Balance Owed' : 'Opening Balance',
-                    border: const OutlineInputBorder(),
+                    labelText: selectedType == 'credit' ? 'Current Balance (amount owed)' : 'Balance',
                     prefixText: '\$',
+                    border: const OutlineInputBorder(),
                     helperText: selectedType == 'credit'
                         ? 'Amount you currently owe on this card'
                         : 'Starting balance for this account',
@@ -143,14 +144,14 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         final confirm = await showDialog<bool>(
                           context: ctx,
                           builder: (c) => AlertDialog(
-                            title: const Text('Delete Account?'),
-                            content: const Text('Transactions linked to this account will be unlinked but not deleted.'),
+                            title: Text('Delete Account?'),
+                            content: Text('Transactions linked to this account will be unlinked but not deleted.'),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: Text('Cancel')),
                               FilledButton(
                                 onPressed: () => Navigator.pop(c, true),
                                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                                child: const Text('Delete'),
+                                child: Text('Delete'),
                               ),
                             ],
                           ),
@@ -160,11 +161,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      label: Text('Delete', style: TextStyle(color: Colors.red)),
                     ),
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () async {
@@ -188,7 +189,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       notifyDataChanged();
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
-                    child: const Text('Save'),
+                    child: Text('Save'),
                   ),
                 ]),
               ],
@@ -223,17 +224,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(account.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                      Text('${accountTxns.length} transactions', style: const TextStyle(fontSize: 12, color: AppTheme.slate500)),
+                      Text(account.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                      Text('${accountTxns.length} transactions', style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.5))),
                     ],
                   ),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  IconButton(icon: Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
                 ],
               ),
               const SizedBox(height: 16),
               Expanded(
                 child: accountTxns.isEmpty
-                    ? const Center(child: Text('No transactions yet', style: TextStyle(color: AppTheme.slate400)))
+                    ? Center(child: Text('No transactions yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))))
                     : ListView.builder(
                         controller: scrollController,
                         itemCount: accountTxns.length,
@@ -251,8 +252,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               ),
                               child: Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: isIncome ? AppTheme.emerald : AppTheme.error, size: 20),
                             ),
-                            title: Text(t.category, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                            subtitle: Text('${DateFormat('MMM d, yyyy').format(t.date)}${t.note?.isNotEmpty == true ? ' · ${t.note}' : ''}', style: const TextStyle(fontSize: 11)),
+                            title: Text(t.category, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                            subtitle: Text('${DateFormat('MMM d, yyyy').format(t.date)}${t.note?.isNotEmpty == true ? ' � ${t.note}' : ''}', style: TextStyle(fontSize: 12)),
                             trailing: Text(_fmt.format(t.amount), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isIncome ? AppTheme.emerald : AppTheme.error)),
                           );
                         },
@@ -291,9 +292,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Transfer Between Accounts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Transfer Between Accounts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 4),
-                const Text('Use this to pay a credit card or move money between accounts.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('Use this to pay a credit card or move money between accounts.', style: TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int?>(
                   value: fromId,
@@ -318,7 +319,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                                   decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                                  child: Text('owes ${_fmt.format(_balances[a.id] ?? 0)}', style: const TextStyle(fontSize: 10, color: Colors.red)),
+                                  child: Text('owes ${_fmt.format(_balances[a.id] ?? 0)}', style: TextStyle(fontSize: 11, color: Colors.red)),
                                 ),
                             ],
                           ),
@@ -336,8 +337,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   CheckboxListTile(
                     value: useOutstanding,
                     contentPadding: EdgeInsets.zero,
-                    title: Text('Pay full outstanding: ${_fmt.format(outstanding)}', style: const TextStyle(fontSize: 13)),
-                    subtitle: const Text('Amount will update automatically each time', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                    title: Text('Pay full outstanding: ${_fmt.format(outstanding)}', style: TextStyle(fontSize: 13)),
+                    subtitle: Text('Amount will update automatically each time', style: TextStyle(fontSize: 12, color: Colors.grey)),
                     onChanged: (v) => setLocal(() {
                       useOutstanding = v ?? false;
                       if (useOutstanding) {
@@ -361,7 +362,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () async {
@@ -372,7 +373,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       notifyDataChanged();
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
-                    child: const Text('Transfer'),
+                    child: Text('Transfer'),
                   ),
                 ]),
               ],
@@ -403,68 +404,30 @@ class _AccountsScreenState extends State<AccountsScreen> {
       groups.putIfAbsent(a.type, () => []).add(a);
     }
 
+    final speedDialActions = <SpeedDialAction>[
+      SpeedDialAction(
+        icon: Icons.add,
+        label: 'Add Account',
+        onPressed: _showForm,
+      ),
+      if (_accounts.length >= 2)
+        SpeedDialAction(
+          icon: Icons.swap_horiz_rounded,
+          label: 'Transfer',
+          onPressed: _showTransferDialog,
+        ),
+    ];
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F0),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.emerald))
-            : Column(
+        child: Stack(
+          children: [
+            _loading
+                ? Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
+                : Column(
                 children: [
-                  // ── Header ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: AppTheme.cardShadow,
-                          ),
-                          child: const Icon(Icons.account_balance_wallet_rounded, color: AppTheme.slate700, size: 20),
-                        ),
-                        const Expanded(
-                          child: Text(
-                            'Accounts',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.slate900),
-                          ),
-                        ),
-                        if (_accounts.length >= 2) ...[
-                          GestureDetector(
-                            onTap: _showTransferDialog,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: AppTheme.cardShadow,
-                              ),
-                              child: const Icon(Icons.swap_horiz_rounded, color: AppTheme.slate700, size: 20),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        GestureDetector(
-                          onTap: () => _showForm(),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              gradient: AppTheme.emeraldGradient,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: AppTheme.cardShadow,
-                            ),
-                            child: const Icon(Icons.add, color: Colors.white, size: 22),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // ── Summary Card ──
+                  const ScreenHeader('Accounts'),
+                  // -- Summary Card --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: _NetWorthSummaryCard(
@@ -475,27 +438,28 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       fmt: fmt,
                     ),
                   ),
-                  // ── Account List ──
+                  // -- Account List --
                   Expanded(
                     child: _accounts.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.account_balance_wallet_outlined, size: 56, color: AppTheme.slate300),
+                                Icon(Icons.account_balance_wallet_outlined, size: 56, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
                                 const SizedBox(height: 12),
-                                const Text('No accounts yet',
-                                    style: TextStyle(color: AppTheme.slate500, fontSize: 15)),
+                                Text('No accounts yet',
+                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 15)),
                                 const SizedBox(height: 16),
                                 GestureDetector(
                                   onTap: () => _showForm(),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                                     decoration: BoxDecoration(
-                                      gradient: AppTheme.emeraldGradient,
+                                      gradient: ThemeService.instance.cardGradient,
                                       borderRadius: BorderRadius.circular(12),
+                                      boxShadow: ThemeService.instance.primaryShadow,
                                     ),
-                                    child: const Text('Add your first account',
+                                    child: Text('Add your first account',
                                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
@@ -505,7 +469,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView(
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                               children: [
                                 for (final type in Account.types)
                                   if (groups.containsKey(type))
@@ -526,6 +490,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   ),
                 ],
               ),
+            const Positioned(
+              bottom: 16,
+              left: 16,
+              child: CalendarFab(),
+            ),
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: SpeedDialFab(actions: speedDialActions),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -541,31 +517,34 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   List<Color> _typeGradient(String type) => switch (type) {
-        'checking' => [AppTheme.blue, const Color(0xFF2563EB)],
+        'checking' || 'debit' => [AppTheme.blue, const Color(0xFF2563EB)],
         'savings' => [AppTheme.emerald, AppTheme.emeraldDark],
         'credit' => [AppTheme.error, const Color(0xFFDC2626)],
         'cash' => [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+        'investment' => [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
         _ => [const Color(0xFFA78BFA), const Color(0xFF8B5CF6)],
       };
 
   IconData _typeIcon(String type) => switch (type) {
-        'checking' => Icons.account_balance_rounded,
+        'checking' || 'debit' => Icons.account_balance_rounded,
         'savings' => Icons.savings_rounded,
         'credit' => Icons.credit_card_rounded,
         'cash' => Icons.payments_rounded,
+        'investment' => Icons.trending_up_rounded,
         _ => Icons.account_balance_wallet_rounded,
       };
 
   Color _typeColor(String type) => switch (type) {
-        'checking' => const Color(0xFF3B82F6),
+        'checking' || 'debit' => const Color(0xFF3B82F6),
         'savings' => const Color(0xFF10B981),
         'credit' => const Color(0xFFEF4444),
         'cash' => const Color(0xFFF59E0B),
+        'investment' => const Color(0xFF6366F1),
         _ => const Color(0xFF8B5CF6),
       };
 }
 
-// ── Net Worth Summary Card ─────────────────────────────────────────────────
+// -- Net Worth Summary Card -------------------------------------------------
 
 class _NetWorthSummaryCard extends StatelessWidget {
   final double netWorth, totalAssets, totalDebt;
@@ -586,19 +565,9 @@ class _NetWorthSummaryCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A2E22), Color(0xFF14532D), Color(0xFF0F766E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF10B981).withOpacity(0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          )
-        ],
+        boxShadow: ThemeService.instance.primaryShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +575,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Net Worth', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text('Net Worth', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -615,7 +584,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
                 ),
                 child: Text(
                   '$accountCount ${accountCount == 1 ? 'account' : 'accounts'}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
             ],
@@ -623,7 +592,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             fmt.format(netWorth),
-            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+            style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5),
           ),
           const SizedBox(height: 16),
           Row(
@@ -676,7 +645,7 @@ class _SummaryPill extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+                Text(label, style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
                 Text(value,
                     style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700),
@@ -691,7 +660,7 @@ class _SummaryPill extends StatelessWidget {
   }
 }
 
-// ── Account Section ────────────────────────────────────────────────────────
+// -- Account Section --------------------------------------------------------
 
 class _AccountSection extends StatelessWidget {
   final String type;
@@ -727,15 +696,15 @@ class _AccountSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.slate500,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     letterSpacing: 0.5)),
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: AppTheme.cardShadow,
             ),
@@ -757,7 +726,7 @@ class _AccountSection extends StatelessWidget {
                       height: 1,
                       indent: 68,
                       endIndent: 16,
-                      color: AppTheme.slate100,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                 ],
               ],
@@ -769,7 +738,7 @@ class _AccountSection extends StatelessWidget {
   }
 }
 
-// ── Account Item ───────────────────────────────────────────────────────────
+// REMOVED: _AccountCarouselHeader — see transactions screen instead
 
 class _AccountItem extends StatelessWidget {
   final Account account;
@@ -809,7 +778,7 @@ class _AccountItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            // Icon circle — matches transaction/recurring/goals screen style
+            // Icon circle � matches transaction/recurring/goals screen style
             Container(
               width: 44,
               height: 44,
@@ -826,26 +795,26 @@ class _AccountItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(account.name,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.slate900),
+                      style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
                   Row(
                     children: [
                       if (account.last4 != null)
-                        Text('•••• ${account.last4}',
-                            style: const TextStyle(fontSize: 11, color: AppTheme.slate500)),
+                        Text('·· ${account.last4}',
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                       if (dueSoon) ...[
                         if (account.last4 != null)
-                          const Text('  ·  ',
-                              style: TextStyle(fontSize: 11, color: AppTheme.slate400)),
-                        const Icon(Icons.warning_amber_rounded, size: 12, color: AppTheme.error),
+                          Text('  �  ',
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
+                        Icon(Icons.warning_amber_rounded, size: 12, color: AppTheme.error),
                         const SizedBox(width: 2),
                         Text(
                           daysUntil == 0 ? 'Due today' : 'Due in ${daysUntil}d',
-                          style: const TextStyle(
-                              fontSize: 11, color: AppTheme.error, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              fontSize: 12, color: AppTheme.error, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ],
@@ -865,14 +834,14 @@ class _AccountItem extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: isCredit
                         ? (balance > 0 ? AppTheme.error : AppTheme.emerald)
-                        : AppTheme.slate900,
+                        : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
                 GestureDetector(
                   onTap: onViewTransactions,
-                  child: const Text('view txns',
-                      style: TextStyle(fontSize: 10, color: AppTheme.emerald, fontWeight: FontWeight.w500)),
+                  child: Text('view txns',
+                      style: TextStyle(fontSize: 11, color: AppTheme.emerald, fontWeight: FontWeight.w500)),
                 ),
               ],
             ),

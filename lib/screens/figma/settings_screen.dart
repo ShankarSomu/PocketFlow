@@ -7,9 +7,12 @@ import '../../services/app_logger.dart';
 import '../../services/auth_service.dart';
 import '../../services/chat_parser.dart';
 import '../../services/groq_service.dart';
+import '../../services/refresh_notifier.dart';
+import '../../services/sms_service.dart';
+import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
 
-// ── Settings Screen ───────────────────────────────────────────────────────────
+// -- Settings Screen -----------------------------------------------------------
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,7 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 2, vsync: this);
+    _tab = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -36,12 +39,13 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F0),
+      backgroundColor: theme.colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ──
+            // -- Header --
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
@@ -52,22 +56,25 @@ class _SettingsScreenState extends State<SettingsScreen>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: AppTheme.cardShadow,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: AppTheme.slate700, size: 18),
+                      child: Icon(Icons.arrow_back_ios_new_rounded,
+                          color: theme.colorScheme.onSurface.withOpacity(0.8), size: 18),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Settings',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.slate900),
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
                   const SizedBox(width: 40),
@@ -75,28 +82,32 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
             const SizedBox(height: 14),
-            // ── Tab Bar ──
+            // -- Tab Bar --
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(14),
-                  boxShadow: AppTheme.cardShadow,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: TabBar(
                   controller: _tab,
                   indicator: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1A2E22), Color(0xFF0F766E)],
-                    ),
+                    gradient: ThemeService.instance.cardGradient,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicatorPadding: const EdgeInsets.all(3),
                   labelColor: Colors.white,
-                  unselectedLabelColor: AppTheme.slate500,
+                  unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.5),
                   labelStyle: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600),
                   dividerColor: Colors.transparent,
@@ -121,6 +132,16 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ],
                       ),
                     ),
+                    Tab(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.tune_rounded, size: 15),
+                          SizedBox(width: 6),
+                          Text('Preferences'),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -132,6 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 children: const [
                   _BackupTab(),
                   _AITab(),
+                  _PreferencesTab(),
                 ],
               ),
             ),
@@ -142,7 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 }
 
-// ── Backup Tab ────────────────────────────────────────────────────────────────
+// -- Backup Tab ----------------------------------------------------------------
 
 class _BackupTab extends StatefulWidget {
   const _BackupTab();
@@ -153,6 +175,7 @@ class _BackupTab extends StatefulWidget {
 
 class _BackupTabState extends State<_BackupTab> {
   bool _backingUp = false;
+  bool _settingUpFolder = false;
   String? _lastBackup;
   DriveFolder? _folder;
   String _backupFreq = 'daily';
@@ -183,178 +206,53 @@ class _BackupTabState extends State<_BackupTab> {
     });
   }
 
-  Future<void> _showFolderPicker() async {
-    setState(() => _backingUp = true);
+  Future<void> _autoSelectFolder() async {
+    setState(() => _settingUpFolder = true);
     try {
       if (!AuthService.isSignedIn) {
         final user = await AuthService.signIn();
         if (user == null) {
           if (!mounted) return;
-          setState(() => _backingUp = false);
+          setState(() => _settingUpFolder = false);
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Sign in failed')));
           return;
         }
       }
-      final folder = await _pickFolder();
-      if (folder != null) {
-        await AuthService.saveSelectedFolder(folder);
-        if (!mounted) return;
-        setState(() => _folder = folder);
+      // Find or create the dedicated app folder automatically
+      const folderName = 'PocketFlow Backups';
+      final folders = await AuthService.listFolders();
+      final existing = folders.where((f) => f.name == folderName).firstOrNull;
+      final DriveFolder folder;
+      if (existing != null) {
+        folder = existing;
+      } else {
+        folder = await AuthService.createFolder(folderName);
       }
+      await AuthService.saveSelectedFolder(folder);
+      if (!mounted) return;
+      setState(() => _folder = folder);
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Drive folder ready ?'),
+              backgroundColor: Color(0xFF10B981)));
     } catch (e) {
-      AppLogger.err('settings_folder_pick', e);
+      AppLogger.err('settings_auto_folder', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to select folder')));
+            const SnackBar(content: Text('Failed to connect to Drive')));
       }
     } finally {
-      if (mounted) setState(() => _backingUp = false);
-    }
-  }
-
-  Future<DriveFolder?> _pickFolder() async {
-    final folders = await AuthService.listFolders();
-    return showModalBottomSheet<DriveFolder>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: AppTheme.slate300,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
-              child: Text('Select Google Drive Folder',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700)),
-            ),
-            if (folders.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const Text(
-                        'No folders found. Create one to continue.',
-                        style: TextStyle(color: AppTheme.slate500)),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.emerald),
-                      onPressed: () async {
-                        Navigator.pop(ctx);
-                        await _createFolder();
-                      },
-                      child: const Text('Create Backup Folder'),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              )
-            else
-              SizedBox(
-                height: MediaQuery.of(ctx).size.height * 0.55,
-                child: ListView.separated(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: folders.length + 1,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1),
-                  itemBuilder: (_, i) {
-                    if (i == folders.length) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.emerald),
-                          onPressed: () async {
-                            Navigator.pop(ctx);
-                            await _createFolder();
-                          },
-                          child: const Text('Create New Folder'),
-                        ),
-                      );
-                    }
-                    final f = folders[i];
-                    return ListTile(
-                      leading: const Icon(Icons.folder_open_rounded,
-                          color: AppTheme.emerald),
-                      title: Text(f.name),
-                      subtitle: Text(f.path,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              const TextStyle(fontSize: 11)),
-                      trailing: const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 14),
-                      onTap: () => Navigator.pop(ctx, f),
-                    );
-                  },
-                ),
-              ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _createFolder() async {
-    final ctrl = TextEditingController(text: 'PocketFlow Backups');
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Create Drive Folder'),
-        content: TextField(
-          controller: ctrl,
-          decoration:
-              const InputDecoration(labelText: 'Folder name'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-              child: const Text('Create')),
-        ],
-      ),
-    );
-    if (name == null || name.isEmpty) return;
-    try {
-      final f = await AuthService.createFolder(name);
-      await AuthService.saveSelectedFolder(f);
-      if (!mounted) return;
-      setState(() => _folder = f);
-    } catch (e) {
-      AppLogger.err('settings_create_folder', e);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Unable to create folder')));
-      }
+      if (mounted) setState(() => _settingUpFolder = false);
     }
   }
 
   Future<void> _backup() async {
     if (!AuthService.isSignedIn) {
-      await _showFolderPicker();
+      await _autoSelectFolder();
       if (!AuthService.isSignedIn) return;
     }
     if (_folder == null) {
-      await _showFolderPicker();
+      await _autoSelectFolder();
       if (_folder == null) return;
     }
     setState(() => _backingUp = true);
@@ -364,7 +262,7 @@ class _BackupTabState extends State<_BackupTab> {
       if (!mounted) return;
       setState(() => _backingUp = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Backup successful ✓'),
+          content: Text('Backup successful ?'),
           backgroundColor: Color(0xFF10B981)));
     } catch (e) {
       if (!mounted) return;
@@ -385,18 +283,18 @@ class _BackupTabState extends State<_BackupTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Restore Backup?'),
-        content: const Text(
+        title: Text('Restore Backup?'),
+        content: Text(
             'This will replace your current data with the backup. Cannot be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text('Cancel')),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: FilledButton.styleFrom(
                   backgroundColor: Colors.red),
-              child: const Text('Restore')),
+              child: Text('Restore')),
         ],
       ),
     );
@@ -437,10 +335,10 @@ class _BackupTabState extends State<_BackupTab> {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-                color: AppTheme.slate300,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2)),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
             child: Text('Auto Backup Frequency',
                 style: TextStyle(
@@ -471,10 +369,10 @@ class _BackupTabState extends State<_BackupTab> {
                                   : FontWeight.normal,
                               color: sel
                                   ? const Color(0xFF10B981)
-                                  : AppTheme.slate700)),
+                                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
                     ),
                     if (sel)
-                      const Icon(Icons.check_circle_rounded,
+                      Icon(Icons.check_circle_rounded,
                           size: 20, color: Color(0xFF10B981)),
                   ],
                 ),
@@ -514,12 +412,15 @@ class _BackupTabState extends State<_BackupTab> {
             _BackupSettingRow(
               icon: Icons.cloud_rounded,
               title: 'Cloud Storage',
-              subtitle: _folder == null
-                  ? (isSignedIn ? 'Tap to select folder' : 'Not connected')
-                  : _folder!.name,
-              subtitleColor:
-                  _folder != null ? const Color(0xFF10B981) : null,
-              onTap: _showFolderPicker,
+              subtitle: _settingUpFolder
+                  ? 'Connecting...'
+                  : _folder == null
+                      ? (AuthService.isSignedIn ? 'Tap to set up Drive folder' : 'Tap to connect Google Drive')
+                      : _folder!.name,
+              subtitleColor: _settingUpFolder
+                  ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
+                  : _folder != null ? const Color(0xFF10B981) : null,
+              onTap: _settingUpFolder ? () {} : _autoSelectFolder,
             ),
             const Divider(height: 1, color: Color(0xFFF1F5F9)),
             _BackupSettingRow(
@@ -598,7 +499,7 @@ class _BackupTabState extends State<_BackupTab> {
   }
 }
 
-// ── AI Tab ────────────────────────────────────────────────────────────────────
+// -- AI Tab --------------------------------------------------------------------
 
 class _AITab extends StatefulWidget {
   const _AITab();
@@ -657,10 +558,10 @@ class _AITabState extends State<_AITab> {
           backgroundColor: const Color(0xFFF7F5F0),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(children: [
-            const Icon(Icons.key_rounded, color: AppTheme.emerald, size: 20),
+            Icon(Icons.key_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
             const SizedBox(width: 8),
-            const Text('Configure AI Key',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
+            Text('Configure AI Key',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
           ]),
           content: SizedBox(
             width: 320,
@@ -675,12 +576,12 @@ class _AITabState extends State<_AITab> {
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: selectedProvider == p ? AppTheme.emerald : AppTheme.slate100,
+                        color: selectedProvider == p ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(p.label, textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: selectedProvider == p ? Colors.white : AppTheme.slate600,
+                            color: selectedProvider == p ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                             fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ),
@@ -691,32 +592,32 @@ class _AITabState extends State<_AITab> {
                 onTap: () async {},
                 child: Text(
                   'Get key: ${selectedProvider.setupUrl}',
-                  style: const TextStyle(fontSize: 10, color: AppTheme.slate500, decoration: TextDecoration.underline),
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), decoration: TextDecoration.underline),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: ctrl,
                 obscureText: obscure,
-                style: const TextStyle(fontSize: 13),
+                style: TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: selectedProvider.hint,
-                  hintStyle: const TextStyle(color: AppTheme.slate400, fontSize: 13),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 13),
                   filled: true,
                   fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppTheme.slate200)),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppTheme.slate200)),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppTheme.emerald, width: 2)),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)),
                   suffixIcon: IconButton(
                     icon: Icon(obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        size: 18, color: AppTheme.slate400),
+                        size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
                     onPressed: () => setLocal(() => obscure = !obscure),
                   ),
                 ),
@@ -730,21 +631,22 @@ class _AITabState extends State<_AITab> {
                   await AiService.clearApiKey(_provider);
                   if (ctx.mounted) Navigator.pop(ctx, false);
                 },
-                child: const Text('Remove', style: TextStyle(color: AppTheme.error)),
+                child: Text('Remove',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, null),
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppTheme.emerald),
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
               onPressed: () async {
                 final key = ctrl.text.trim();
                 if (key.isEmpty) return;
                 await AiService.saveApiKey(key, selectedProvider);
                 if (ctx.mounted) Navigator.pop(ctx, true);
               },
-              child: const Text('Save'),
+              child: Text('Save'),
             ),
           ],
         ),
@@ -763,60 +665,70 @@ class _AITabState extends State<_AITab> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       children: [
-        // ── AI Overview card ──
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1A2E22), Color(0xFF0F766E)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.auto_awesome_rounded,
-                    color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('AI Assistant',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700)),
-                    SizedBox(height: 3),
-                    Text(
-                        'Configure how the AI interprets your transactions',
-                        style: TextStyle(
-                            color: Colors.white60, fontSize: 11)),
+        // -- AI Overview card --
+        ListenableBuilder(
+          listenable: ThemeService.instance,
+          builder: (context, _) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primaryContainer,
+                    Theme.of(context).colorScheme.secondaryContainer,
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: ThemeService.instance.primaryShadow,
               ),
-            ],
-          ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.auto_awesome_rounded,
+                        color: Theme.of(context).colorScheme.primary, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('AI Assistant',
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700)),
+                        SizedBox(height: 3),
+                        Text(
+                            'Configure how the AI interprets your transactions',
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.7), fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
         const SizedBox(height: 14),
-        // ── API Configuration ──
+        // -- API Configuration --
         _SettingsCard(
           title: 'API Configuration',
           icon: Icons.key_rounded,
           children: [
             _ActionRow(
               icon: _hasKey ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-              iconColor: _hasKey ? AppTheme.emerald : AppTheme.warning,
+              iconColor: _hasKey
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.error,
               title: _hasKey ? '${_provider.label} key configured' : 'No API key set',
               subtitle: _hasKey ? _maskedKey : 'Required to use AI chat features',
               trailingLabel: _hasKey ? 'Change' : 'Setup',
@@ -825,7 +737,7 @@ class _AITabState extends State<_AITab> {
           ],
         ),
         const SizedBox(height: 14),
-        // ── Default Accounts ──
+        // -- Default Accounts --
         _SettingsCard(
           title: 'Default Accounts',
           icon: Icons.account_balance_wallet_rounded,
@@ -858,14 +770,14 @@ class _AITabState extends State<_AITab> {
           ],
         ),
         const SizedBox(height: 12),
-        // ── Diagnostics ──
+        // -- Diagnostics --
         _SettingsCard(
           title: 'Diagnostics',
           icon: Icons.bug_report_rounded,
           children: [
             _DropdownRow(
               icon: Icons.tune_rounded,
-              iconColor: AppTheme.slate500,
+              iconColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
               title: 'Log Level',
               subtitle: 'Controls verbosity of app logs',
               value: _logLevel,
@@ -888,7 +800,286 @@ class _AITabState extends State<_AITab> {
   }
 }
 
-// ── Shared Settings Widgets ───────────────────────────────────────────────────
+// -- Preferences Tab ----------------------------------------------------------
+
+class _PreferencesTab extends StatefulWidget {
+  const _PreferencesTab();
+
+  @override
+  State<_PreferencesTab> createState() => _PreferencesTabState();
+}
+
+class _PreferencesTabState extends State<_PreferencesTab> {
+  bool _notifyTransactions = true;
+  bool _notifyBudget = true;
+  bool _notifyWeekly = false;
+
+  bool _smsEnabled = false;
+  SmsScanRange _smsScanRange = SmsScanRange.oneMonth;
+  DateTime? _smsLastScan;
+  bool _smsScanning = false;
+  String? _smsResult;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifPrefs();
+    _loadSmsPrefs();
+  }
+
+  Future<void> _loadNotifPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _notifyTransactions = prefs.getBool('notif_transactions') ?? true;
+      _notifyBudget = prefs.getBool('notif_budget') ?? true;
+      _notifyWeekly = prefs.getBool('notif_weekly') ?? false;
+    });
+  }
+
+  Future<void> _setNotifPref(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
+  Future<void> _loadSmsPrefs() async {
+    final enabled = await SmsService.isEnabled();
+    final range = await SmsService.getScanRange();
+    final lastScan = await SmsService.getLastScan();
+    if (!mounted) return;
+    setState(() {
+      _smsEnabled = enabled;
+      _smsScanRange = range;
+      _smsLastScan = lastScan;
+    });
+  }
+
+  Future<void> _toggleSms(bool value) async {
+    if (value) {
+      final granted = await SmsService.requestPermission();
+      if (!granted) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SMS permission is required')),
+        );
+        return;
+      }
+    }
+    await SmsService.setEnabled(value);
+    if (!mounted) return;
+    setState(() => _smsEnabled = value);
+    if (value) _runSmsScan();
+  }
+
+  Future<void> _runSmsScan() async {
+    if (_smsScanning) return;
+    final ok = await SmsService.hasPermission();
+    if (!ok) {
+      final granted = await SmsService.requestPermission();
+      if (!granted) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('SMS permission denied')),
+        );
+        return;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _smsScanning = true;
+      _smsResult = null;
+    });
+    try {
+      final result = await SmsService.scanAndImport();
+      notifyDataChanged();
+      if (!mounted) return;
+      setState(() {
+        _smsScanning = false;
+        _smsLastScan = DateTime.now();
+        _smsResult = result.hasError ? result.error : result.toString();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _smsScanning = false;
+        _smsResult = 'Scan failed: $e';
+      });
+    }
+  }
+
+  String _formatLastScan(DateTime time) {
+    return DateFormat('MMM d, h:mm a').format(time);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      children: [
+        _SettingsCard(
+          title: 'Notifications',
+          icon: Icons.notifications_rounded,
+          children: [
+            _ToggleRow(
+              icon: Icons.receipt_long_rounded,
+              title: 'Transaction Alerts',
+              subtitle: 'Notify when transactions are logged',
+              value: _notifyTransactions,
+              onChanged: (v) {
+                setState(() => _notifyTransactions = v);
+                _setNotifPref('notif_transactions', v);
+              },
+            ),
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
+            _ToggleRow(
+              icon: Icons.pie_chart_rounded,
+              title: 'Budget Warnings',
+              subtitle: 'Alert when nearing budget limits',
+              value: _notifyBudget,
+              onChanged: (v) {
+                setState(() => _notifyBudget = v);
+                _setNotifPref('notif_budget', v);
+              },
+            ),
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
+            _ToggleRow(
+              icon: Icons.calendar_today_rounded,
+              title: 'Weekly Summary',
+              subtitle: 'Get a weekly spending digest',
+              value: _notifyWeekly,
+              onChanged: (v) {
+                setState(() => _notifyWeekly = v);
+                _setNotifPref('notif_weekly', v);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _SettingsCard(
+          title: 'Appearance',
+          icon: Icons.palette_rounded,
+          children: const [
+            _AppearanceSection(),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _SettingsCard(
+          title: 'SMS Auto-Import',
+          icon: Icons.sms_outlined,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.privacy_tip_outlined,
+                      size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Reads only bank/wallet SMS locally on your device. Never uploaded.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
+            _ToggleRow(
+              icon: Icons.sms_outlined,
+              title: 'Enable SMS Import',
+              subtitle: _smsEnabled
+                  ? 'Active - reads financial SMS'
+                  : 'Disabled',
+              value: _smsEnabled,
+              onChanged: _toggleSms,
+            ),
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Icon(Icons.date_range_outlined,
+                      size: 18,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Scan range',
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: theme.colorScheme.onSurface)),
+                  ),
+                  DropdownButton<SmsScanRange>(
+                    value: _smsScanRange,
+                    isDense: true,
+                    underline: const SizedBox(),
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurface),
+                    items: SmsScanRange.values
+                        .map((r) => DropdownMenuItem(
+                              value: r,
+                              child: Text(r.label),
+                            ))
+                        .toList(),
+                    onChanged: (v) async {
+                      if (v == null) return;
+                      await SmsService.setScanRange(v);
+                      setState(() => _smsScanRange = v);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            if (_smsLastScan != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Last scan: ${_formatLastScan(_smsLastScan!)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ),
+            if (_smsResult != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  _smsResult!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ),
+            if (_smsEnabled) ...[
+              const SizedBox(height: 10),
+              _SettingsActionButton(
+                label: _smsScanning ? 'Scanning...' : 'Scan Now',
+                icon: _smsScanning
+                    ? Icons.hourglass_top_rounded
+                    : Icons.play_arrow_rounded,
+                onTap: _smsScanning ? () {} : _runSmsScan,
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// -- Shared Settings Widgets ---------------------------------------------------
 
 class _SettingsCard extends StatelessWidget {
   final String title;
@@ -899,30 +1090,31 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.cardShadow,
+        side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 15, color: AppTheme.emerald),
-              const SizedBox(width: 6),
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.slate900)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 15, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(title,
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
       ),
     );
   }
@@ -946,18 +1138,18 @@ class _SettingsActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFF7F5F0),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.slate200),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: AppTheme.emerald),
+            Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.slate700)),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
           ],
         ),
       ),
@@ -1004,13 +1196,13 @@ class _DropdownRow<T> extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.slate900)),
+                        color: Theme.of(context).colorScheme.onSurface)),
                 Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppTheme.slate500)),
+                    style: TextStyle(
+                        fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
               ],
             ),
           ),
@@ -1020,12 +1212,12 @@ class _DropdownRow<T> extends StatelessWidget {
             items: items,
             onChanged: onChanged,
             underline: const SizedBox(),
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.slate700,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                 fontWeight: FontWeight.w600),
-            icon: const Icon(Icons.expand_more_rounded,
-                size: 18, color: AppTheme.slate400),
+            icon: Icon(Icons.expand_more_rounded,
+                size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
           ),
         ],
       ),
@@ -1071,22 +1263,22 @@ class _ActionRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.slate900)),
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   Text(subtitle,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.slate500)),
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
                 ],
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppTheme.emerald.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(trailingLabel,
-                  style: const TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.emerald)),
+                  style: TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
             ),
           ],
         ),
@@ -1095,7 +1287,7 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
-// ── Backup-specific widgets ───────────────────────────────────────────────────
+// -- Backup-specific widgets ---------------------------------------------------
 
 class _BackupStatusCard extends StatelessWidget {
   final DriveFolder? folder;
@@ -1112,97 +1304,66 @@ class _BackupStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasBackup = lastBackup != null;
-    String timeLabel = 'Never';
-    if (hasBackup) {
-      try {
-        final dt = DateTime.parse(lastBackup!).toLocal();
-        timeLabel = DateFormat('MMM d, y  h:mm a').format(dt);
-      } catch (_) {
-        timeLabel = lastBackup!;
-      }
-    }
-
+    final themeService = ThemeService.instance;
+    final statusLabel = isSignedIn ? 'Connected' : 'Not signed in';
+    final detail = !isSignedIn
+        ? 'Sign in to enable backup'
+        : folder == null
+            ? 'Drive folder not set'
+            : (lastBackup != null ? 'Last backup: $lastBackup' : 'No backups yet');
+    final badge = isSignedIn ? (folder == null ? 'Setup' : 'Ready') : 'Offline';
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A2E22), Color(0xFF065F46)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: themeService.cardGradient,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.cardShadow,
+        boxShadow: themeService.primaryShadow,
       ),
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.cloud_sync_rounded,
-                    color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Backup Status',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text(
-                      isSignedIn ? (userEmail ?? 'Signed in') : 'Not signed in',
-                      style: const TextStyle(
-                          color: Colors.white60, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: isSignedIn
-                        ? const Color(0xFF10B981).withValues(alpha: 0.25)
-                        : Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20)),
-                child: Text(
-                  isSignedIn ? 'Connected' : 'Offline',
-                  style: TextStyle(
-                      color: isSignedIn
-                          ? const Color(0xFF6EE7B7)
-                          : Colors.white70,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.cloud_sync_rounded,
+                color: Colors.white, size: 20),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _MetaChip(
-                  icon: Icons.schedule_rounded,
-                  label: 'Last backup',
-                  value: timeLabel),
-              const SizedBox(width: 10),
-              if (folder != null)
-                Expanded(
-                  child: _MetaChip(
-                      icon: Icons.folder_rounded,
-                      label: 'Folder',
-                      value: folder!.name),
-                ),
-            ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Backup Status',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(statusLabel,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 2),
+                Text(detail,
+                    style: const TextStyle(color: Colors.white60, fontSize: 11)),
+              ],
+            ),
+          ),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              badge,
+              style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -1233,17 +1394,17 @@ class _MetaChip extends StatelessWidget {
                 Icon(icon, size: 11, color: Colors.white54),
                 const SizedBox(width: 4),
                 Text(label,
-                    style: const TextStyle(
-                        color: Colors.white54, fontSize: 10)),
+                    style: TextStyle(
+                        color: Colors.white54, fontSize: 11)),
               ],
             ),
             const SizedBox(height: 3),
             Text(value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                     color: Colors.white,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600)),
           ],
         ),
@@ -1259,36 +1420,35 @@ class _BackupNowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeService = ThemeService.instance;
     return GestureDetector(
       onTap: backing ? null : onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          gradient: backing
-              ? null
-              : const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF059669)],
-                ),
-          color: backing ? AppTheme.slate200 : null,
+          gradient: backing ? null : themeService.cardGradient,
+          color: backing ? theme.colorScheme.surfaceContainerHighest : null,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: backing ? null : AppTheme.cardShadow,
+          boxShadow: backing ? null : themeService.primaryShadow,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (backing) ...[
-              const SizedBox(
+              SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppTheme.slate500)),
+                      strokeWidth: 2,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5))),
               const SizedBox(width: 10),
-              const Text('Backing up…',
+              Text('Backing up...',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.slate500)),
+                      color: theme.colorScheme.onSurface.withOpacity(0.5))),
             ] else ...[
               const Icon(Icons.backup_rounded,
                   color: Colors.white, size: 18),
@@ -1333,9 +1493,9 @@ class _BackupSettingRow extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                  color: AppTheme.emerald.withValues(alpha: 0.1),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, size: 17, color: AppTheme.emerald),
+              child: Icon(icon, size: 17, color: Theme.of(context).colorScheme.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1343,19 +1503,19 @@ class _BackupSettingRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.slate900)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   Text(subtitle,
                       style: TextStyle(
-                          fontSize: 11,
-                          color: subtitleColor ?? AppTheme.slate500)),
+                          fontSize: 12,
+                          color: subtitleColor ?? Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                size: 18, color: AppTheme.slate400),
+            Icon(Icons.chevron_right_rounded,
+                size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
           ],
         ),
       ),
@@ -1388,13 +1548,13 @@ class _ToggleRow extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: value
-                  ? AppTheme.emerald.withValues(alpha: 0.12)
-                  : AppTheme.slate100,
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon,
                 size: 17,
-                color: value ? AppTheme.emerald : AppTheme.slate400),
+                color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1402,20 +1562,20 @@ class _ToggleRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.slate900)),
+                        color: Theme.of(context).colorScheme.onSurface)),
                 Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppTheme.slate500)),
+                    style: TextStyle(
+                        fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
               ],
             ),
           ),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppTheme.emerald,
+            activeColor: Theme.of(context).colorScheme.primary,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
@@ -1423,3 +1583,203 @@ class _ToggleRow extends StatelessWidget {
     );
   }
 }
+
+// -- Appearance Section ----------------------------------------------------
+
+class _AppearanceSection extends StatefulWidget {
+  const _AppearanceSection();
+  @override
+  State<_AppearanceSection> createState() => _AppearanceSectionState();
+}
+
+class _AppearanceSectionState extends State<_AppearanceSection> {
+  @override
+  void initState() {
+    super.initState();
+    ThemeService.instance.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    ThemeService.instance.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ts = ThemeService.instance;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text('Accent Color',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+          ),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: AppAccentColor.values.map((accent) {
+              final color = ThemeService.accentColors[accent]!;
+              final name = ThemeService.accentNames[accent]!;
+              final selected = ts.accent == accent;
+              return GestureDetector(
+                onTap: () => ts.setAccent(accent),
+                child: Tooltip(
+                  message: name,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selected ? Colors.white : Colors.transparent,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(selected ? 0.5 : 0.2),
+                          blurRadius: selected ? 10 : 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: selected
+                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
+                        : null,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+          const SizedBox(height: 16),
+
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text('Contrast',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+          ),
+          Row(
+            children: [
+              Icon(Icons.contrast_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+              Expanded(
+                child: Slider(
+                  value: ts.contrast,
+                  min: 0.7,
+                  max: 1.3,
+                  divisions: 30,
+                  label: '${((ts.contrast - 0.7) / 0.6 * 100).round()}%',
+                  onChanged: (v) => ts.setContrast(v),
+                ),
+              ),
+              Text('${((ts.contrast - 0.7) / 0.6 * 100).round()}%',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+          const SizedBox(height: 16),
+
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text('Text Size',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+          ),
+          Row(
+            children: [
+              Icon(Icons.text_fields_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+              Expanded(
+                child: Slider(
+                  value: ts.textSizeIndex.toDouble(),
+                  min: 0,
+                  max: 2,
+                  divisions: 2,
+                  label: ts.textSizeIndex == 0 ? 'Small' : ts.textSizeIndex == 1 ? 'Normal' : 'Large',
+                  onChanged: (v) => ts.setTextSizeIndex(v.toInt()),
+                ),
+              ),
+              Text(ts.textSizeIndex == 0 ? 'Small (85%)' : ts.textSizeIndex == 1 ? 'Normal (100%)' : 'Large (120%)',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+          const SizedBox(height: 16),
+
+          _ToggleRow(
+            icon: Icons.swap_horiz_rounded,
+            title: 'Left-Handed Mode',
+            subtitle: 'Moves FAB to left side',
+            value: ts.leftHanded,
+            onChanged: (v) => ts.setLeftHanded(v),
+          ),
+          const SizedBox(height: 16),
+          Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+          const SizedBox(height: 16),
+
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text('Theme',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+          ),
+          Row(
+            children: AppThemeMode.values.map((m) {
+              final selected = ts.mode == m;
+              final label = m == AppThemeMode.system
+                  ? 'System'
+                  : m == AppThemeMode.light
+                      ? 'Light'
+                      : 'Dark';
+              final icon = m == AppThemeMode.system
+                  ? Icons.brightness_auto_rounded
+                  : m == AppThemeMode.light
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => ts.setMode(m),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: EdgeInsets.only(right: m != AppThemeMode.dark ? 8 : 0),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: selected ? ts.primaryColor : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon,
+                            size: 20,
+                            color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                        const SizedBox(height: 4),
+                        Text(label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            )),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

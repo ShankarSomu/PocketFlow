@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 import '../../db/database.dart';
 import '../../services/app_logger.dart';
 import '../../services/auth_service.dart';
 import '../../services/refresh_notifier.dart';
+import '../../services/seed_data.dart';
+import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
 import 'shared.dart';
 
@@ -20,37 +21,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   double _budgetCompliance = 0;
   int _goalsOnTrack = 0;
   int _totalGoals = 0;
-  bool _notifyTransactions = true;
-  bool _notifyBudget = true;
-  bool _notifyWeekly = false;
 
   @override
   void initState() {
     super.initState();
     _loadAccountHealth();
-    _loadNotifPrefs();
-  }
-
-  Future<void> _loadNotifPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _notifyTransactions = prefs.getBool('notif_transactions') ?? true;
-      _notifyBudget = prefs.getBool('notif_budget') ?? true;
-      _notifyWeekly = prefs.getBool('notif_weekly') ?? false;
-    });
-  }
-
-  Future<void> _setNotifPref(String key, bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(key, value);
   }
 
   Future<void> _loadAccountHealth() async {
     final now = DateTime.now();
     final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
     final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
-    final savingsRate = income > 0 ? ((income - expenses) / income * 100).clamp(0.0, 100.0) : 0.0;
+    final savingsRate = income > 0
+        ? ((income - expenses) / income * 100).clamp(0.0, 100.0)
+        : 0.0;
 
     final budgets = await AppDatabase.getBudgets(now.month, now.year);
     final spent = await AppDatabase.monthlyExpenseByCategory(now.month, now.year);
@@ -60,7 +44,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final spentAmount = spent[b.category] ?? 0;
       if (spentAmount <= b.limit) onTrackCount++;
     }
-    final budgetCompliance = budgetsWithLimit.isNotEmpty ? (onTrackCount / budgetsWithLimit.length * 100) : 0.0;
+    final budgetCompliance = budgetsWithLimit.isNotEmpty
+        ? (onTrackCount / budgetsWithLimit.length * 100)
+        : 0.0;
 
     final goals = await AppDatabase.getGoals();
     final goalsOnTrack = goals.where((g) => g.progress >= 0.5).length;
@@ -74,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-
   Future<void> _signIn() async {
     setState(() {
       _loading = true;
@@ -85,9 +70,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _loading = false;
     });
     if (user != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Signed in as ${user.email}')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Signed in as ${user.email}')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sign in failed')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Sign in failed')));
     }
   }
 
@@ -95,7 +82,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await AuthService.signOut();
     await AuthService.clearSelectedFolder();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signed out')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Signed out')));
   }
 
   Future<void> _showProfileMenu() async {
@@ -111,16 +99,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (isSignedIn) ...[
               ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
-                  child: user?.photoUrl == null ? const Icon(Icons.person) : null,
+                  backgroundImage:
+                      user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
+                  child: user?.photoUrl == null
+                      ? const Icon(Icons.person)
+                      : null,
                 ),
-                title: Text(user?.displayName ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(user?.email ?? '', style: const TextStyle(fontSize: 12)),
+                title: Text(user?.displayName ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(user?.email ?? '',
+                    style: const TextStyle(fontSize: 12)),
               ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+                title: const Text('Sign Out',
+                    style: TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _signOut();
@@ -129,8 +123,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.delete_forever, color: Colors.red),
-                title: const Text('Delete All Data', style: TextStyle(color: Colors.red)),
-                subtitle: const Text('Permanently delete all local data', style: TextStyle(fontSize: 11)),
+                title: const Text('Delete All Data',
+                    style: TextStyle(color: Colors.red)),
+                subtitle: const Text('Permanently delete all local data',
+                    style: TextStyle(fontSize: 11)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _deleteAllData();
@@ -139,7 +135,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ] else ...[
               const Padding(
                 padding: EdgeInsets.all(16),
-                child: Text('Sign in to access backups and premium features', style: TextStyle(color: Colors.grey)),
+                child: Text(
+                    'Sign in to access backups and premium features',
+                    style: TextStyle(color: Colors.grey)),
               ),
               ListTile(
                 leading: const Icon(Icons.login, color: Colors.blue),
@@ -161,10 +159,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete All Data?'),
-        content: const Text('This will permanently delete all transactions, accounts, budgets, savings goals and recurring transactions. This cannot be undone.'),
+        content: const Text(
+            'This will permanently delete all transactions, accounts, budgets, savings goals and recurring transactions. This cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: Colors.red), child: const Text('Delete Everything')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Delete Everything')),
         ],
       ),
     );
@@ -180,14 +184,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _loading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All data deleted successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All data deleted successfully')));
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
       });
       AppLogger.err('profile_delete_all_data', e);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to delete data')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to delete data')));
+    }
+  }
+
+  Future<void> _loadSampleData() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Load Sample Data?'),
+        content: const Text(
+            'This will populate your app with 13 months of realistic demo data including accounts, transactions, budgets, savings goals, and recurring transactions. This is useful for testing and exploring features.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Load Data')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    setState(() {
+      _loading = true;
+    });
+    try {
+      await SeedData.load();
+      notifyDataChanged();
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sample data loaded successfully! 🎉')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+      AppLogger.err('profile_load_sample_data', e);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to load sample data')));
     }
   }
 
@@ -197,132 +245,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isSignedIn = AuthService.isSignedIn;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F0),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.emerald))
-            : Column(
-                children: [
-                  // ── Header ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Row(
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.emerald))
+            : ListenableBuilder(
+                listenable: ThemeService.instance,
+                builder: (context, _) {
+                  return Container(
+                    color: Theme.of(context).colorScheme.surface,
+                    child: Column(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: AppTheme.cardShadow,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: AppTheme.cardShadow,
+                                ),
+                                child: Icon(Icons.person_rounded,
+                                    color: Theme.of(context).colorScheme.onPrimaryContainer, size: 20),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  'Profile',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: Theme.of(context).colorScheme.onSurface),
+                                ),
+                              ),
+                              const SizedBox(width: 40),
+                            ],
                           ),
-                          child: const Icon(Icons.person_rounded, color: AppTheme.slate700, size: 20),
                         ),
-                        const Expanded(
-                          child: Text(
-                            'Profile',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.slate900),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: _ProfileHeroCard(
+                            user: user,
+                            isSignedIn: isSignedIn,
+                            savingsRate: _savingsRate,
+                            budgetCompliance: _budgetCompliance,
+                            goalsOnTrack: _goalsOnTrack,
+                            totalGoals: _totalGoals,
+                            onAvatarTap: _showProfileMenu,
                           ),
                         ),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
-                  ),
-                  // ── Profile Hero Card ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: _ProfileHeroCard(
-                      user: user,
-                      isSignedIn: isSignedIn,
-                      savingsRate: _savingsRate,
-                      budgetCompliance: _budgetCompliance,
-                      goalsOnTrack: _goalsOnTrack,
-                      totalGoals: _totalGoals,
-                      onAvatarTap: _showProfileMenu,
-                    ),
-                  ),
-                  // ── Sections ──
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                      children: [
-                        // Account
-                        _SectionCard(
-                          title: 'Account',
-                          icon: Icons.manage_accounts_rounded,
-                          children: [
-                            _TileRow(
-                              icon: isSignedIn ? Icons.logout_rounded : Icons.login_rounded,
-                              label: isSignedIn ? 'Sign Out' : 'Sign In with Google',
-                              color: isSignedIn ? AppTheme.error : AppTheme.emerald,
-                              onTap: isSignedIn ? _signOut : _signIn,
-                            ),
-                            if (isSignedIn) ...[
-                              Divider(height: 1, color: AppTheme.slate100),
-                              _TileRow(
-                                icon: Icons.delete_forever_rounded,
-                                label: 'Delete All Data',
-                                color: AppTheme.error,
-                                onTap: _deleteAllData,
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                            children: [
+                              _SectionCard(
+                                title: 'Account',
+                                icon: Icons.manage_accounts_rounded,
+                                children: [
+                                  _TileRow(
+                                    icon: isSignedIn
+                                        ? Icons.logout_rounded
+                                        : Icons.login_rounded,
+                                    label: isSignedIn
+                                        ? 'Sign Out'
+                                        : 'Sign In with Google',
+                                    color: isSignedIn
+                                        ? AppTheme.error
+                                        : AppTheme.emerald,
+                                    onTap: isSignedIn ? _signOut : _signIn,
+                                  ),
+                                  if (isSignedIn) ...[
+                                    Divider(height: 1, color: Theme.of(context).dividerColor),
+                                    _TileRow(
+                                      icon: Icons.delete_forever_rounded,
+                                      label: 'Delete All Data',
+                                      color: AppTheme.error,
+                                      onTap: _deleteAllData,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              _SectionCard(
+                                title: 'Developer',
+                                icon: Icons.code_rounded,
+                                children: [
+                                  _TileRow(
+                                    icon: Icons.data_object_rounded,
+                                    label: 'Load Sample Data',
+                                    color: AppTheme.blue,
+                                    onTap: _loadSampleData,
+                                  ),
+                                ],
                               ),
                             ],
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Notifications
-                        _SectionCard(
-                          title: 'Notifications',
-                          icon: Icons.notifications_rounded,
-                          children: [
-                            _SwitchTile(
-                              icon: Icons.receipt_long_rounded,
-                              label: 'Transaction Alerts',
-                              subtitle: 'Notify when transactions are logged',
-                              color: AppTheme.emerald,
-                              value: _notifyTransactions,
-                              onChanged: (v) {
-                                setState(() => _notifyTransactions = v);
-                                _setNotifPref('notif_transactions', v);
-                              },
-                            ),
-                            Divider(height: 1, color: AppTheme.slate100),
-                            _SwitchTile(
-                              icon: Icons.pie_chart_rounded,
-                              label: 'Budget Warnings',
-                              subtitle: 'Alert when nearing budget limits',
-                              color: AppTheme.warning,
-                              value: _notifyBudget,
-                              onChanged: (v) {
-                                setState(() => _notifyBudget = v);
-                                _setNotifPref('notif_budget', v);
-                              },
-                            ),
-                            Divider(height: 1, color: AppTheme.slate100),
-                            _SwitchTile(
-                              icon: Icons.calendar_today_rounded,
-                              label: 'Weekly Summary',
-                              subtitle: 'Get a weekly spending digest',
-                              color: AppTheme.blue,
-                              value: _notifyWeekly,
-                              onChanged: (v) {
-                                setState(() => _notifyWeekly = v);
-                                _setNotifPref('notif_weekly', v);
-                              },
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
       ),
     );
   }
 }
-
-// ── Profile Hero Card ─────────────────────────────────────────────────────
 
 class _ProfileHeroCard extends StatelessWidget {
   final dynamic user;
@@ -375,12 +405,17 @@ class _ProfileHeroCard extends StatelessWidget {
                     gradient: AppTheme.emeraldGradient,
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(color: const Color(0xFF10B981).withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4))
+                      BoxShadow(
+                          color: const Color(0xFF10B981).withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4))
                     ],
                   ),
                   child: user?.photoUrl != null
-                      ? ClipOval(child: Image.network(user!.photoUrl!, fit: BoxFit.cover))
-                      : const Icon(Icons.person_rounded, size: 32, color: Colors.white),
+                      ? ClipOval(
+                          child: Image.network(user!.photoUrl!, fit: BoxFit.cover))
+                      : const Icon(Icons.person_rounded,
+                          size: 32, color: Colors.white),
                 ),
               ),
               const SizedBox(width: 16),
@@ -390,7 +425,10 @@ class _ProfileHeroCard extends StatelessWidget {
                   children: [
                     Text(
                       user?.displayName ?? 'Profile',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                      style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -410,7 +448,10 @@ class _ProfileHeroCard extends StatelessWidget {
                       ),
                       child: Text(
                         isSignedIn ? 'Premium Member' : 'Guest',
-                        style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -469,16 +510,20 @@ class _StatChip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 9, fontWeight: FontWeight.w500)),
+          Text(label,
+              style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(value,
+              style: TextStyle(
+                  color: color, fontSize: 16, fontWeight: FontWeight.w700)),
         ],
       ),
     );
   }
 }
-
-// ── Section Card ──────────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final String title;
@@ -488,28 +533,36 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return ListenableBuilder(
+      listenable: ThemeService.instance,
+      builder: (context, _) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 16, color: AppTheme.emerald),
-              const SizedBox(width: 6),
-              Text(title,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
+              Row(
+                children: [
+                  Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onSurface)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ...children,
             ],
           ),
-          const SizedBox(height: 14),
-          ...children,
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -523,10 +576,17 @@ class _InfoRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.slate500, fontWeight: FontWeight.w500)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 11,
+                color: AppTheme.slate500,
+                fontWeight: FontWeight.w500)),
         const SizedBox(height: 3),
         Text(value,
-            style: const TextStyle(fontSize: 13, color: AppTheme.slate900, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+                fontSize: 13,
+                color: AppTheme.slate900,
+                fontWeight: FontWeight.w500),
             maxLines: 2,
             overflow: TextOverflow.ellipsis),
       ],
@@ -564,7 +624,10 @@ class _OutlineActionButton extends StatelessWidget {
             Icon(icon, size: 15, color: AppTheme.emerald),
             const SizedBox(width: 6),
             Text(label,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.slate700)),
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.slate700)),
           ],
         ),
       ),
@@ -600,9 +663,13 @@ class _TileRow extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(label,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color)),
             ),
-            Icon(Icons.chevron_right_rounded, size: 20, color: color.withOpacity(0.5)),
+            Icon(Icons.chevron_right_rounded,
+                size: 20, color: color.withOpacity(0.5)),
           ],
         ),
       ),
@@ -610,56 +677,3 @@ class _TileRow extends StatelessWidget {
   }
 }
 
-class _SwitchTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final Color color;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  const _SwitchTile({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.color,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.slate900)),
-                Text(subtitle,
-                    style: const TextStyle(fontSize: 11, color: AppTheme.slate500)),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppTheme.emerald,
-          ),
-        ],
-      ),
-    );
-  }
-}

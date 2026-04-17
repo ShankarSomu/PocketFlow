@@ -6,6 +6,8 @@ import '../models/account.dart';
 import '../models/budget.dart';
 import '../models/recurring_transaction.dart';
 import '../models/savings_goal.dart';
+import '../services/auth_service.dart';
+import '../services/theme_service.dart';
 import '../services/refresh_notifier.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
@@ -33,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _dashboardController = PageController(viewportFraction: 0.98);
+    _dashboardController = PageController(viewportFraction: 1.0);
     _load();
     appRefresh.addListener(_load);
   }
@@ -110,44 +112,56 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _selectedCategoryIndex = index);
   }
 
-  Widget _buildDashboardPager(NumberFormat fmt) {
-    return SizedBox(
-      height: 500,
-      child: Column(
-        children: [
-          Expanded(
-            child: PageView(
-              controller: _dashboardController,
-              onPageChanged: _onDashboardPageChanged,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _BalanceCard(
-                      totalBalance: _totalBalance,
-                      cashAvailable: _cashAvailable,
-                      monthlyChange: _monthlyChange,
-                      fmt: fmt,
+  Widget _buildDashboardPager(NumberFormat fmt, double height) {
+    return ClipRect(
+      child: SizedBox(
+        height: height,
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView(
+                controller: _dashboardController,
+                physics: const PageScrollPhysics(),
+                onPageChanged: _onDashboardPageChanged,
+                children: [
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _BalanceCard(
+                          totalBalance: _totalBalance,
+                          cashAvailable: _cashAvailable,
+                          monthlyChange: _monthlyChange,
+                          fmt: fmt,
+                        ),
+                        const SizedBox(height: 16),
+                        _QuickActions(onAction: _showComingSoon),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _QuickActions(onAction: _showComingSoon),
-                  ],
-                ),
-                _SpendingSnapshot(
-                  income: _income,
-                  expenses: _expenses,
-                  categorySpend: _categorySpend,
-                  fmt: fmt,
-                  selectedIndex: _selectedCategoryIndex,
-                  onCategorySelected: _selectCategory,
-                ),
-                _BudgetCards(categorySpend: _categorySpend, fmt: fmt),
-              ],
+                  ),
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _SpendingSnapshot(
+                      income: _income,
+                      expenses: _expenses,
+                      categorySpend: _categorySpend,
+                      fmt: fmt,
+                      selectedIndex: _selectedCategoryIndex,
+                      onCategorySelected: _selectCategory,
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _BudgetCards(categorySpend: _categorySpend, fmt: fmt),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          _buildPageDots(count: 3, activeIndex: _dashboardPage),
-        ],
+            const SizedBox(height: 12),
+            _buildPageDots(count: 3, activeIndex: _dashboardPage),
+          ],
+        ),
       ),
     );
   }
@@ -180,10 +194,12 @@ class _HomeScreenState extends State<HomeScreen> {
         : now.hour < 18
             ? 'Good afternoon'
             : 'Good evening';
-
-    // Example user data (replace with real user data if available)
-    final userName = 'Alex';
-    final avatarUrl = null; // e.g., 'https://example.com/avatar.png'
+    final monthLabel = DateFormat('MMMM yyyy').format(now);
+    final user = AuthService.currentUser;
+    final userName = user?.displayName?.split(' ').first ?? 'there';
+    final avatarUrl = user?.photoUrl;
+    // Height for the carousel pager — tall enough to show richest page
+    final pagerHeight = MediaQuery.of(context).size.height * 0.60;
 
     return Scaffold(
       body: Container(
@@ -197,26 +213,117 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SafeArea(
           child: _loading
               ? const Center(child: CircularProgressIndicator(color: Colors.white))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _TopBar(
-                        greeting: greeting,
-                        userName: userName,
-                        avatarUrl: avatarUrl,
-                        onNotificationTap: () => _showComingSoon('Notifications'),
-                        onSettingsTap: () => _showComingSoon('Settings'),
+              : Column(
+                  children: [
+                    // ── Fixed Header (like Accounts / Profile screens) ──────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                      child: Row(
+                        children: [
+                          // Avatar
+                          GestureDetector(
+                            onTap: () => _showComingSoon('Profile'),
+                            child: Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: ThemeService.instance.cardGradient,
+                                boxShadow: ThemeService.instance.primaryShadow,
+                              ),
+                              child: avatarUrl != null
+                                  ? ClipOval(child: Image.network(avatarUrl, fit: BoxFit.cover))
+                                  : Icon(Icons.person, color: Theme.of(context).colorScheme.onPrimary, size: 28),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          // Greeting + name
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$greeting, $userName 👋',
+                                  style: const TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                ShaderMask(
+                                  shaderCallback: (bounds) => const LinearGradient(
+                                    colors: [Colors.white, Color(0xFFD1FAE5)],
+                                  ).createShader(bounds),
+                                  child: const Text(
+                                    'Dashboard',
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.5,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Month badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.secondary,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15)),
+                            ),
+                            child: Text(
+                              monthLabel,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Notification button
+                          GestureDetector(
+                            onTap: () => _showComingSoon('Notifications'),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.notifications_none, color: Colors.white, size: 22),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      _buildDashboardPager(fmt),
-                      const SizedBox(height: 16),
-                      _RecentTransactions(recent: _recent, fmt: fmt),
-                      const SizedBox(height: 16),
-                      _AlertsInsights(accounts: _accounts, fmt: fmt),
-                    ],
-                  ),
+                    ),
+                    // ── Scrollable Content ─────────────────────────────────────
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _load,
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                          children: [
+                            _buildDashboardPager(fmt, pagerHeight),
+                            const SizedBox(height: 16),
+                            _RecentTransactions(recent: _recent, fmt: fmt),
+                            const SizedBox(height: 16),
+                            _AlertsInsights(accounts: _accounts, fmt: fmt),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
@@ -254,13 +361,7 @@ class _NetWorthCard extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: AppTheme.emeraldBlueGradient,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.emerald.withValues(alpha: 0.3),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: AppTheme.cardShadow,
         ),
         child: Stack(
           children: [
@@ -2070,6 +2171,7 @@ class _InsightTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

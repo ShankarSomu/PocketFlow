@@ -91,7 +91,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
+                        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(icon,
@@ -188,7 +188,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
           width: 40, height: 4,
           margin: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.outlineVariant,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -208,7 +208,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
             ),
             // Add button
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF6C63FF)),
+              icon: Icon(Icons.add_circle_outline, color: Theme.of(context).colorScheme.primary),
               tooltip: _selected == null ? 'Add category' : 'Add subcategory',
               onPressed: () => _showAddDialog(parent: _selected),
             ),
@@ -267,7 +267,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
             child: Text(c.icon, style: const TextStyle(fontSize: 18)),
           ),
           title: Text(c.name),
-          trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+          trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
           onTap: () => _selectParent(c),
           onLongPress: () => _pick(c.name),
         );
@@ -348,7 +348,8 @@ Color _hexColor(String hex) {
   try {
     return Color(int.parse(hex.replaceFirst('#', '0xFF')));
   } catch (_) {
-    return const Color(0xFF6C63FF);
+    // Return a default theme-based color if parsing fails
+    return const Color(0xFF6C63FF); // This is a constant fallback, not theme-based
   }
 }
 

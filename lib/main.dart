@@ -15,9 +15,31 @@ import 'services/auth_service.dart';
 import 'services/app_logger.dart';
 import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
+import 'core/app_dependencies.dart';
+import 'widgets/error_boundary.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set up global error handler
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    AppLogger.log(
+      LogLevel.error,
+      LogCategory.error,
+      'Flutter Error',
+      detail: details.exceptionAsString(),
+    );
+    if (details.stack != null) {
+      AppLogger.log(
+        LogLevel.error,
+        LogCategory.error,
+        'Stack Trace',
+        detail: details.stack.toString(),
+      );
+    }
+  };
+  
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
@@ -90,20 +112,21 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: Listenable.merge([ThemeService.instance, _rootNavIndex]),
-      builder: (context, _) {
-        final ts = ThemeService.instance;
-        // Reactive system UI style based on effective brightness
-        final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
-        final effectiveDark = ts.mode == AppThemeMode.dark ||
-            (ts.mode == AppThemeMode.system && platformBrightness == Brightness.dark);
-        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: effectiveDark ? Brightness.light : Brightness.dark,
-          statusBarBrightness: effectiveDark ? Brightness.dark : Brightness.light,
-        ));
-        return MaterialApp(
+    return AppDependencies.wrapApp(
+      ListenableBuilder(
+        listenable: Listenable.merge([ThemeService.instance, _rootNavIndex]),
+        builder: (context, _) {
+          final ts = ThemeService.instance;
+          // Reactive system UI style based on effective brightness
+          final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+          final effectiveDark = ts.mode == AppThemeMode.dark ||
+              (ts.mode == AppThemeMode.system && platformBrightness == Brightness.dark);
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: effectiveDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: effectiveDark ? Brightness.dark : Brightness.light,
+          ));
+          return MaterialApp(
           title: 'PocketFlow',
           debugShowCheckedModeBanner: false,
           theme: ts.buildLightTheme(),
@@ -185,8 +208,9 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
           : _showWelcome
               ? WelcomeScreen(onGetStarted: _onGetStarted, isFirstTime: _isFirstTime)
               : const _RootNav(),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

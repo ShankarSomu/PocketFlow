@@ -1,0 +1,375 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../shared.dart';
+
+/// Interactive donut chart showing spending by category
+class InteractiveDonut extends StatefulWidget {
+  final Map<String, double> categorySpend;
+
+  const InteractiveDonut({
+    super.key,
+    required this.categorySpend,
+  });
+
+  @override
+  State<InteractiveDonut> createState() => _InteractiveDonutState();
+}
+
+class _InteractiveDonutState extends State<InteractiveDonut>
+    with SingleTickerProviderStateMixin {
+  int? _selectedIdx;
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  List<Color> get _colors => [
+    Theme.of(context).colorScheme.tertiary,
+    Theme.of(context).colorScheme.primary,
+    Theme.of(context).colorScheme.primary,
+    Theme.of(context).colorScheme.secondary,
+    Theme.of(context).colorScheme.secondaryContainer,
+    Theme.of(context).colorScheme.secondary,
+    Theme.of(context).colorScheme.error,
+    Theme.of(context).colorScheme.inversePrimary,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1000));
+    _animation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(InteractiveDonut old) {
+    super.didUpdateWidget(old);
+    if (old.categorySpend != widget.categorySpend) {
+      _selectedIdx = null;
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  List<MapEntry<String, double>> _buildItems() {
+    final all = widget.categorySpend.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    if (all.length <= 6) return all;
+    final top5 = all.take(5).toList();
+    final rest = all.skip(5).fold(0.0, (s, e) => s + e.value);
+    return [...top5, MapEntry('Others', rest)];
+  }
+
+  static String _titleCase(String s) => s
+      .split(' ')
+      .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _buildItems();
+    final total = items.fold(0.0, (s, e) => s + e.value);
+    final fmtC = NumberFormat.compactCurrency(symbol: r'$');
+    final fmtF = NumberFormat.currency(symbol: r'$', decimalDigits: 0);
+
+    return FigmaPanel(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Spend by Category',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700)),
+              const Spacer(),
+              if (_selectedIdx != null)
+                GestureDetector(
+                  onTap: () => setState(() => _selectedIdx = null),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(20)),
+                    child: Icon(Icons.close_rounded,
+                        size: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (items.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.pie_chart_outline_rounded,
+                      size: 40, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+                  const SizedBox(height: 8),
+                  Text('No expenses recorded',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 12)),
+                ]),
+              ),
+            )
+          else
+            Expanded(
+              child: Row(
+                children: [
+                  // ── Donut ──
+                  SizedBox(
+                    width: 155,
+                    height: 155,
+                    child: AnimatedBuilder(
+                      animation: _animation,
+                      builder: (_, __) => CustomPaint(
+                        painter: InteractiveDonutPainter(
+                          items: items,
+                          colors: _colors,
+                          selectedIdx: _selectedIdx,
+                          progress: _animation.value,
+                          strokeColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        ),
+                        child: GestureDetector(
+                          onTapDown: (_) =>
+                              setState(() => _selectedIdx = null),
+                          child: Center(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: _selectedIdx == null
+                                  ? Column(
+                                      key: const ValueKey('total'),
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(fmtC.format(total),
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w800,
+                                                color: Theme.of(context).colorScheme.onSurface)),
+                                        Text('expenses',
+                                            style: TextStyle(
+                                                fontSize: 9,
+                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                                      ],
+                                    )
+                                  : Column(
+                                      key: ValueKey('sel_$_selectedIdx'),
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          total > 0
+                                              ? '${(items[_selectedIdx!].value / total * 100).toStringAsFixed(1)}%'
+                                              : '0%',
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w800,
+                                              color: _colors[_selectedIdx! %
+                                                  _colors.length]),
+                                        ),
+                                        SizedBox(
+                                          width: 60,
+                                          child: Text(
+                                            _titleCase(items[_selectedIdx!].key),
+                                            style: TextStyle(
+                                                fontSize: 9,
+                                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                                fontWeight: FontWeight.w600),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Text(
+                                          fmtF.format(
+                                              items[_selectedIdx!].value),
+                                          style: TextStyle(
+                                              fontSize: 9,
+                                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // ── Legend ──
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: items.asMap().entries.map((e) {
+                        final color = _colors[e.key % _colors.length];
+                        final isSelected = _selectedIdx == e.key;
+                        final isOtherSel =
+                            _selectedIdx != null && !isSelected;
+                        final pct = total > 0
+                            ? (e.value.value / total * 100)
+                                .toStringAsFixed(0)
+                            : '0';
+                        return GestureDetector(
+                          onTap: () => setState(() =>
+                              _selectedIdx = isSelected ? null : e.key),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.only(bottom: 7),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? color.withValues(alpha: 0.1)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: color.withValues(alpha: 0.3))
+                                  : null,
+                            ),
+                            child: Row(
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: isSelected ? 10 : 8,
+                                  height: isSelected ? 10 : 8,
+                                  decoration: BoxDecoration(
+                                    color: isOtherSel
+                                        ? color.withValues(alpha: 0.35)
+                                        : color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _titleCase(e.value.key),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                      color: isOtherSel
+                                          ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
+                                          : Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text('$pct%',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: isOtherSel
+                                            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.3)
+                                            : color)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class InteractiveDonutPainter extends CustomPainter {
+  final List<MapEntry<String, double>> items;
+  final List<Color> colors;
+  final int? selectedIdx;
+  final double progress;
+  final Color strokeColor;
+
+  static const double _strokeWidth = 20.0;
+  static const double _expansion = 8.0;
+  static const double _gap = 0.03;
+
+  InteractiveDonutPainter({
+    required this.items,
+    required this.colors,
+    required this.selectedIdx,
+    required this.progress,
+    required this.strokeColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final total = items.fold(0.0, (s, e) => s + e.value);
+    if (total <= 0) return;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final baseRadius =
+        (size.shortestSide / 2) - _strokeWidth / 2 - _expansion - 2;
+
+    // Track ring
+    canvas.drawCircle(
+      center,
+      baseRadius,
+      Paint()
+        ..color = strokeColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _strokeWidth,
+    );
+
+    double currentAngle = -pi / 2;
+    for (int i = 0; i < items.length; i++) {
+      final fraction = items[i].value / total;
+      final sweep = 2 * pi * fraction * progress;
+      if (sweep <= 0) continue;
+
+      final isSelected = selectedIdx == i;
+      final isOtherSel = selectedIdx != null && !isSelected;
+      final color = colors[i % colors.length];
+      final midAngle = currentAngle + sweep / 2;
+
+      final offsetDist = isSelected ? _expansion * 0.7 : 0.0;
+      final drawCenter = center +
+          Offset(cos(midAngle) * offsetDist, sin(midAngle) * offsetDist);
+
+      if (isSelected) {
+        canvas.drawArc(
+          Rect.fromCircle(center: drawCenter, radius: baseRadius),
+          currentAngle + _gap / 2,
+          (sweep - _gap).clamp(0.01, sweep),
+          false,
+          Paint()
+            ..color = color.withValues(alpha: 0.22)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = _strokeWidth + 8
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+
+      canvas.drawArc(
+        Rect.fromCircle(center: drawCenter, radius: baseRadius),
+        currentAngle + _gap / 2,
+        (sweep - _gap).clamp(0.01, sweep),
+        false,
+        Paint()
+          ..color = isOtherSel ? color.withValues(alpha: 0.3) : color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _strokeWidth
+          ..strokeCap = StrokeCap.round,
+      );
+
+      currentAngle += 2 * pi * fraction * progress;
+    }
+  }
+
+  @override
+  bool shouldRepaint(InteractiveDonutPainter old) =>
+      old.selectedIdx != selectedIdx ||
+      old.progress != progress ||
+      old.items != items;
+}

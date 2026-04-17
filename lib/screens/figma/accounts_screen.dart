@@ -6,6 +6,7 @@ import '../../models/account.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/error_state_widget.dart';
 import 'shared.dart';
 
 class AccountsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class AccountsScreen extends StatefulWidget {
 class _AccountsScreenState extends State<AccountsScreen> {
   final _fmt = NumberFormat.currency(symbol: '\$');
   bool _loading = true;
+  String? _error;
   List<Account> _accounts = [];
   Map<int, double> _balances = {};
 
@@ -37,17 +39,30 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _load() async {
-    final accounts = await AppDatabase.getAccounts();
-    final balances = <int, double>{};
-    for (final account in accounts) {
-      balances[account.id!] = await AppDatabase.accountBalance(account.id!, account);
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+
+      final accounts = await AppDatabase.getAccounts();
+      final balances = <int, double>{};
+      for (final account in accounts) {
+        balances[account.id!] = await AppDatabase.accountBalance(account.id!, account);
+      }
+      if (!mounted) return;
+      setState(() {
+        _accounts = accounts;
+        _balances = balances;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load accounts: $e';
+        _loading = false;
+      });
     }
-    if (!mounted) return;
-    setState(() {
-      _accounts = accounts;
-      _balances = balances;
-      _loading = false;
-    });
   }
 
   void _showForm([Account? existing]) {
@@ -150,7 +165,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               TextButton(onPressed: () => Navigator.pop(c, false), child: Text('Cancel')),
                               FilledButton(
                                 onPressed: () => Navigator.pop(c, true),
-                                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                                style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
                                 child: Text('Delete'),
                               ),
                             ],
@@ -161,8 +176,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      label: Text('Delete', style: TextStyle(color: Colors.red)),
+                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                      label: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   const Spacer(),
                   TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
@@ -294,7 +309,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               children: [
                 Text('Transfer Between Accounts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 4),
-                Text('Use this to pay a credit card or move money between accounts.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('Use this to pay a credit card or move money between accounts.', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int?>(
                   value: fromId,
@@ -318,8 +333,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               if (a.type == 'credit')
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                  decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                                  child: Text('owes ${_fmt.format(_balances[a.id] ?? 0)}', style: TextStyle(fontSize: 11, color: Colors.red)),
+                                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                                  child: Text('owes ${_fmt.format(_balances[a.id] ?? 0)}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.error)),
                                 ),
                             ],
                           ),
@@ -338,7 +353,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     value: useOutstanding,
                     contentPadding: EdgeInsets.zero,
                     title: Text('Pay full outstanding: ${_fmt.format(outstanding)}', style: TextStyle(fontSize: 13)),
-                    subtitle: Text('Amount will update automatically each time', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    subtitle: Text('Amount will update automatically each time', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
                     onChanged: (v) => setLocal(() {
                       useOutstanding = v ?? false;
                       if (useOutstanding) {
@@ -423,8 +438,13 @@ class _AccountsScreenState extends State<AccountsScreen> {
         child: Stack(
           children: [
             _loading
-                ? Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
-                : Column(
+                ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
+                : _error != null
+                    ? ErrorStateWidget(
+                        message: _error!,
+                        onRetry: _load,
+                      )
+                    : Column(
                 children: [
                   const ScreenHeader('Accounts'),
                   // -- Summary Card --
@@ -460,7 +480,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                                       boxShadow: ThemeService.instance.primaryShadow,
                                     ),
                                     child: Text('Add your first account',
-                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
                               ],
@@ -516,14 +536,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
     };
   }
 
-  List<Color> _typeGradient(String type) => switch (type) {
-        'checking' || 'debit' => [AppTheme.blue, const Color(0xFF2563EB)],
-        'savings' => [AppTheme.emerald, AppTheme.emeraldDark],
-        'credit' => [AppTheme.error, const Color(0xFFDC2626)],
-        'cash' => [const Color(0xFFF59E0B), const Color(0xFFD97706)],
-        'investment' => [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-        _ => [const Color(0xFFA78BFA), const Color(0xFF8B5CF6)],
-      };
+  List<Color> _typeGradient(BuildContext context, String type) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (type) {
+      'checking' || 'debit' => [colorScheme.primary, colorScheme.primary.withOpacity(0.8)],
+      'savings' => [colorScheme.tertiary, colorScheme.tertiary.withOpacity(0.8)],
+      'credit' => [colorScheme.error, colorScheme.error.withOpacity(0.8)],
+      'cash' => [colorScheme.secondary, colorScheme.secondary.withOpacity(0.8)],
+      'investment' => [colorScheme.primary.withOpacity(0.7), colorScheme.primary.withOpacity(0.5)],
+      _ => [colorScheme.primary.withOpacity(0.6), colorScheme.primary.withOpacity(0.4)],
+    };
+  }
 
   IconData _typeIcon(String type) => switch (type) {
         'checking' || 'debit' => Icons.account_balance_rounded,
@@ -534,14 +557,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
         _ => Icons.account_balance_wallet_rounded,
       };
 
-  Color _typeColor(String type) => switch (type) {
-        'checking' || 'debit' => const Color(0xFF3B82F6),
-        'savings' => const Color(0xFF10B981),
-        'credit' => const Color(0xFFEF4444),
-        'cash' => const Color(0xFFF59E0B),
-        'investment' => const Color(0xFF6366F1),
-        _ => const Color(0xFF8B5CF6),
-      };
+  Color _typeColor(BuildContext context, String type) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return switch (type) {
+      'checking' || 'debit' => colorScheme.primary,
+      'savings' => colorScheme.tertiary,
+      'credit' => colorScheme.error,
+      'cash' => colorScheme.secondary,
+      'investment' => colorScheme.primary.withOpacity(0.7),
+      _ => colorScheme.primary.withOpacity(0.6),
+    };
+  }
 }
 
 // -- Net Worth Summary Card -------------------------------------------------
@@ -575,16 +601,16 @@ class _NetWorthSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Net Worth', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Net Worth', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '$accountCount ${accountCount == 1 ? 'account' : 'accounts'}',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 12),
                 ),
               ),
             ],
@@ -592,7 +618,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             fmt.format(netWorth),
-            style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.5),
           ),
           const SizedBox(height: 16),
           Row(
@@ -602,7 +628,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
                   label: 'Assets',
                   value: fmt.format(totalAssets),
                   icon: Icons.trending_up,
-                  color: const Color(0xFF34D399),
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -611,7 +637,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
                   label: 'Debt',
                   value: fmt.format(totalDebt),
                   icon: Icons.trending_down,
-                  color: const Color(0xFFF87171),
+                  color: Theme.of(context).colorScheme.error,
                 ),
               ),
             ],
@@ -634,7 +660,7 @@ class _SummaryPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -645,7 +671,7 @@ class _SummaryPill extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
                 Text(value,
                     style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700),
@@ -667,9 +693,9 @@ class _AccountSection extends StatelessWidget {
   final List<Account> accounts;
   final Map<int, double> balances;
   final NumberFormat fmt;
-  final List<Color> Function(String) typeGradient;
+  final List<Color> Function(BuildContext, String) typeGradient;
   final IconData Function(String) typeIcon;
-  final Color Function(String) typeColor;
+  final Color Function(BuildContext, String) typeColor;
   final void Function(Account) onTap;
   final void Function(Account) onViewTransactions;
 
@@ -715,9 +741,9 @@ class _AccountSection extends StatelessWidget {
                     account: accounts[i],
                     balance: balances[accounts[i].id] ?? 0,
                     fmt: fmt,
-                    gradient: typeGradient(type),
+                    gradient: typeGradient(context, type),
                     icon: typeIcon(type),
-                    color: typeColor(type),
+                    color: typeColor(context, type),
                     onTap: () => onTap(accounts[i]),
                     onViewTransactions: () => onViewTransactions(accounts[i]),
                   ),

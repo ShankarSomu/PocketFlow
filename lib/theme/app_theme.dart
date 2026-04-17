@@ -58,4 +58,32 @@ class AppTheme {
       offset: Offset(0, 6),
     ),
   ];
+
+  /// Create a custom two-color gradient
+  /// Useful for dynamic gradients based on category colors or user preferences
+  static LinearGradient twoColorGradient(Color startColor, Color endColor) {
+    return LinearGradient(
+      colors: [startColor, endColor],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  /// Create a vertical gradient
+  static LinearGradient verticalGradient(Color startColor, Color endColor) {
+    return LinearGradient(
+      colors: [startColor, endColor],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+  }
+
+  /// Create a horizontal gradient
+  static LinearGradient horizontalGradient(Color startColor, Color endColor) {
+    return LinearGradient(
+      colors: [startColor, endColor],
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+    );
+  }
 }

@@ -7,6 +7,7 @@ import '../models/account.dart';
 import '../models/recurring_transaction.dart';
 import '../models/category.dart';
 import 'package:pocket_flow/services/app_logger.dart';
+import '../core/database_optimizer.dart';
 
 // Wrap DB init to log errors
 
@@ -88,10 +89,15 @@ class AppDatabase {
       onOpen: (db) async {
         // For existing databases that might have empty categories table
         final count = await db.rawQuery('SELECT COUNT(*) as count FROM categories');
-        final categoryCount = count.first['count'] as int;
-        if (categoryCount == 0) {
-          await _seedDefaultCategories(db);
+        if (count.isNotEmpty) {
+          final categoryCount = (count.first['count'] as num?)?.toInt() ?? 0;
+          if (categoryCount == 0) {
+            await _seedDefaultCategories(db);
+          }
         }
+        
+        // Create performance indexes
+        await DatabaseOptimizer.createIndexes(db);
       },
     );
   }
@@ -356,7 +362,11 @@ class AppDatabase {
       "WHERE type='expense' AND category != 'transfer' AND date>=? AND date<? GROUP BY LOWER(category)",
       [start, end],
     );
-    return {for (final r in rows) r['category'] as String: (r['total'] as num).toDouble()};
+    return {
+      for (final r in rows)
+        if (r['category'] != null)
+          r['category'] as String: (r['total'] as num?)?.toDouble() ?? 0
+    };
   }
 
   /// Returns the sum of [type] transactions in a custom date range.
@@ -377,7 +387,11 @@ class AppDatabase {
       "WHERE type='expense' AND category != 'transfer' AND date>=? AND date<=? GROUP BY LOWER(category)",
       [from.toIso8601String(), to.toIso8601String()],
     );
-    return {for (final r in rows) r['category'] as String: (r['total'] as num).toDouble()};
+    return {
+      for (final r in rows)
+        if (r['category'] != null)
+          r['category'] as String: (r['total'] as num?)?.toDouble() ?? 0
+    };
   }
 
   // ── Budgets ──────────────────────────────────────────────────────────────────

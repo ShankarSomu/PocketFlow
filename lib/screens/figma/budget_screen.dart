@@ -5,6 +5,7 @@ import '../../db/database.dart';
 import '../../models/budget.dart';
 import '../../services/refresh_notifier.dart';
 import '../../widgets/category_picker.dart';
+import '../../widgets/error_state_widget.dart';
 import '../../theme/app_theme.dart';
 import 'shared.dart';
 import '../../services/theme_service.dart';
@@ -18,6 +19,7 @@ class BudgetScreen extends StatefulWidget {
 
 class _BudgetScreenState extends State<BudgetScreen> {
   bool _loading = true;
+  String? _error;
   List<Budget> _budgets = [];
   Map<String, double> _spentByCategory = {};
   double _income = 0;
@@ -38,23 +40,36 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   Future<void> _load() async {
-    final filter = appTimeFilter.current;
-    final budgets = await AppDatabase.getBudgets(filter.budgetMonth, filter.budgetYear);
-    final spent = await AppDatabase.rangeExpenseByCategory(filter.from, filter.to);
-    final income = await AppDatabase.rangeTotal('income', filter.from, filter.to);
-    final budgetCategories = {for (final b in budgets) b.category};
-    final extra = spent.keys
-        .where((c) => !budgetCategories.contains(c))
-        .map((c) => Budget(category: c, limit: 0, month: filter.budgetMonth, year: filter.budgetYear))
-        .toList();
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
 
-    if (!mounted) return;
-    setState(() {
-      _budgets = [...budgets, ...extra];
-      _spentByCategory = spent;
-      _income = income;
-      _loading = false;
-    });
+      final filter = appTimeFilter.current;
+      final budgets = await AppDatabase.getBudgets(filter.budgetMonth, filter.budgetYear);
+      final spent = await AppDatabase.rangeExpenseByCategory(filter.from, filter.to);
+      final income = await AppDatabase.rangeTotal('income', filter.from, filter.to);
+      final budgetCategories = {for (final b in budgets) b.category};
+      final extra = spent.keys
+          .where((c) => !budgetCategories.contains(c))
+          .map((c) => Budget(category: c, limit: 0, month: filter.budgetMonth, year: filter.budgetYear))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        _budgets = [...budgets, ...extra];
+        _spentByCategory = spent;
+        _income = income;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load budgets: $e';
+        _loading = false;
+      });
+    }
   }
 
   // Month navigation removed; now uses global time filter only.
@@ -111,7 +126,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
             if (isExisting && existing!.id == null)
               Padding(
                 padding: EdgeInsets.only(top: 12),
-                child: Text('This category has spending but no limit yet.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                child: Text('This category has spending but no limit yet.', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
               ),
           ],
         ),
@@ -162,8 +177,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
         child: Stack(
           children: [
             _loading
-                ? Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
-                : Column(
+                ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
+                : _error != null
+                    ? ErrorStateWidget(
+                        message: _error!,
+                        onRetry: _load,
+                      )
+                    : Column(
                 children: [
                   const ScreenHeader('Budget'),
                   // -- Summary Card --
@@ -200,7 +220,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                       boxShadow: ThemeService.instance.primaryShadow,
                                     ),
                                     child: Text('Add your first budget',
-                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
                               ],
@@ -313,19 +333,19 @@ class _BudgetSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.pie_chart_rounded, color: Colors.white, size: 18),
+                child: Icon(Icons.pie_chart_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 18),
               ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text('Monthly Budget',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                   Text('Overall spending vs limits',
-                      style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12)),
                 ],
               ),
               const Spacer(),
@@ -338,24 +358,24 @@ class _BudgetSummaryCard extends StatelessWidget {
                   ),
                   child: Text('$overCount over',
                       style: TextStyle(
-                          color: Color(0xFFFCA5A5), fontSize: 12, fontWeight: FontWeight.w600)),
+                          color: Theme.of(context).colorScheme.error.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('Total Spent', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text('Total Spent', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(fmt.format(totalSpent),
                   style: TextStyle(
-                      color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+                      color: Theme.of(context).colorScheme.onPrimary, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               const SizedBox(width: 6),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('/ ${fmt.format(totalLimit)}',
-                    style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 13)),
               ),
             ],
           ),
@@ -366,9 +386,9 @@ class _BudgetSummaryCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: Colors.white.withOpacity(0.15),
+              backgroundColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
               valueColor: AlwaysStoppedAnimation<Color>(
-                progress >= 1.0 ? AppTheme.error : const Color(0xFF34D399),
+                progress >= 1.0 ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.tertiary,
               ),
             ),
           ),
@@ -380,7 +400,7 @@ class _BudgetSummaryCard extends StatelessWidget {
                   label: isOver ? 'Over by' : 'Remaining',
                   amount: fmt.format(remaining.abs()),
                   icon: isOver ? Icons.warning_rounded : Icons.savings_rounded,
-                  color: isOver ? const Color(0xFFF87171) : const Color(0xFF34D399),
+                  color: isOver ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.tertiary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -389,7 +409,7 @@ class _BudgetSummaryCard extends StatelessWidget {
                   label: 'Income',
                   amount: fmt.format(income),
                   icon: Icons.arrow_downward_rounded,
-                  color: const Color(0xFF34D399),
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
             ],
@@ -412,7 +432,7 @@ class _SummaryPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -428,7 +448,7 @@ class _SummaryPill extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.white70, fontSize: 11)),
+                Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 11)),
                 Text(amount,
                     style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
                     overflow: TextOverflow.ellipsis),
@@ -480,7 +500,7 @@ class _BudgetSection extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: AppTheme.cardShadow,
           ),
@@ -523,20 +543,21 @@ class _BudgetItem extends StatelessWidget {
     required this.onTap,
   });
 
-  static Color _colorForCategory(String category) {
+  static Color _colorForCategory(BuildContext context, String category) {
+    final colorScheme = Theme.of(context).colorScheme;
     final c = category.toLowerCase();
-    if (c.contains('food') || c.contains('restaurant') || c.contains('dining')) return const Color(0xFFFF6B35);
-    if (c.contains('transport') || c.contains('car')) return const Color(0xFF3B82F6);
-    if (c.contains('shopping')) return const Color(0xFF8B5CF6);
-    if (c.contains('entertainment')) return const Color(0xFFEF4444);
-    if (c.contains('health') || c.contains('medical')) return const Color(0xFF06B6D4);
-    if (c.contains('home') || c.contains('rent')) return const Color(0xFFF59E0B);
-    if (c.contains('education') || c.contains('school')) return const Color(0xFF7C3AED);
-    if (c.contains('travel') || c.contains('flight')) return const Color(0xFF0EA5E9);
-    if (c.contains('utilities') || c.contains('electric')) return const Color(0xFFF59E0B);
-    if (c.contains('insurance')) return const Color(0xFF64748B);
-    if (c.contains('phone') || c.contains('mobile')) return const Color(0xFF10B981);
-    return const Color(0xFF6366F1);
+    if (c.contains('food') || c.contains('restaurant') || c.contains('dining')) return colorScheme.secondary;
+    if (c.contains('transport') || c.contains('car')) return colorScheme.primary;
+    if (c.contains('shopping')) return colorScheme.primary.withOpacity(0.7);
+    if (c.contains('entertainment')) return colorScheme.error;
+    if (c.contains('health') || c.contains('medical')) return colorScheme.tertiary;
+    if (c.contains('home') || c.contains('rent')) return colorScheme.secondary;
+    if (c.contains('education') || c.contains('school')) return colorScheme.primary.withOpacity(0.6);
+    if (c.contains('travel') || c.contains('flight')) return colorScheme.primary;
+    if (c.contains('utilities') || c.contains('electric')) return colorScheme.secondary;
+    if (c.contains('insurance')) return colorScheme.onSurface.withOpacity(0.6);
+    if (c.contains('phone') || c.contains('mobile')) return colorScheme.tertiary;
+    return colorScheme.primary;
   }
 
   static IconData _iconForCategory(String category) {
@@ -578,7 +599,7 @@ class _BudgetItem extends StatelessWidget {
     final hasLimit = budget.limit > 0;
     final progress = hasLimit ? (spent / budget.limit).clamp(0.0, 1.0) as double : 0.0;
     final isOver = hasLimit && spent > budget.limit;
-    final color = isOver ? Theme.of(context).colorScheme.error : _colorForCategory(budget.category);
+    final color = isOver ? Theme.of(context).colorScheme.error : _colorForCategory(context, budget.category);
     final displayCategory = budget.category.isNotEmpty
         ? budget.category[0].toUpperCase() + budget.category.substring(1)
         : 'Unbudgeted';

@@ -8,6 +8,7 @@ import '../../models/savings_goal.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/error_state_widget.dart';
 import 'shared.dart';
 
 class RecurringScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class RecurringScreen extends StatefulWidget {
 
 class _RecurringScreenState extends State<RecurringScreen> {
   bool _loading = true;
+  String? _error;
   List<RecurringTransaction> _items = [];
   List<Account> _accounts = [];
   List<SavingsGoal> _goals = [];
@@ -39,16 +41,29 @@ class _RecurringScreenState extends State<RecurringScreen> {
   }
 
   Future<void> _load() async {
-    final items = await AppDatabase.getRecurring();
-    final accounts = await AppDatabase.getAccounts();
-    final goals = await AppDatabase.getGoals();
-    if (!mounted) return;
-    setState(() {
-      _items = items;
-      _accounts = accounts;
-      _goals = goals;
-      _loading = false;
-    });
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+
+      final items = await AppDatabase.getRecurring();
+      final accounts = await AppDatabase.getAccounts();
+      final goals = await AppDatabase.getGoals();
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _accounts = accounts;
+        _goals = goals;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load recurring transactions: $e';
+        _loading = false;
+      });
+    }
   }
 
   void _showForm([RecurringTransaction? existing]) {
@@ -189,7 +204,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                               TextButton(onPressed: () => Navigator.pop(c, false), child: Text('Cancel')),
                               FilledButton(
                                 onPressed: () => Navigator.pop(c, true),
-                                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                                style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
                                 child: Text('Delete'),
                               ),
                             ],
@@ -200,7 +215,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
-                      child: Text('Delete', style: TextStyle(color: Colors.red)),
+                      child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   const Spacer(),
                   TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
@@ -298,8 +313,13 @@ class _RecurringScreenState extends State<RecurringScreen> {
         child: Stack(
           children: [
             _loading
-                ? Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
-                : Column(
+                ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
+                : _error != null
+                    ? ErrorStateWidget(
+                        message: _error!,
+                        onRetry: _load,
+                      )
+                    : Column(
                 children: [
                   const ScreenHeader('Recurring'),
                   // -- Summary Card --
@@ -333,7 +353,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: ThemeService.instance.primaryShadow,
                                     ),
-                                    child: Text('Add your first', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                    child: Text('Add your first', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
                               ],
@@ -432,29 +452,29 @@ class _RecurringSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.repeat_rounded, color: Colors.white, size: 18),
+                child: Icon(Icons.repeat_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 18),
               ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Recurring Schedule',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                   Text('Monthly commitments',
-                      style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12)),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('Total / month', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text('Total / month', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(fmt.format(totalMonthly),
               style: TextStyle(
-                  color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+                  color: Theme.of(context).colorScheme.onPrimary, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -463,7 +483,7 @@ class _RecurringSummaryCard extends StatelessWidget {
                   label: 'Active',
                   value: '$activeCount',
                   icon: Icons.play_circle_rounded,
-                  color: const Color(0xFF34D399),
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -472,7 +492,7 @@ class _RecurringSummaryCard extends StatelessWidget {
                   label: 'Paused',
                   value: '$pausedCount',
                   icon: Icons.pause_circle_rounded,
-                  color: const Color(0xFFFBBF24),
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
             ],
@@ -495,7 +515,7 @@ class _StatPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -510,7 +530,7 @@ class _StatPill extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+              Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 11)),
               Text(value,
                   style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w700)),
             ],
@@ -611,12 +631,13 @@ class _RecurringItem extends StatelessWidget {
     required this.onToggle,
   });
 
-  static Color _colorForType(String type) {
+  static Color _colorForType(BuildContext context, String type) {
+    final colorScheme = Theme.of(context).colorScheme;
     switch (type) {
-      case 'income': return const Color(0xFF10B981);
-      case 'transfer': return const Color(0xFF3B82F6);
-      case 'goal': return const Color(0xFFF59E0B);
-      default: return const Color(0xFF6366F1);
+      case 'income': return colorScheme.tertiary;
+      case 'transfer': return colorScheme.primary;
+      case 'goal': return colorScheme.secondary;
+      default: return colorScheme.primary.withOpacity(0.7);
     }
   }
 
@@ -638,7 +659,7 @@ class _RecurringItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorForType(item.type);
+    final color = _colorForType(context, item.type);
     final icon = _iconForType(item.type, item.category);
     final account = accounts.where((a) => a.id == item.accountId).firstOrNull;
     final dueStr = DateFormat('MMM d').format(item.nextDueDate);

@@ -6,6 +6,7 @@ import '../../services/refresh_notifier.dart';
 import '../../services/seed_data.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/error_state_widget.dart';
 import 'shared.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = false;
+  String? _error;
   double _savingsRate = 0;
   double _budgetCompliance = 0;
   int _goalsOnTrack = 0;
@@ -29,35 +31,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadAccountHealth() async {
-    final now = DateTime.now();
-    final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
-    final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
-    final savingsRate = income > 0
-        ? ((income - expenses) / income * 100).clamp(0.0, 100.0)
-        : 0.0;
+    try {
+      final now = DateTime.now();
+      final income = await AppDatabase.monthlyTotal('income', now.month, now.year);
+      final expenses = await AppDatabase.monthlyTotal('expense', now.month, now.year);
+      final savingsRate = income > 0
+          ? ((income - expenses) / income * 100).clamp(0.0, 100.0)
+          : 0.0;
 
-    final budgets = await AppDatabase.getBudgets(now.month, now.year);
-    final spent = await AppDatabase.monthlyExpenseByCategory(now.month, now.year);
-    final budgetsWithLimit = budgets.where((b) => b.limit > 0).toList();
-    int onTrackCount = 0;
-    for (final b in budgetsWithLimit) {
-      final spentAmount = spent[b.category] ?? 0;
-      if (spentAmount <= b.limit) onTrackCount++;
+      final budgets = await AppDatabase.getBudgets(now.month, now.year);
+      final spent = await AppDatabase.monthlyExpenseByCategory(now.month, now.year);
+      final budgetsWithLimit = budgets.where((b) => b.limit > 0).toList();
+      int onTrackCount = 0;
+      for (final b in budgetsWithLimit) {
+        final spentAmount = spent[b.category] ?? 0;
+        if (spentAmount <= b.limit) onTrackCount++;
+      }
+      final budgetCompliance = budgetsWithLimit.isNotEmpty
+          ? (onTrackCount / budgetsWithLimit.length * 100)
+          : 0.0;
+
+      final goals = await AppDatabase.getGoals();
+      final goalsOnTrack = goals.where((g) => g.progress >= 0.5).length;
+
+      if (!mounted) return;
+      setState(() {
+        _savingsRate = savingsRate;
+        _budgetCompliance = budgetCompliance;
+        _goalsOnTrack = goalsOnTrack;
+        _totalGoals = goals.length;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load account health: $e';
+      });
     }
-    final budgetCompliance = budgetsWithLimit.isNotEmpty
-        ? (onTrackCount / budgetsWithLimit.length * 100)
-        : 0.0;
-
-    final goals = await AppDatabase.getGoals();
-    final goalsOnTrack = goals.where((g) => g.progress >= 0.5).length;
-
-    if (!mounted) return;
-    setState(() {
-      _savingsRate = savingsRate;
-      _budgetCompliance = budgetCompliance;
-      _goalsOnTrack = goalsOnTrack;
-      _totalGoals = goals.length;
-    });
   }
 
   Future<void> _signIn() async {
@@ -112,9 +122,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Sign Out',
-                    style: TextStyle(color: Colors.red)),
+                leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+                title: Text('Sign Out',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _signOut();
@@ -122,9 +132,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.red),
-                title: const Text('Delete All Data',
-                    style: TextStyle(color: Colors.red)),
+                leading: Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),
+                title: Text('Delete All Data',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 subtitle: const Text('Permanently delete all local data',
                     style: TextStyle(fontSize: 11)),
                 onTap: () {
@@ -133,14 +143,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
             ] else ...[
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
                     'Sign in to access backups and premium features',
-                    style: TextStyle(color: Colors.grey)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
               ),
               ListTile(
-                leading: const Icon(Icons.login, color: Colors.blue),
+                leading: Icon(Icons.login, color: Theme.of(context).colorScheme.primary),
                 title: const Text('Sign in with Google'),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -167,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('Cancel')),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
               child: const Text('Delete Everything')),
         ],
       ),
@@ -377,15 +387,18 @@ class _ProfileHeroCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1A2E22), Color(0xFF14532D), Color(0xFF0F766E)],
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primaryContainer,
+            Theme.of(context).colorScheme.primary,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withOpacity(0.25),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
             blurRadius: 20,
             offset: const Offset(0, 6),
           )
@@ -406,7 +419,7 @@ class _ProfileHeroCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: const Color(0xFF10B981).withOpacity(0.4),
+                          color: Theme.of(context).colorScheme.tertiary.withOpacity(0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 4))
                     ],
@@ -414,8 +427,8 @@ class _ProfileHeroCard extends StatelessWidget {
                   child: user?.photoUrl != null
                       ? ClipOval(
                           child: Image.network(user!.photoUrl!, fit: BoxFit.cover))
-                      : const Icon(Icons.person_rounded,
-                          size: 32, color: Colors.white),
+                      : Icon(Icons.person_rounded,
+                          size: 32, color: Theme.of(context).colorScheme.onPrimary),
                 ),
               ),
               const SizedBox(width: 16),
@@ -425,17 +438,17 @@ class _ProfileHeroCard extends StatelessWidget {
                   children: [
                     Text(
                       user?.displayName ?? 'Profile',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white),
+                          color: Theme.of(context).colorScheme.onPrimary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
                     Text(
                       isSignedIn ? (user?.email ?? '') : 'Not signed in',
-                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -443,13 +456,13 @@ class _ProfileHeroCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         isSignedIn ? 'Premium Member' : 'Guest',
-                        style: const TextStyle(
-                            color: Colors.white70,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
                             fontSize: 11,
                             fontWeight: FontWeight.w600),
                       ),
@@ -500,19 +513,21 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = good ? const Color(0xFF34D399) : const Color(0xFFFBBF24);
+    final color = good 
+        ? Theme.of(context).colorScheme.tertiary 
+        : Theme.of(context).colorScheme.secondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: const TextStyle(
-                  color: Colors.white54,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.54),
                   fontSize: 9,
                   fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
@@ -614,7 +629,7 @@ class _OutlineActionButton extends StatelessWidget {
         width: fullWidth ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F5F0),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppTheme.slate200),
         ),

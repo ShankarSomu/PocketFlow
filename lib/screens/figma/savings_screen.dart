@@ -7,6 +7,7 @@ import '../../models/savings_goal.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/error_state_widget.dart';
 import 'shared.dart';
 
 class SavingsScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class SavingsScreen extends StatefulWidget {
 
 class _SavingsScreenState extends State<SavingsScreen> {
   bool _loading = true;
+  String? _error;
   List<SavingsGoal> _goals = [];
   List<Account> _accounts = [];
   Map<int, double> _accountBalances = {};
@@ -38,19 +40,32 @@ class _SavingsScreenState extends State<SavingsScreen> {
   }
 
   Future<void> _load() async {
-    final goals = await AppDatabase.getGoals();
-    final accounts = await AppDatabase.getAccounts();
-    final balances = <int, double>{};
-    for (final a in accounts) {
-      balances[a.id!] = await AppDatabase.accountBalance(a.id!, a);
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+
+      final goals = await AppDatabase.getGoals();
+      final accounts = await AppDatabase.getAccounts();
+      final balances = <int, double>{};
+      for (final a in accounts) {
+        balances[a.id!] = await AppDatabase.accountBalance(a.id!, a);
+      }
+      if (!mounted) return;
+      setState(() {
+        _goals = goals;
+        _accounts = accounts;
+        _accountBalances = balances;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load savings goals: $e';
+        _loading = false;
+      });
     }
-    if (!mounted) return;
-    setState(() {
-      _goals = goals;
-      _accounts = accounts;
-      _accountBalances = balances;
-      _loading = false;
-    });
   }
 
   void _showForm([SavingsGoal? existing]) {
@@ -133,7 +148,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                               TextButton(onPressed: () => Navigator.pop(c, false), child: Text('Cancel')),
                               FilledButton(
                                 onPressed: () => Navigator.pop(c, true),
-                                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                                style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
                                 child: Text('Delete'),
                               ),
                             ],
@@ -144,8 +159,8 @@ class _SavingsScreenState extends State<SavingsScreen> {
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      label: Text('Delete', style: TextStyle(color: Colors.red)),
+                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                      label: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   const Spacer(),
                   TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
@@ -212,8 +227,13 @@ class _SavingsScreenState extends State<SavingsScreen> {
         child: Stack(
           children: [
             _loading
-                ? Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
-                : Column(
+                ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
+                : _error != null
+                    ? ErrorStateWidget(
+                        message: _error!,
+                        onRetry: _load,
+                      )
+                    : Column(
                 children: [
                   const ScreenHeader('Goals'),
                   // -- Summary Card --
@@ -250,7 +270,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                                       boxShadow: ThemeService.instance.primaryShadow,
                                     ),
                                     child: Text('Add your first goal',
-                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
                                   ),
                                 ),
                               ],
@@ -349,47 +369,47 @@ class _GoalsSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.emoji_events_rounded, color: Colors.white, size: 18),
+                child: Icon(Icons.emoji_events_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 18),
               ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Savings Goals',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                   Text('Track your financial targets',
-                      style: TextStyle(color: Colors.white60, fontSize: 12)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12)),
                 ],
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('$goalCount goals',
-                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 12)),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('Total Saved', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text('Total Saved', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(fmt.format(totalSaved),
                   style: TextStyle(
-                      color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+                      color: Theme.of(context).colorScheme.onPrimary, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               const SizedBox(width: 6),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('/ ${fmt.format(totalTarget)}',
-                    style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 13)),
               ),
             ],
           ),
@@ -399,8 +419,8 @@ class _GoalsSummaryCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: totalProgress,
               minHeight: 6,
-              backgroundColor: Colors.white.withOpacity(0.15),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF34D399)),
+              backgroundColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.tertiary),
             ),
           ),
           const SizedBox(height: 14),
@@ -411,7 +431,7 @@ class _GoalsSummaryCard extends StatelessWidget {
                   label: 'Remaining',
                   amount: fmt.format(remaining.clamp(0, double.infinity)),
                   icon: Icons.flag_rounded,
-                  color: const Color(0xFFFBBF24),
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -420,7 +440,7 @@ class _GoalsSummaryCard extends StatelessWidget {
                   label: 'Completed',
                   amount: '$completedCount / $goalCount',
                   icon: Icons.check_circle_rounded,
-                  color: const Color(0xFF34D399),
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
             ],
@@ -443,7 +463,7 @@ class _StatPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -459,7 +479,7 @@ class _StatPill extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+                Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 11)),
                 Text(amount,
                     style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
                     overflow: TextOverflow.ellipsis),
@@ -547,22 +567,23 @@ class _GoalItem extends StatelessWidget {
     required this.onTap,
   });
 
-  static Color _colorForGoal(String name) {
+  static Color _colorForGoal(BuildContext context, String name) {
+    final colorScheme = Theme.of(context).colorScheme;
     final n = name.toLowerCase();
-    if (n.contains('emergency') || n.contains('fund')) return const Color(0xFF3B82F6);
-    if (n.contains('car')) return const Color(0xFF6366F1);
-    if (n.contains('vacation') || n.contains('travel')) return const Color(0xFF0EA5E9);
-    if (n.contains('home') || n.contains('house')) return const Color(0xFFF59E0B);
-    if (n.contains('wedding')) return const Color(0xFFEC4899);
-    if (n.contains('education') || n.contains('school')) return const Color(0xFF7C3AED);
-    return const Color(0xFF10B981);
+    if (n.contains('emergency') || n.contains('fund')) return colorScheme.primary;
+    if (n.contains('car')) return colorScheme.primary.withOpacity(0.7);
+    if (n.contains('vacation') || n.contains('travel')) return colorScheme.primary;
+    if (n.contains('home') || n.contains('house')) return colorScheme.secondary;
+    if (n.contains('wedding')) return colorScheme.error.withOpacity(0.7);
+    if (n.contains('education') || n.contains('school')) return colorScheme.primary.withOpacity(0.6);
+    return colorScheme.tertiary;
   }
 
   @override
   Widget build(BuildContext context) {
     final progress = goal.target <= 0 ? 0.0 : (goal.saved / goal.target).clamp(0.0, 1.0) as double;
     final isComplete = goal.saved >= goal.target;
-    final color = isComplete ? AppTheme.emerald : _colorForGoal(goal.name);
+    final color = isComplete ? Theme.of(context).colorScheme.tertiary : _colorForGoal(context, goal.name);
 
     return InkWell(
       onTap: onTap,

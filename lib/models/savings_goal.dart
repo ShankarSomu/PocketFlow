@@ -17,6 +17,7 @@ class SavingsGoal {
 
   double get progress => target > 0 ? (saved / target).clamp(0.0, 1.0) : 0;
   double get remaining => (target - saved).clamp(0.0, double.infinity);
+  bool get isComplete => saved >= target;
 
   /// Estimate completion date given a monthly contribution amount.
   /// Returns null if monthlyContribution <= 0 or goal already reached.

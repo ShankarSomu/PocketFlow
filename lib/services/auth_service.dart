@@ -293,7 +293,13 @@ class AuthService {
     final last = DateTime.parse(lastStr);
     final now = DateTime.now();
     final diff = now.difference(last);
-    final isDue = freq == 'hourly' ? diff.inHours >= 1 : diff.inHours >= 24;
+    final isDue = freq == 'hourly'
+        ? diff.inHours >= 1
+        : freq == 'weekly'
+            ? diff.inDays >= 7
+            : freq == 'monthly'
+                ? diff.inDays >= 30
+                : diff.inHours >= 24; // daily (default)
     if (isDue) await backup();
   }
 

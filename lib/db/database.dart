@@ -65,7 +65,8 @@ class AppDatabase {
             'is_default INTEGER NOT NULL DEFAULT 0, '
             'icon TEXT NOT NULL DEFAULT "📁", '
             'color TEXT NOT NULL DEFAULT "#6C63FF")');
-          await _seedCategories(db);
+          // Seed default categories for existing databases
+          await _seedDefaultCategories(db);
         }
         if (oldVersion < 6) {
           await db.execute(
@@ -82,6 +83,14 @@ class AppDatabase {
               'ALTER TABLE accounts ADD COLUMN due_date_day INTEGER');
           await db.execute(
               'ALTER TABLE accounts ADD COLUMN credit_limit REAL');
+        }
+      },
+      onOpen: (db) async {
+        // For existing databases that might have empty categories table
+        final count = await db.rawQuery('SELECT COUNT(*) as count FROM categories');
+        final categoryCount = count.first['count'] as int;
+        if (categoryCount == 0) {
+          await _seedDefaultCategories(db);
         }
       },
     );
@@ -141,7 +150,6 @@ class AppDatabase {
         icon TEXT NOT NULL DEFAULT '📁',
         color TEXT NOT NULL DEFAULT '#6C63FF'
       )''');
-    await _seedCategories(db);
     await db.execute('''
       CREATE TABLE savings_goals(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -151,30 +159,31 @@ class AppDatabase {
         account_id INTEGER REFERENCES accounts(id),
         priority INTEGER NOT NULL DEFAULT 999
       )''');
+    
+    // Seed default categories
+    await _seedDefaultCategories(db);
+  }
+
+  static Future<void> _seedDefaultCategories(Database db) async {
+    final defaultCategories = [
+      {'name': 'Food', 'icon': '🍔', 'color': '#FF9F43', 'is_default': 1},
+      {'name': 'Transport', 'icon': '🚗', 'color': '#3B82F6', 'is_default': 1},
+      {'name': 'Shopping', 'icon': '🛍️', 'color': '#8B5CF6', 'is_default': 1},
+      {'name': 'Entertainment', 'icon': '🎮', 'color': '#EF4444', 'is_default': 1},
+      {'name': 'Health', 'icon': '💊', 'color': '#06B6D4', 'is_default': 1},
+      {'name': 'Home', 'icon': '🏠', 'color': '#F59E0B', 'is_default': 1},
+      {'name': 'Education', 'icon': '📚', 'color': '#7C3AED', 'is_default': 1},
+      {'name': 'Salary', 'icon': '💰', 'color': '#10B981', 'is_default': 1},
+      {'name': 'Bills', 'icon': '📄', 'color': '#EF4444', 'is_default': 1},
+      {'name': 'Fitness', 'icon': '🏋️', 'color': '#10B981', 'is_default': 1},
+    ];
+
+    for (final cat in defaultCategories) {
+      await db.insert('categories', cat);
+    }
   }
 
   // ── Categories ────────────────────────────────────────────────────────────
-
-  static Future<void> _seedCategories(Database db) async {
-    for (final cat in kDefaultCategories) {
-      final parentId = await db.insert('categories', {
-        'name': cat.name,
-        'parent_id': null,
-        'is_default': 1,
-        'icon': cat.icon,
-        'color': cat.color,
-      });
-      for (final sub in cat.subs) {
-        await db.insert('categories', {
-          'name': sub,
-          'parent_id': parentId,
-          'is_default': 1,
-          'icon': cat.icon,
-          'color': cat.color,
-        });
-      }
-    }
-  }
 
   static Future<List<Category>> getCategories() async {
     final rows = await (await db).query('categories',
@@ -346,6 +355,27 @@ class AppDatabase {
       "SELECT LOWER(category) as category, SUM(amount) as total FROM transactions "
       "WHERE type='expense' AND category != 'transfer' AND date>=? AND date<? GROUP BY LOWER(category)",
       [start, end],
+    );
+    return {for (final r in rows) r['category'] as String: (r['total'] as num).toDouble()};
+  }
+
+  /// Returns the sum of [type] transactions in a custom date range.
+  static Future<double> rangeTotal(String type, DateTime from, DateTime to) async {
+    final d = await db;
+    final result = await d.rawQuery(
+      "SELECT SUM(amount) as total FROM transactions WHERE type=? AND date>=? AND date<=? AND category != 'transfer'",
+      [type, from.toIso8601String(), to.toIso8601String()],
+    );
+    return (result.first['total'] as num?)?.toDouble() ?? 0;
+  }
+
+  /// Returns a map of category -> total for expenses in a custom date range.
+  static Future<Map<String, double>> rangeExpenseByCategory(DateTime from, DateTime to) async {
+    final d = await db;
+    final rows = await d.rawQuery(
+      "SELECT LOWER(category) as category, SUM(amount) as total FROM transactions "
+      "WHERE type='expense' AND category != 'transfer' AND date>=? AND date<=? GROUP BY LOWER(category)",
+      [from.toIso8601String(), to.toIso8601String()],
     );
     return {for (final r in rows) r['category'] as String: (r['total'] as num).toDouble()};
   }

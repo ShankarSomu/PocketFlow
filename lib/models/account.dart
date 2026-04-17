@@ -17,7 +17,7 @@ class Account {
     this.creditLimit,
   });
 
-  static const types = ['checking', 'savings', 'credit', 'cash', 'other'];
+  static const types = ['checking', 'debit', 'savings', 'credit', 'cash', 'investment', 'other'];
 
   bool get isCredit => type == 'credit';
 

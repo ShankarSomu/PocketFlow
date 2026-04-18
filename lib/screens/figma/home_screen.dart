@@ -8,8 +8,10 @@ import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
 import '../../services/time_filter.dart';
+import '../../theme/app_color_scheme.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/error_state_widget.dart';
+import '../../widgets/feature_hint.dart';
 import 'home/components/home_components.dart';
 import 'shared.dart';
 
@@ -24,8 +26,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _carouselController = PageController();
-    _carousel2Controller = PageController();
     _load();
     appRefresh.addListener(_load);
     appTimeFilter.addListener(_load);
@@ -35,8 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     appRefresh.removeListener(_load);
     appTimeFilter.removeListener(_load);
-    _carouselController.dispose();
-    _carousel2Controller.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -53,10 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, double> _categorySpend = {};
   List<Budget> _budgets = [];
   bool _showBalance = true;
-  late final PageController _carouselController;
-  int _carouselPage = 0;
-  late final PageController _carousel2Controller;
-  int _carousel2Page = 0;
   final ScrollController _scrollController = ScrollController();
   int _budgetAnimKey = 0;
 
@@ -122,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
       .join(' ');
 
   String _pctChange(double current, double previous) {
-    if (previous == 0) return current > 0 ? '+100%' : '—';
+    if (previous == 0) return current > 0 ? '+100%' : 'ï¿½';
     final pct = (current - previous) / previous * 100;
     final sign = pct >= 0 ? '+' : '';
     return '$sign${pct.toStringAsFixed(1)}%';
@@ -136,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showNotifications() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Notifications are coming soon — stay tuned!'),
+        content: Text('Notifications are coming soon ï¿½ stay tuned!'),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -194,7 +188,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const Positioned(
               bottom: 16,
               left: 16,
-              child: CalendarFab(),
+              child: FeatureHint(
+                featureKey: FeatureHints.timeFilter,
+                message: 'Tap to filter by time period',
+                alignment: Alignment.bottomLeft,
+                child: CalendarFab(),
+              ),
             ),
           ],
         ),
@@ -203,104 +202,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCarousel(NumberFormat fmt) {
-    final pages = [
-      HomeStatsRow(
+    return SizedBox(
+      height: 260,
+      child: HomeStatsRow(
         totalBalance: _totalBalance,
         income: _income,
         expenses: _expenses,
         prevIncome: _prevIncome,
         prevExpenses: _prevExpenses,
         savingsRate: _savingsRate,
-      ),
-      HomeAccountsOverview(
-        accounts: _accounts,
-        accountBalances: _accountBalances,
-      ),
-      HomeSmartInsights(
-        categorySpend: _categorySpend,
-        budgets: _budgets,
-        income: _income,
-        expenses: _expenses,
-        savingsRate: _savingsRate,
-      ),
-    ];
-    final labels = ['Overview', 'Accounts', 'Insights'];
-
-    return ClipRect(
-      child: SizedBox(
-        height: 260,
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _carouselController,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: pages.length,
-              onPageChanged: (i) => setState(() => _carouselPage = i),
-              itemBuilder: (context, index) => pages[index],
-            ),
-            // Left arrow (circular)
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: CarouselArrow(
-                  icon: Icons.chevron_left_rounded,
-                  onTap: () => _carouselController.animateToPage(
-                    (_carouselPage - 1 + pages.length) % pages.length,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
-                  ),
-                ),
-              ),
-            ),
-            // Right arrow (circular)
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: CarouselArrow(
-                  icon: Icons.chevron_right_rounded,
-                  onTap: () => _carouselController.animateToPage(
-                    (_carouselPage + 1) % pages.length,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
-                  ),
-                ),
-              ),
-            ),
-            // Page label + dots (top-right, compact)
-            Positioned(
-              top: 0,
-              right: 6,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Text(
-                      labels[_carouselPage],
-                      key: ValueKey(_carouselPage),
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  ...List.generate(pages.length, (i) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.only(left: 3),
-                    width: i == _carouselPage ? 14 : 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: i == _carouselPage ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  )),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -347,11 +257,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    gradient: LinearGradient(colors: [ThemeService.instance.primaryColor, ThemeService.instance.primaryDark]),
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).extension<AppColorScheme>()!.graphPositiveStart,
+                        Theme.of(context).extension<AppColorScheme>()!.graphPositiveEnd,
+                      ],
+                    ),
                     barWidth: 3,
                     belowBarData: BarAreaData(
                       show: true,
-                      gradient: LinearGradient(colors: [ThemeService.instance.primaryColor.withOpacity(0.28), ThemeService.instance.primaryColor.withOpacity(0.0)]),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Theme.of(context).extension<AppColorScheme>()!.graphPositiveStart.withOpacity(0.28),
+                          Theme.of(context).extension<AppColorScheme>()!.graphPositiveStart.withOpacity(0.0),
+                        ],
+                      ),
                     ),
                     dotData: FlDotData(show: false),
                   ),
@@ -364,91 +286,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // -- Second horizontal carousel: Budget / Trend / Categories --------------
-
   Widget _buildSecondCarousel() {
-    final pages = [
-      _buildBudgetDonutPage(),
-      _buildCategoryBarsPage(),
-    ];
-    final labels = ['Spending', 'Budgets'];
-
-    return ClipRect(
-      child: SizedBox(
-        height: 280,
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _carousel2Controller,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: pages.length,
-              onPageChanged: (i) => setState(() => _carousel2Page = i),
-              itemBuilder: (context, index) => pages[index],
-            ),
-            // Left arrow (circular)
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: CarouselArrow(
-                  icon: Icons.chevron_left_rounded,
-                  onTap: () => _carousel2Controller.animateToPage(
-                    (_carousel2Page - 1 + pages.length) % pages.length,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
-                  ),
-                ),
-              ),
-            ),
-            // Right arrow (circular)
-            Positioned(
-              right: 0,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: CarouselArrow(
-                  icon: Icons.chevron_right_rounded,
-                  onTap: () => _carousel2Controller.animateToPage(
-                    (_carousel2Page + 1) % pages.length,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
-                  ),
-                ),
-              ),
-            ),
-            // Page label + dots (top-right, compact)
-            Positioned(
-              top: 0,
-              right: 6,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Text(
-                      labels[_carousel2Page],
-                      key: ValueKey(_carousel2Page),
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  ...List.generate(pages.length, (i) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.only(left: 3),
-                    width: i == _carousel2Page ? 14 : 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: i == _carousel2Page ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  )),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return SizedBox(
+      height: 260,
+      child: _buildBudgetDonutPage(),
     );
   }
 

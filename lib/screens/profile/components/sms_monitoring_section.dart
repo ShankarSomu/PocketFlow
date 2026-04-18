@@ -106,7 +106,7 @@ class SmsMonitoringSection extends StatelessWidget {
                     value: smsScanRange,
                     isDense: true,
                     underline: const SizedBox(),
-                    dropdownColor: AppTheme.slate800,
+                    dropdownColor: AppTheme.slate700,
                     style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 12),
                     items: SmsScanRange.values
                         .map((r) => DropdownMenuItem(

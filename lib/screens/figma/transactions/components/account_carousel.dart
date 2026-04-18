@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../models/account.dart';
 import '../../../../services/theme_service.dart';
+import '../../../../theme/app_theme.dart';
 import 'transaction_helpers.dart';
 
 /// Account carousel for transactions screen with swipeable account cards
@@ -36,14 +37,9 @@ class TransactionAccountCarousel extends StatelessWidget {
     }
 
     Widget cardContent;
-    List<Color> gradColors;
 
     if (carouselIdx == 0) {
       // All accounts card
-      gradColors = [
-        Theme.of(context).colorScheme.inverseSurface,
-        Theme.of(context).colorScheme.inverseSurface.withOpacity(0.85)
-      ];
       cardContent = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -109,7 +105,6 @@ class TransactionAccountCarousel extends StatelessWidget {
     } else {
       final account = accounts[carouselIdx - 1];
       final balance = balances[account.id] ?? 0;
-      gradColors = accountGradient(context, account.type);
       cardContent = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -186,12 +181,13 @@ class TransactionAccountCarousel extends StatelessWidget {
           curve: Curves.easeInOut,
           padding: const EdgeInsets.fromLTRB(44, 16, 44, 16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-                colors: gradColors,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight),
+            gradient: ThemeService.instance.cardGradient,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: ThemeService.instance.primaryShadow,
+            boxShadow: AppTheme.cardShadow,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              width: 1,
+            ),
           ),
           child: cardContent,
         ),

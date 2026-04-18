@@ -264,7 +264,18 @@ class SmsService {
         final parsed = _parseSms(body, date ?? DateTime.now());
         if (parsed == null) { skipped++; continue; }
 
-        await AppDatabase.insertTransaction(parsed);
+        // Store SMS source in transaction
+        final transaction = model.Transaction(
+          type: parsed.type,
+          amount: parsed.amount,
+          category: parsed.category,
+          note: parsed.note,
+          date: parsed.date,
+          accountId: parsed.accountId,
+          smsSource: body, // Store original SMS text
+        );
+
+        await AppDatabase.insertTransaction(transaction);
         newIds.add(id);
         imported++;
       } catch (e) {

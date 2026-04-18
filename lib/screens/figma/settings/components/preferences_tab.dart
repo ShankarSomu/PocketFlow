@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../db/database.dart';
 import '../../../../services/refresh_notifier.dart';
 import '../../../../services/sms_service.dart';
+import '../../../../widgets/performance_settings.dart';
 import 'appearance_section.dart';
 import 'settings_card.dart';
 import 'settings_widgets.dart';
@@ -25,11 +27,15 @@ class PreferencesTabState extends State<PreferencesTab> {
   bool _smsScanning = false;
   String? _smsResult;
 
+  DateTime? _lastSalaryDate;
+  int? _detectedSalaryDay;
+
   @override
   void initState() {
     super.initState();
     _loadNotifPrefs();
     _loadSmsPrefs();
+    _detectSalaryDate();
   }
 
   Future<void> _loadNotifPrefs() async {
@@ -116,6 +122,63 @@ class PreferencesTabState extends State<PreferencesTab> {
     return DateFormat('MMM d, h:mm a').format(time);
   }
 
+  String _getDaySuffix(int day) {
+    if (day >= 11 && day <= 13) return 'th';
+    return switch (day % 10) {
+      1 => 'st',
+      2 => 'nd',
+      3 => 'rd',
+      _ => 'th',
+    };
+  }
+
+  Future<void> _detectSalaryDate() async {
+    try {
+      // Get all salary transactions from the last 3 months
+      final now = DateTime.now();
+      final threeMonthsAgo = DateTime(now.year, now.month - 3, now.day);
+      
+      final transactions = await AppDatabase.getTransactions(
+        from: threeMonthsAgo,
+        to: now,
+      );
+      
+      // Filter for income transactions, prioritize "Salary" category
+      final salaryTxns = transactions.where((t) => 
+        t.type == 'income' && 
+        (t.category.toLowerCase().contains('salary') || 
+         t.category.toLowerCase().contains('income'))
+      ).toList();
+      
+      if (salaryTxns.isEmpty) {
+        // If no salary transactions, just use all income
+        final incomeTxns = transactions.where((t) => t.type == 'income').toList();
+        if (incomeTxns.isNotEmpty) {
+          incomeTxns.sort((a, b) => b.date.compareTo(a.date));
+          final mostRecent = incomeTxns.first;
+          if (!mounted) return;
+          setState(() {
+            _lastSalaryDate = mostRecent.date;
+            _detectedSalaryDay = mostRecent.date.day;
+          });
+        }
+        return;
+      }
+      
+      // Sort by date (most recent first)
+      salaryTxns.sort((a, b) => b.date.compareTo(a.date));
+      final mostRecentSalary = salaryTxns.first;
+      
+      if (!mounted) return;
+      setState(() {
+        _lastSalaryDate = mostRecentSalary.date;
+        _detectedSalaryDay = mostRecentSalary.date.day;
+      });
+    } catch (e) {
+      // Silently fail, not critical
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -166,6 +229,111 @@ class PreferencesTabState extends State<PreferencesTab> {
           icon: Icons.palette_rounded,
           children: const [
             AppearanceSection(),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SettingsCard(
+          title: 'Performance',
+          icon: Icons.speed_rounded,
+          children: const [
+            PerformanceSettings(),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SettingsCard(
+          title: 'Financial Period',
+          icon: Icons.calendar_month_rounded,
+          children: [
+            if (_detectedSalaryDay != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.auto_fix_high_rounded,
+                            size: 16, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Auto-Detected Salary Date',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Your salary is typically credited on or around the ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                        Text(
+                          '${_detectedSalaryDay}${_getDaySuffix(_detectedSalaryDay!)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_lastSalaryDate != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Last detected: ${DateFormat('MMM d, yyyy').format(_lastSalaryDate!)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              SettingsActionButton(
+                label: 'Refresh Salary Detection',
+                icon: Icons.refresh_rounded,
+                onTap: _detectSalaryDate,
+              ),
+            ] else ...[
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'No salary transactions detected yet',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Once you have income transactions marked as "Salary", we\'ll automatically detect your typical salary date.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 12),

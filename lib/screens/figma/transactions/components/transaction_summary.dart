@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../models/account.dart';
 import '../../../../services/theme_service.dart';
+import '../../../../theme/app_theme.dart';
 
 /// Gradient card showing net balance and income/expense split
 class TransactionSummaryCard extends StatelessWidget {
@@ -32,7 +33,8 @@ class TransactionSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: ThemeService.instance.primaryShadow,
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,10 +44,7 @@ class TransactionSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onPrimary
-                      .withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.credit_card_rounded,
@@ -62,10 +61,7 @@ class TransactionSummaryCard extends StatelessWidget {
                           fontWeight: FontWeight.w600)),
                   Text(masked,
                       style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onPrimary
-                              .withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
                           fontSize: 12)),
                 ],
               ),
@@ -74,18 +70,12 @@ class TransactionSummaryCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onPrimary
-                      .withOpacity(0.12),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('$transactionCount txns',
                     style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onPrimary
-                            .withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
                         fontSize: 12)),
               ),
             ],
@@ -93,10 +83,7 @@ class TransactionSummaryCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text('Net Balance',
               style: TextStyle(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onPrimary
-                      .withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
@@ -153,7 +140,7 @@ class SummaryPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -174,10 +161,7 @@ class SummaryPill extends StatelessWidget {
               children: [
                 Text(label,
                     style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onPrimary
-                            .withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
                         fontSize: 11)),
                 Text(amount,
                     style: TextStyle(

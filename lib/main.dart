@@ -10,13 +10,18 @@ import 'screens/figma/recurring_screen.dart';
 import 'screens/figma/profile_screen.dart';
 import 'screens/figma/transactions_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/tutorial_overlay.dart';
+import 'widgets/feature_hint.dart';
 import 'services/recurring_scheduler.dart';
 import 'services/auth_service.dart';
 import 'services/app_logger.dart';
 import 'services/theme_service.dart';
+import 'services/image_cache_service.dart';
+import 'services/navigation_state.dart';
+import 'services/deep_link_service.dart';
 import 'theme/app_theme.dart';
 import 'core/app_dependencies.dart';
-import 'widgets/error_boundary.dart';
+import 'utils/performance_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +54,10 @@ void main() async {
   await AppLogger.init();
   await AuthService.init();
   await ThemeService.instance.init();
+  await NavigationState.init();
+  await DeepLinkService().init();
+  await ImageCacheService().init();
+  PerformanceMonitor.init();
   AuthService.autoBackupIfDue();
   RecurringScheduler.processDue();
   runApp(const PocketFlowApp());
@@ -107,6 +116,82 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
     await prefs.setBool('has_seen_welcome', true);
     if (mounted) {
       setState(() => _showWelcome = false);
+      // Show tutorial for first-time users, then prompt sign-in
+      if (_isFirstTime) {
+        _showTutorial();
+      } else {
+        _promptSignIn();
+      }
+    }
+  }
+
+  Future<void> _showTutorial() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    
+    final shouldShow = await TutorialOverlay.shouldShow();
+    if (!shouldShow || !mounted) {
+      _promptSignIn();
+      return;
+    }
+    
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (_, __, ___) => TutorialOverlay(
+          onComplete: () {
+            Navigator.of(context).pop();
+            _promptSignIn();
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _promptSignIn() async {
+    // Wait a bit for the UI to settle
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    
+    final shouldSignIn = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.cloud_outlined, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            const Text('Sign In to PocketFlow'),
+          ],
+        ),
+        content: const Text(
+          'Sign in to sync your data across devices and enable automatic backups to Google Drive.\n\nYou can always sign in later from the profile menu.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Skip for now'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.login, size: 18),
+            label: const Text('Sign In'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldSignIn == true && mounted) {
+      final user = await AuthService.signIn();
+      if (user != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome, ${user.displayName ?? user.email}!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -183,29 +268,7 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
             }
             return result;
           },
-          home: _loading
-          ? Scaffold(
-              body: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF064E3B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.account_balance_wallet_rounded, size: 64, color: Colors.white),
-                      SizedBox(height: 24),
-                      CircularProgressIndicator(color: Colors.white),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          : _showWelcome
+          home: _showWelcome
               ? WelcomeScreen(onGetStarted: _onGetStarted, isFirstTime: _isFirstTime)
               : const _RootNav(),
           );
@@ -239,8 +302,81 @@ class _RootNavState extends State<_RootNav> {
   @override
   void initState() {
     super.initState();
+    _restoreLastTab();
     _pageCtrl = PageController(initialPage: 7 * 500);
     _rootGoHome = () => _goTo(0);
+    _setupDeepLinkHandler();
+  }
+
+  /// Set up deep link navigation handler
+  void _setupDeepLinkHandler() {
+    DeepLinkService().onLinkReceived = (deepLink) {
+      AppLogger.log(
+        LogLevel.info,
+        LogCategory.navigation,
+        'Deep link received',
+        detail: deepLink.toString(),
+      );
+
+      // Navigate based on deep link route
+      switch (deepLink.route) {
+        case 'home':
+          _goTo(0);
+          break;
+        case 'transactions':
+          _goTo(1);
+          break;
+        case 'transactions/add':
+          _goTo(1);
+          // TODO: Open add transaction dialog
+          break;
+        case 'accounts':
+          _goTo(6);
+          break;
+        case 'budgets':
+          _goTo(5);
+          break;
+        case 'goals':
+          _goTo(4);
+          break;
+        case 'settings':
+          // Navigate to profile screen (not in bottom nav)
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          );
+          break;
+        case 'chat':
+          _goTo(3);
+          break;
+        default:
+          AppLogger.log(
+            LogLevel.warning,
+            LogCategory.navigation,
+            'Unknown deep link route',
+            detail: deepLink.route,
+          );
+      }
+    };
+  }
+
+  Future<void> _restoreLastTab() async {
+    final lastTab = await NavigationState.getLastTab();
+    if (lastTab != 0 && mounted) {
+      setState(() => _index = lastTab);
+      _rootNavIndex.value = lastTab;
+      // Update page controller after it's initialized
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _pageCtrl.hasClients) {
+          final currentPage = _pageCtrl.page?.round() ?? (_screens.length * 500);
+          final currentSlot = currentPage % _screens.length;
+          int diff = (lastTab - currentSlot) % _screens.length;
+          if (diff > _screens.length ~/ 2) diff -= _screens.length;
+          if (diff != 0) {
+            _pageCtrl.jumpToPage(currentPage + diff);
+          }
+        }
+      });
+    }
   }
 
   @override
@@ -258,6 +394,7 @@ class _RootNavState extends State<_RootNav> {
     if (diff > _screens.length ~/ 2) diff -= _screens.length;
     setState(() => _index = i);
     _rootNavIndex.value = i;
+    NavigationState.saveLastTab(i); // Persist tab change
     if (diff == 0) return;
     _pageCtrl.animateToPage(
       currentPage + diff,
@@ -269,24 +406,31 @@ class _RootNavState extends State<_RootNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageCtrl,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
+      body: FeatureHint(
+        featureKey: FeatureHints.swipeNavigation,
+        message: 'Swipe left or right to navigate between screens',
+        alignment: Alignment.center,
+        delay: const Duration(seconds: 2),
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageCtrl,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              onPageChanged: (i) {
+                const names = ['Home','Transactions','Recurring','Chat','Savings','Budget','Accounts'];
+                final idx = i % _screens.length;
+                AppLogger.nav(names[idx]);
+                setState(() => _index = idx);
+                _rootNavIndex.value = idx;
+                NavigationState.saveLastTab(idx); // Persist swipe navigation
+              },
+              itemBuilder: (_, i) => _KeepAlivePage(child: _screens[i % _screens.length]),
             ),
-            onPageChanged: (i) {
-              const names = ['Home','Transactions','Recurring','Chat','Savings','Budget','Accounts'];
-              final idx = i % _screens.length;
-              AppLogger.nav(names[idx]);
-              setState(() => _index = idx);
-              _rootNavIndex.value = idx;
-            },
-            itemBuilder: (_, i) => _KeepAlivePage(child: _screens[i % _screens.length]),
-          ),
-          // Home FAB is now in MaterialApp.builder (above all pushed routes)
-        ],
+            // Home FAB is now in MaterialApp.builder (above all pushed routes)
+          ],
+        ),
       ),
       bottomNavigationBar: _BottomNav(
         index: _index,

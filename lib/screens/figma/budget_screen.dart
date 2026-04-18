@@ -1,12 +1,16 @@
 import '../../services/time_filter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../db/database.dart';
 import '../../models/budget.dart';
 import '../../services/refresh_notifier.dart';
 import '../../widgets/category_picker.dart';
+import '../../widgets/empty_states.dart';
+import '../../core/haptic_feedback.dart';
 import '../../widgets/error_state_widget.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/app_color_scheme.dart';
 import 'shared.dart';
 import '../../services/theme_service.dart';
 
@@ -185,7 +189,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       )
                     : Column(
                 children: [
-                  const ScreenHeader('Budget'),
+                  const ScreenHeader(
+                    'Budget',
+                    icon: Icons.pie_chart_rounded,
+                    subtitle: 'Overall spending vs limits',
+                  ),
                   // -- Summary Card --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -201,31 +209,10 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   // -- Budget List --
                   Expanded(
                     child: _budgets.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.pie_chart_outline_rounded, size: 56, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
-                                const SizedBox(height: 12),
-                                Text('No budgets set yet',
-                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 15)),
-                                const SizedBox(height: 16),
-                                GestureDetector(
-                                  onTap: () => _showEditDialog(null),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      gradient: ThemeService.instance.cardGradient,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: ThemeService.instance.primaryShadow,
-                                    ),
-                                    child: Text('Add your first budget',
-                                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
+                        ? EmptyStates.budgets(context, onAdd: () async {
+                            await HapticFeedbackHelper.lightImpact();
+                            _showEditDialog(null);
+                          })
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView(
@@ -241,7 +228,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                     )),
                                 if (overBudget.isNotEmpty) ...[
                                   const SizedBox(height: 18),
-                                  Text('Over Budget', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.error)),
+                                  Text('Over Budget', style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).extension<AppColorScheme>()!.error)),
                                   ...overBudget.map((b) => _BudgetItem(
                                         budget: b,
                                         spent: _spentByCategory[b.category] ?? 0,
@@ -269,13 +256,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   ),
                 ],
               ),
-            const Positioned(
-              bottom: 16,
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 16,
               left: 16,
-              child: CalendarFab(),
+              child: const CalendarFab(),
             ),
             Positioned(
-              bottom: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
               right: 16,
               child: SpeedDialFab(
                 actions: [
@@ -323,37 +310,21 @@ class _BudgetSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: ThemeService.instance.primaryShadow,
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.pie_chart_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Monthly Budget',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text('Overall spending vs limits',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12)),
-                ],
-              ),
-              const Spacer(),
+              Text('Total Spent', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
               if (overCount > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.error.withOpacity(0.25),
+                    color: Theme.of(context).extension<AppColorScheme>()!.error.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text('$overCount over',
@@ -362,8 +333,6 @@ class _BudgetSummaryCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text('Total Spent', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -375,7 +344,7 @@ class _BudgetSummaryCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('/ ${fmt.format(totalLimit)}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 13)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8), fontSize: 13)),
               ),
             ],
           ),
@@ -612,7 +581,7 @@ class _BudgetItem extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Column(
             children: [
               Row(
@@ -628,7 +597,7 @@ class _BudgetItem extends StatelessWidget {
                     child: Icon(
                       _iconForCategory(budget.category),
                       color: color,
-                      size: 22,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),

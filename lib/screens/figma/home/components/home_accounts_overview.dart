@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../models/account.dart';
+import '../../../../theme/category_colors.dart';
 import '../../shared.dart';
 
 /// Accounts overview widget showing all accounts with balances
@@ -22,14 +23,16 @@ class HomeAccountsOverview extends StatelessWidget {
         _ => Icons.account_balance_wallet_rounded,
       };
 
-  static Color _accountTypeColor(BuildContext context, String type) =>
-      switch (type) {
-        'checking' => Theme.of(context).colorScheme.primary,
-        'savings' => Theme.of(context).colorScheme.tertiary,
-        'credit' => Theme.of(context).colorScheme.error,
-        'cash' => Theme.of(context).colorScheme.secondary,
-        _ => Theme.of(context).colorScheme.secondary,
-      };
+  static Color _accountTypeColor(BuildContext context, String type) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return switch (type) {
+      'checking' => isDark ? const Color(0xFF5FAEE3) : const Color(0xFF3498DB),
+      'savings' => const Color(0xFF26DE81),
+      'credit' => isDark ? const Color(0xFFFF8787) : const Color(0xFFFF6B6B),
+      'cash' => const Color(0xFFF39C12),
+      _ => Theme.of(context).colorScheme.secondary,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -6,8 +6,12 @@ import '../../models/account.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/app_color_scheme.dart';
 import '../../widgets/error_state_widget.dart';
+import '../../widgets/empty_states.dart';
+import '../../core/haptic_feedback.dart';
 import 'shared.dart';
+import 'transactions_screen.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -172,6 +176,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           ),
                         );
                         if (confirm != true) return;
+                        await HapticFeedbackHelper.heavyImpact();
                         await AppDatabase.deleteAccount(existing.id!);
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -215,67 +220,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
     );
   }
 
-  void _showTransactions(Account account) async {
-    final transactions = await AppDatabase.getTransactions();
-    final accountTxns = transactions.where((t) => t.accountId == account.id).toList();
-    if (!mounted) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(account.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                      Text('${accountTxns.length} transactions', style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.onSurface.withOpacity(0.5))),
-                    ],
-                  ),
-                  IconButton(icon: Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: accountTxns.isEmpty
-                    ? Center(child: Text('No transactions yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))))
-                    : ListView.builder(
-                        controller: scrollController,
-                        itemCount: accountTxns.length,
-                        itemBuilder: (context, index) {
-                          final t = accountTxns[index];
-                          final isIncome = t.type == 'income';
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                            leading: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: (isIncome ? AppTheme.emerald : AppTheme.error).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: isIncome ? AppTheme.emerald : AppTheme.error, size: 20),
-                            ),
-                            title: Text(t.category, style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                            subtitle: Text('${DateFormat('MMM d, yyyy').format(t.date)}${t.note?.isNotEmpty == true ? ' � ${t.note}' : ''}', style: TextStyle(fontSize: 12)),
-                            trailing: Text(_fmt.format(t.amount), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isIncome ? AppTheme.emerald : AppTheme.error)),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
+  void _showTransactions(Account account) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TransactionsScreen(
+          initialAccountId: account.id,
         ),
       ),
     );
@@ -446,7 +396,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       )
                     : Column(
                 children: [
-                  const ScreenHeader('Accounts'),
+                  const ScreenHeader(
+                    'Accounts',
+                    icon: Icons.account_balance_wallet_rounded,
+                    subtitle: 'Net worth & balances',
+                  ),
                   // -- Summary Card --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -461,31 +415,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   // -- Account List --
                   Expanded(
                     child: _accounts.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.account_balance_wallet_outlined, size: 56, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
-                                const SizedBox(height: 12),
-                                Text('No accounts yet',
-                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 15)),
-                                const SizedBox(height: 16),
-                                GestureDetector(
-                                  onTap: () => _showForm(),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      gradient: ThemeService.instance.cardGradient,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: ThemeService.instance.primaryShadow,
-                                    ),
-                                    child: Text('Add your first account',
-                                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
+                        ? EmptyStates.accounts(context, onAdd: () async {
+                            await HapticFeedbackHelper.lightImpact();
+                            _showForm();
+                          })
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView(
@@ -516,7 +449,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               child: CalendarFab(),
             ),
             Positioned(
-              bottom: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
               right: 16,
               child: SpeedDialFab(actions: speedDialActions),
             ),
@@ -589,11 +522,12 @@ class _NetWorthSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: ThemeService.instance.primaryShadow,
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -750,7 +684,7 @@ class _AccountSection extends StatelessWidget {
                   if (i < accounts.length - 1)
                     Divider(
                       height: 1,
-                      indent: 68,
+                      indent: 70,
                       endIndent: 16,
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
@@ -812,7 +746,7 @@ class _AccountItem extends StatelessWidget {
                 color: color.withOpacity(0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 22),
+              child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 12),
             // Name + subtitle
@@ -835,12 +769,12 @@ class _AccountItem extends StatelessWidget {
                         if (account.last4 != null)
                           Text('  �  ',
                               style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
-                        Icon(Icons.warning_amber_rounded, size: 12, color: AppTheme.error),
+                        Icon(Icons.warning_amber_rounded, size: 12, color: Theme.of(context).extension<AppColorScheme>()!.error),
                         const SizedBox(width: 2),
                         Text(
                           daysUntil == 0 ? 'Due today' : 'Due in ${daysUntil}d',
                           style: TextStyle(
-                              fontSize: 12, color: AppTheme.error, fontWeight: FontWeight.w500),
+                              fontSize: 12, color: Theme.of(context).extension<AppColorScheme>()!.error, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ],
@@ -859,7 +793,7 @@ class _AccountItem extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: isCredit
-                        ? (balance > 0 ? AppTheme.error : AppTheme.emerald)
+                        ? (balance > 0 ? Theme.of(context).extension<AppColorScheme>()!.error : Theme.of(context).extension<AppColorScheme>()!.success)
                         : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -867,7 +801,7 @@ class _AccountItem extends StatelessWidget {
                 GestureDetector(
                   onTap: onViewTransactions,
                   child: Text('view txns',
-                      style: TextStyle(fontSize: 11, color: AppTheme.emerald, fontWeight: FontWeight.w500)),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).extension<AppColorScheme>()!.primaryVariant, fontWeight: FontWeight.w500)),
                 ),
               ],
             ),

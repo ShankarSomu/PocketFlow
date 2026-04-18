@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../services/theme_service.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/app_color_scheme.dart';
 import '../../accounts_screen.dart';
 import '../../savings_screen.dart';
 import '../../transactions_screen.dart';
@@ -39,15 +39,22 @@ class HomeStatsRow extends StatelessWidget {
     String change,
     Color accent, {
     VoidCallback? onTap,
+    Gradient? gradient,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          gradient: ThemeService.instance.cardGradient,
+          gradient: gradient ?? ThemeService.instance.cardGradient,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: ThemeService.instance.primaryShadow,
+          boxShadow: [
+            BoxShadow(
+              color: accent.withOpacity(0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,32 +63,32 @@ class HomeStatsRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 13,
-                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+                        color: Colors.white,
                         fontWeight: FontWeight.w500)),
                 Container(
                   width: 30,
                   height: 30,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+                  decoration: const BoxDecoration(
+                    color: Colors.white24,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.trending_up, color: accent, size: 14),
+                  child: Icon(Icons.trending_up, color: Colors.white.withOpacity(0.9), size: 14),
                 ),
               ],
             ),
             const SizedBox(height: 6),
             Text(value,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: Theme.of(context).colorScheme.onPrimary)),
+                    color: Colors.white)),
             const SizedBox(height: 3),
             Text(change,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6))),
+                    color: Colors.white70)),
           ],
         ),
       ),
@@ -90,6 +97,7 @@ class HomeStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = Theme.of(context).extension<AppColorScheme>()!;
     final fmt = NumberFormat.currency(symbol: '\$');
     final incomeChg = _pctChange(income, prevIncome);
     final expChg = _pctChange(expenses, prevExpenses);
@@ -101,6 +109,10 @@ class HomeStatsRow extends StatelessWidget {
         '${savingsDiff >= 0 ? '+' : ''}${savingsDiff.toStringAsFixed(1)}pp';
     final netBalanceChg = totalBalance >= 0 ? 'Total assets' : 'Net negative';
 
+    // Use theme primary color for all cards with subtle variations
+    final primaryColor = ThemeService.instance.primaryColor;
+    final primaryDark = ThemeService.instance.primaryDark;
+
     return Column(
       children: [
         Row(
@@ -111,7 +123,12 @@ class HomeStatsRow extends StatelessWidget {
                 'Net Balance',
                 fmt.format(totalBalance),
                 netBalanceChg,
-                ThemeService.instance.primaryColor,
+                primaryColor,
+                gradient: LinearGradient(
+                  colors: [primaryColor, primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const AccountsScreen()),
@@ -125,7 +142,12 @@ class HomeStatsRow extends StatelessWidget {
                 'Savings Rate',
                 '${(savingsRate * 100).toStringAsFixed(0)}%',
                 savingsChg,
-                ThemeService.instance.primaryColor,
+                primaryColor,
+                gradient: LinearGradient(
+                  colors: [primaryColor.withOpacity(0.85), primaryDark.withOpacity(0.85)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const SavingsScreen()),
@@ -143,7 +165,12 @@ class HomeStatsRow extends StatelessWidget {
                 'Income',
                 fmt.format(income),
                 incomeChg,
-                ThemeService.instance.primaryColor,
+                appColors.success,
+                gradient: LinearGradient(
+                  colors: [appColors.success, appColors.success.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -159,7 +186,12 @@ class HomeStatsRow extends StatelessWidget {
                 'Expenses',
                 fmt.format(expenses),
                 expChg,
-                AppTheme.error,
+                appColors.error,
+                gradient: LinearGradient(
+                  colors: [appColors.error, appColors.error.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(

@@ -6,6 +6,7 @@ class Account {
   final String? last4;
   final int? dueDateDay;    // credit card due date (day of month 1-31)
   final double? creditLimit; // credit card limit
+  final int? deletedAt;
 
   Account({
     this.id,
@@ -15,6 +16,7 @@ class Account {
     this.last4,
     this.dueDateDay,
     this.creditLimit,
+    this.deletedAt,
   });
 
   static const types = ['checking', 'debit', 'savings', 'credit', 'cash', 'investment', 'other'];
@@ -46,6 +48,7 @@ class Account {
         'last4': last4,
         'due_date_day': dueDateDay,
         'credit_limit': creditLimit,
+        'deleted_at': deletedAt,
       };
 
   factory Account.fromMap(Map<String, dynamic> m) => Account(
@@ -56,5 +59,6 @@ class Account {
         last4: m['last4'],
         dueDateDay: m['due_date_day'],
         creditLimit: m['credit_limit'],
+        deletedAt: m['deleted_at'],
       );
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/app_constants.dart';
 
 /// Pull-to-refresh wrapper for any scrollable widget
 class PullToRefreshWrapper extends StatelessWidget {

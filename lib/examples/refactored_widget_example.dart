@@ -261,10 +261,7 @@ class OldWayExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ❌ Creating formatters repeatedly
-    final fmt = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
-    final dateFmt = DateFormat('MMM d, yyyy');
-
+    // ✅ Use static formatters from core/formatters.dart
     return Container(
       // ❌ Manual BoxDecoration
       decoration: BoxDecoration(
@@ -283,7 +280,7 @@ class OldWayExample extends StatelessWidget {
         children: [
           // ❌ Verbose opacity calls
           Text(
-            dateFmt.format(date),
+            DateFormatter.medium(date),
             style: TextStyle(
               color: Theme.of(context)
                   .colorScheme
@@ -292,7 +289,7 @@ class OldWayExample extends StatelessWidget {
             ),
           ),
           Text(
-            fmt.format(amount),
+            CurrencyFormatter.formatNoDecimals(amount),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ],

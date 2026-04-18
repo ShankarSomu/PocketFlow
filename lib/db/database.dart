@@ -6,6 +6,7 @@ import '../models/savings_goal.dart';
 import '../models/account.dart';
 import '../models/recurring_transaction.dart';
 import '../models/category.dart';
+import '../models/deletable_entity.dart';
 import 'package:pocket_flow/services/app_logger.dart';
 import '../core/database_optimizer.dart';
 
@@ -22,7 +23,7 @@ class AppDatabase {
 
   static Future<Database> _init() async {
     final path = join(await getDatabasesPath(), 'pocket_flow.db');
-    return openDatabase(path, version: 8,
+    return openDatabase(path, version: 10,
       onCreate: (db, _) => _createAll(db),
       onUpgrade: (db, oldVersion, _) async {
         if (oldVersion < 2) {
@@ -85,13 +86,38 @@ class AppDatabase {
           await db.execute(
               'ALTER TABLE accounts ADD COLUMN credit_limit REAL');
         }
+        if (oldVersion < 9) {
+          // Add soft delete support
+          await db.execute('ALTER TABLE transactions ADD COLUMN deleted_at INTEGER');
+          await db.execute('ALTER TABLE accounts ADD COLUMN deleted_at INTEGER');
+          await db.execute('ALTER TABLE budgets ADD COLUMN deleted_at INTEGER');
+          await db.execute('ALTER TABLE savings_goals ADD COLUMN deleted_at INTEGER');
+          await db.execute('ALTER TABLE recurring_transactions ADD COLUMN deleted_at INTEGER');
+          // Create indexes for deleted_at
+          await db.execute('CREATE INDEX idx_transactions_deleted ON transactions(deleted_at)');
+          await db.execute('CREATE INDEX idx_accounts_deleted ON accounts(deleted_at)');
+          await db.execute('CREATE INDEX idx_budgets_deleted ON budgets(deleted_at)');
+          await db.execute('CREATE INDEX idx_goals_deleted ON savings_goals(deleted_at)');
+          await db.execute('CREATE INDEX idx_recurring_deleted ON recurring_transactions(deleted_at)');
+        }
+        if (oldVersion < 10) {
+          // Add SMS source tracking for transactions
+          await db.execute('ALTER TABLE transactions ADD COLUMN sms_source TEXT');
+        }
       },
       onOpen: (db) async {
-        // For existing databases that might have empty categories table
+        // For existing databases that might have empty categories table or missing subcategories
         final count = await db.rawQuery('SELECT COUNT(*) as count FROM categories');
-        if (count.isNotEmpty) {
+        final subCount = await db.rawQuery('SELECT COUNT(*) as count FROM categories WHERE parent_id IS NOT NULL');
+        
+        if (count.isNotEmpty && subCount.isNotEmpty) {
           final categoryCount = (count.first['count'] as num?)?.toInt() ?? 0;
-          if (categoryCount == 0) {
+          final subcategoryCount = (subCount.first['count'] as num?)?.toInt() ?? 0;
+          
+          // Reseed if no categories at all, or if we have categories but no subcategories
+          if (categoryCount == 0 || (categoryCount > 0 && subcategoryCount == 0)) {
+            // Clear existing categories before reseeding
+            await db.delete('categories');
             await _seedDefaultCategories(db);
           }
         }
@@ -111,7 +137,8 @@ class AppDatabase {
         balance REAL NOT NULL DEFAULT 0,
         last4 TEXT,
         due_date_day INTEGER,
-        credit_limit REAL
+        credit_limit REAL,
+        deleted_at INTEGER
       )''');
     await db.execute('''
       CREATE TABLE transactions(
@@ -122,7 +149,9 @@ class AppDatabase {
         note TEXT,
         date TEXT NOT NULL,
         account_id INTEGER REFERENCES accounts(id),
-        recurring_id INTEGER REFERENCES recurring_transactions(id)
+        recurring_id INTEGER REFERENCES recurring_transactions(id),
+        sms_source TEXT,
+        deleted_at INTEGER
       )''');
     await db.execute('''
       CREATE TABLE budgets(
@@ -131,6 +160,7 @@ class AppDatabase {
         `limit` REAL NOT NULL,
         month INTEGER NOT NULL,
         year INTEGER NOT NULL,
+        deleted_at INTEGER,
         UNIQUE(category, month, year)
       )''');
     await db.execute('''
@@ -145,7 +175,8 @@ class AppDatabase {
         goal_id INTEGER REFERENCES savings_goals(id),
         frequency TEXT NOT NULL,
         next_due_date TEXT NOT NULL,
-        is_active INTEGER NOT NULL DEFAULT 1
+        is_active INTEGER NOT NULL DEFAULT 1,
+        deleted_at INTEGER
       )''');
     await db.execute('''
       CREATE TABLE categories(
@@ -163,7 +194,8 @@ class AppDatabase {
         target REAL NOT NULL,
         saved REAL NOT NULL DEFAULT 0,
         account_id INTEGER REFERENCES accounts(id),
-        priority INTEGER NOT NULL DEFAULT 999
+        priority INTEGER NOT NULL DEFAULT 999,
+        deleted_at INTEGER
       )''');
     
     // Seed default categories
@@ -171,21 +203,27 @@ class AppDatabase {
   }
 
   static Future<void> _seedDefaultCategories(Database db) async {
-    final defaultCategories = [
-      {'name': 'Food', 'icon': '🍔', 'color': '#FF9F43', 'is_default': 1},
-      {'name': 'Transport', 'icon': '🚗', 'color': '#3B82F6', 'is_default': 1},
-      {'name': 'Shopping', 'icon': '🛍️', 'color': '#8B5CF6', 'is_default': 1},
-      {'name': 'Entertainment', 'icon': '🎮', 'color': '#EF4444', 'is_default': 1},
-      {'name': 'Health', 'icon': '💊', 'color': '#06B6D4', 'is_default': 1},
-      {'name': 'Home', 'icon': '🏠', 'color': '#F59E0B', 'is_default': 1},
-      {'name': 'Education', 'icon': '📚', 'color': '#7C3AED', 'is_default': 1},
-      {'name': 'Salary', 'icon': '💰', 'color': '#10B981', 'is_default': 1},
-      {'name': 'Bills', 'icon': '📄', 'color': '#EF4444', 'is_default': 1},
-      {'name': 'Fitness', 'icon': '🏋️', 'color': '#10B981', 'is_default': 1},
-    ];
-
-    for (final cat in defaultCategories) {
-      await db.insert('categories', cat);
+    // Import categories from kDefaultCategories with subcategories
+    for (final catDef in kDefaultCategories) {
+      // Insert parent category
+      final parentId = await db.insert('categories', {
+        'name': catDef.name,
+        'icon': catDef.icon,
+        'color': catDef.color,
+        'is_default': 1,
+        'parent_id': null,
+      });
+      
+      // Insert subcategories
+      for (final subName in catDef.subs) {
+        await db.insert('categories', {
+          'name': subName,
+          'icon': catDef.icon,
+          'color': catDef.color,
+          'is_default': 1,
+          'parent_id': parentId,
+        });
+      }
     }
   }
 
@@ -230,20 +268,40 @@ class AppDatabase {
       (await db).insert('accounts', a.toMap()..remove('id'));
 
   static Future<List<Account>> getAccounts() async {
-    final rows = await (await db).query('accounts', orderBy: 'name ASC');
+    final rows = await (await db).query('accounts',
+        where: 'deleted_at IS NULL',
+        orderBy: 'name ASC');
     return rows.map(Account.fromMap).toList();
   }
 
   static Future<void> updateAccount(Account a) async =>
       (await db).update('accounts', a.toMap(), where: 'id=?', whereArgs: [a.id]);
 
-  /// Nullifies account_id on all transactions before deleting the account
-  /// so balance calculations don't break.
+  /// Soft delete account (marks as deleted, doesn't remove)
   static Future<void> deleteAccount(int id) async {
+    final d = await db;
+    await d.update('accounts',
+        {'deleted_at': SoftDeleteHelper.now()},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('softDeleteAccount', detail: 'id=$id');
+  }
+
+  /// Restore soft-deleted account
+  static Future<void> restoreAccount(int id) async {
+    await (await db).update('accounts',
+        {'deleted_at': null},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('restoreAccount', detail: 'id=$id');
+  }
+
+  /// Permanently delete account (cannot be undone)
+  /// Also nullifies account_id on all transactions
+  static Future<void> permanentlyDeleteAccount(int id) async {
     final d = await db;
     await d.update('transactions', {'account_id': null},
         where: 'account_id=?', whereArgs: [id]);
     await d.delete('accounts', where: 'id=?', whereArgs: [id]);
+    AppLogger.db('permanentlyDeleteAccount', detail: 'id=$id');
   }
 
   /// Transfer money from one account to another.
@@ -283,11 +341,11 @@ class AppDatabase {
   static Future<double> accountBalance(int accountId, Account account) async {
     final d = await db;
     final income = await d.rawQuery(
-      "SELECT SUM(amount) as t FROM transactions WHERE account_id=? AND type='income'",
+      "SELECT SUM(amount) as t FROM transactions WHERE deleted_at IS NULL AND account_id=? AND type='income'",
       [accountId],
     );
     final expense = await d.rawQuery(
-      "SELECT SUM(amount) as t FROM transactions WHERE account_id=? AND type='expense'",
+      "SELECT SUM(amount) as t FROM transactions WHERE deleted_at IS NULL AND account_id=? AND type='expense'",
       [accountId],
     );
     final i = (income.first['t'] as num?)?.toDouble() ?? 0;
@@ -310,9 +368,26 @@ class AppDatabase {
     AppLogger.db('updateTransaction', detail: 'id=${t.id} ${t.type} \$${t.amount}');
   }
 
+  /// Soft delete transaction
   static Future<void> deleteTransaction(int id) async {
+    await (await db).update('transactions',
+        {'deleted_at': SoftDeleteHelper.now()},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('softDeleteTransaction', detail: 'id=$id');
+  }
+
+  /// Restore soft-deleted transaction
+  static Future<void> restoreTransaction(int id) async {
+    await (await db).update('transactions',
+        {'deleted_at': null},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('restoreTransaction', detail: 'id=$id');
+  }
+
+  /// Permanently delete transaction (cannot be undone)
+  static Future<void> permanentlyDeleteTransaction(int id) async {
     await (await db).delete('transactions', where: 'id=?', whereArgs: [id]);
-    AppLogger.db('deleteTransaction', detail: 'id=$id');
+    AppLogger.db('permanentlyDeleteTransaction', detail: 'id=$id');
   }
 
   static Future<List<model.Transaction>> getTransactions({
@@ -323,7 +398,7 @@ class AppDatabase {
     int? accountId,
   }) async {
     final d = await db;
-    final where = <String>[];
+    final where = <String>['deleted_at IS NULL'];
     final args = <dynamic>[];
     if (type != null) { where.add('type = ?'); args.add(type); }
     if (from != null) { where.add('date >= ?'); args.add(from.toIso8601String()); }
@@ -335,7 +410,7 @@ class AppDatabase {
     if (accountId != null) { where.add('account_id = ?'); args.add(accountId); }
     final rows = await d.query(
       'transactions',
-      where: where.isEmpty ? null : where.join(' AND '),
+      where: where.join(' AND '),
       whereArgs: args.isEmpty ? null : args,
       orderBy: 'date DESC',
     );
@@ -347,7 +422,7 @@ class AppDatabase {
     final start = DateTime(year, month, 1).toIso8601String();
     final end = DateTime(year, month + 1, 1).toIso8601String();
     final result = await d.rawQuery(
-      "SELECT SUM(amount) as total FROM transactions WHERE type=? AND date>=? AND date<? AND category != 'transfer'",
+      "SELECT SUM(amount) as total FROM transactions WHERE deleted_at IS NULL AND type=? AND date>=? AND date<? AND category != 'transfer'",
       [type, start, end],
     );
     return (result.first['total'] as num?)?.toDouble() ?? 0;
@@ -359,7 +434,7 @@ class AppDatabase {
     final end = DateTime(year, month + 1, 1).toIso8601String();
     final rows = await d.rawQuery(
       "SELECT LOWER(category) as category, SUM(amount) as total FROM transactions "
-      "WHERE type='expense' AND category != 'transfer' AND date>=? AND date<? GROUP BY LOWER(category)",
+      "WHERE deleted_at IS NULL AND type='expense' AND category != 'transfer' AND date>=? AND date<? GROUP BY LOWER(category)",
       [start, end],
     );
     return {
@@ -373,7 +448,7 @@ class AppDatabase {
   static Future<double> rangeTotal(String type, DateTime from, DateTime to) async {
     final d = await db;
     final result = await d.rawQuery(
-      "SELECT SUM(amount) as total FROM transactions WHERE type=? AND date>=? AND date<=? AND category != 'transfer'",
+      "SELECT SUM(amount) as total FROM transactions WHERE deleted_at IS NULL AND type=? AND date>=? AND date<=? AND category != 'transfer'",
       [type, from.toIso8601String(), to.toIso8601String()],
     );
     return (result.first['total'] as num?)?.toDouble() ?? 0;
@@ -384,7 +459,7 @@ class AppDatabase {
     final d = await db;
     final rows = await d.rawQuery(
       "SELECT LOWER(category) as category, SUM(amount) as total FROM transactions "
-      "WHERE type='expense' AND category != 'transfer' AND date>=? AND date<=? GROUP BY LOWER(category)",
+      "WHERE deleted_at IS NULL AND type='expense' AND category != 'transfer' AND date>=? AND date<=? GROUP BY LOWER(category)",
       [from.toIso8601String(), to.toIso8601String()],
     );
     return {
@@ -402,7 +477,8 @@ class AppDatabase {
 
   static Future<List<Budget>> getBudgets(int month, int year) async {
     final rows = await (await db).query('budgets',
-        where: 'month=? AND year=?', whereArgs: [month, year]);
+        where: 'deleted_at IS NULL AND month=? AND year=?',
+        whereArgs: [month, year]);
     return rows.map(Budget.fromMap).toList();
   }
 
@@ -412,7 +488,9 @@ class AppDatabase {
       (await db).insert('savings_goals', g.toMap()..remove('id'));
 
   static Future<List<SavingsGoal>> getGoals() async {
-    final rows = await (await db).query('savings_goals', orderBy: 'priority ASC, name ASC');
+    final rows = await (await db).query('savings_goals',
+        where: 'deleted_at IS NULL',
+        orderBy: 'priority ASC, name ASC');
     return rows.map(SavingsGoal.fromMap).toList();
   }
 
@@ -422,8 +500,27 @@ class AppDatabase {
   static Future<void> updateGoalSaved(int id, double saved) async =>
       (await db).update('savings_goals', {'saved': saved}, where: 'id=?', whereArgs: [id]);
 
-  static Future<void> deleteGoal(int id) async =>
-      (await db).delete('savings_goals', where: 'id=?', whereArgs: [id]);
+  /// Soft delete savings goal
+  static Future<void> deleteGoal(int id) async {
+    await (await db).update('savings_goals',
+        {'deleted_at': SoftDeleteHelper.now()},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('softDeleteGoal', detail: 'id=$id');
+  }
+
+  /// Restore soft-deleted goal
+  static Future<void> restoreGoal(int id) async {
+    await (await db).update('savings_goals',
+        {'deleted_at': null},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('restoreGoal', detail: 'id=$id');
+  }
+
+  /// Permanently delete goal (cannot be undone)
+  static Future<void> permanentlyDeleteGoal(int id) async {
+    await (await db).delete('savings_goals', where: 'id=?', whereArgs: [id]);
+    AppLogger.db('permanentlyDeleteGoal', detail: 'id=$id');
+  }
 
   // ── Recurring Transactions ───────────────────────────────────────────────────
 
@@ -431,7 +528,9 @@ class AppDatabase {
       (await db).insert('recurring_transactions', r.toMap()..remove('id'));
 
   static Future<List<RecurringTransaction>> getRecurring() async {
-    final rows = await (await db).query('recurring_transactions', orderBy: 'next_due_date ASC');
+    final rows = await (await db).query('recurring_transactions',
+        where: 'deleted_at IS NULL',
+        orderBy: 'next_due_date ASC');
     return rows.map(RecurringTransaction.fromMap).toList();
   }
 
@@ -439,8 +538,119 @@ class AppDatabase {
       (await db).update('recurring_transactions', r.toMap(),
           where: 'id=?', whereArgs: [r.id]);
 
-  static Future<void> deleteRecurring(int id) async =>
-      (await db).delete('recurring_transactions', where: 'id=?', whereArgs: [id]);
+  /// Soft delete recurring transaction
+  static Future<void> deleteRecurring(int id) async {
+    await (await db).update('recurring_transactions',
+        {'deleted_at': SoftDeleteHelper.now()},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('softDeleteRecurring', detail: 'id=$id');
+  }
+
+  /// Restore soft-deleted recurring transaction
+  static Future<void> restoreRecurring(int id) async {
+    await (await db).update('recurring_transactions',
+        {'deleted_at': null},
+        where: 'id=?', whereArgs: [id]);
+    AppLogger.db('restoreRecurring', detail: 'id=$id');
+  }
+
+  /// Permanently delete recurring transaction (cannot be undone)
+  static Future<void> permanentlyDeleteRecurring(int id) async {
+    await (await db).delete('recurring_transactions', where: 'id=?', whereArgs: [id]);
+    AppLogger.db('permanentlyDeleteRecurring', detail: 'id=$id');
+  }
+
+  // ── Export ───────────────────────────────────────────────────────────────────
+
+  /// Get statistics about deleted items
+  static Future<DeletedItemsStats> getDeletedItemsStats() async {
+    final d = await db;
+    
+    final txnCount = await d.rawQuery(
+      'SELECT COUNT(*) as count FROM transactions WHERE deleted_at IS NOT NULL'
+    );
+    final accountCount = await d.rawQuery(
+      'SELECT COUNT(*) as count FROM accounts WHERE deleted_at IS NOT NULL'
+    );
+    final budgetCount = await d.rawQuery(
+      'SELECT COUNT(*) as count FROM budgets WHERE deleted_at IS NOT NULL'
+    );
+    final goalCount = await d.rawQuery(
+      'SELECT COUNT(*) as count FROM savings_goals WHERE deleted_at IS NOT NULL'
+    );
+    final recurringCount = await d.rawQuery(
+      'SELECT COUNT(*) as count FROM recurring_transactions WHERE deleted_at IS NOT NULL'
+    );
+    
+    return DeletedItemsStats(
+      transactions: (txnCount.first['count'] as num?)?.toInt() ?? 0,
+      accounts: (accountCount.first['count'] as num?)?.toInt() ?? 0,
+      budgets: (budgetCount.first['count'] as num?)?.toInt() ?? 0,
+      goals: (goalCount.first['count'] as num?)?.toInt() ?? 0,
+      recurring: (recurringCount.first['count'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// Get all deleted transactions
+  static Future<List<model.Transaction>> getDeletedTransactions() async {
+    final rows = await (await db).query('transactions',
+        where: 'deleted_at IS NOT NULL',
+        orderBy: 'deleted_at DESC');
+    return rows.map(model.Transaction.fromMap).toList();
+  }
+
+  /// Get all deleted accounts
+  static Future<List<Account>> getDeletedAccounts() async {
+    final rows = await (await db).query('accounts',
+        where: 'deleted_at IS NOT NULL',
+        orderBy: 'deleted_at DESC');
+    return rows.map(Account.fromMap).toList();
+  }
+
+  /// Get all deleted goals
+  static Future<List<SavingsGoal>> getDeletedGoals() async {
+    final rows = await (await db).query('savings_goals',
+        where: 'deleted_at IS NOT NULL',
+        orderBy: 'deleted_at DESC');
+    return rows.map(SavingsGoal.fromMap).toList();
+  }
+
+  /// Get all deleted recurring transactions
+  static Future<List<RecurringTransaction>> getDeletedRecurring() async {
+    final rows = await (await db).query('recurring_transactions',
+        where: 'deleted_at IS NOT NULL',
+        orderBy: 'deleted_at DESC');
+    return rows.map(RecurringTransaction.fromMap).toList();
+  }
+
+  /// Purge old deleted items (default: older than 30 days)
+  static Future<int> purgeOldDeletedItems({int retentionDays = 30}) async {
+    final d = await db;
+    final cutoff = DateTime.now()
+        .subtract(Duration(days: retentionDays))
+        .millisecondsSinceEpoch;
+    
+    int totalPurged = 0;
+    totalPurged += await d.delete('transactions',
+        where: 'deleted_at IS NOT NULL AND deleted_at < ?',
+        whereArgs: [cutoff]);
+    totalPurged += await d.delete('accounts',
+        where: 'deleted_at IS NOT NULL AND deleted_at < ?',
+        whereArgs: [cutoff]);
+    totalPurged += await d.delete('budgets',
+        where: 'deleted_at IS NOT NULL AND deleted_at < ?',
+        whereArgs: [cutoff]);
+    totalPurged += await d.delete('savings_goals',
+        where: 'deleted_at IS NOT NULL AND deleted_at < ?',
+        whereArgs: [cutoff]);
+    totalPurged += await d.delete('recurring_transactions',
+        where: 'deleted_at IS NOT NULL AND deleted_at < ?',
+        whereArgs: [cutoff]);
+    
+    AppLogger.db('purgeOldDeletedItems',
+        detail: 'Purged $totalPurged items older than $retentionDays days');
+    return totalPurged;
+  }
 
   // ── Export ───────────────────────────────────────────────────────────────────
 

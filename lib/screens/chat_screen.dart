@@ -406,49 +406,69 @@ class ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(64),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            border: Border(
-              bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Modern header matching other screens
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
               child: Row(
                 children: [
                   Container(
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      gradient: ThemeService.instance.cardGradient,
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    padding: const EdgeInsets.all(8),
                     child: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.onPrimary, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('AI Assistant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Theme.of(context).colorScheme.onSurface)),
-                      const SizedBox(height: 1),
-                      Text(
-                        'Smart Finance Assistant',
-                        style: TextStyle(fontSize: 11, color: context.colors.onSurface.subtle),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AI Assistant',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 22,
+                            letterSpacing: -0.5,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          'Smart Finance Assistant',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
                   IconButton(
-                    icon: Icon(Icons.refresh, color: context.colors.onSurface.subtle),
+                    icon: Icon(Icons.refresh_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
                     tooltip: 'New chat',
                     onPressed: () => setState(() { _messages.clear(); _aiHistory.clear(); }),
                   ),
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: context.colors.onSurface.subtle),
+                    icon: Icon(Icons.more_vert_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     itemBuilder: (context) => [
                       const PopupMenuItem(value: 'settings', child: Text('Change AI Key')),
                       const PopupMenuItem(value: 'clear', child: Text('Clear chat')),
@@ -461,12 +481,6 @@ class ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
               // Suggestion chips above input
               if (_messages.isEmpty) ...[
                 Expanded(
@@ -476,9 +490,16 @@ class ChatScreenState extends State<ChatScreen> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            gradient: ThemeService.instance.cardGradient,
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).colorScheme.primary,
+                                Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: ThemeService.instance.primaryShadow,
+                            boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))],
                           ),
                           padding: const EdgeInsets.all(18),
                           child: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.onPrimary, size: 36),

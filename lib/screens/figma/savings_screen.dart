@@ -8,6 +8,8 @@ import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/error_state_widget.dart';
+import '../../widgets/empty_states.dart';
+import '../../core/haptic_feedback.dart';
 import 'shared.dart';
 
 class SavingsScreen extends StatefulWidget {
@@ -155,6 +157,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                           ),
                         );
                         if (confirm != true) return;
+                        await HapticFeedbackHelper.heavyImpact();
                         await AppDatabase.deleteGoal(existing.id!);
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -198,18 +201,18 @@ class _SavingsScreenState extends State<SavingsScreen> {
     );
   }
 
-  String _emojiForGoal(String name) {
+  IconData _iconForGoal(String name) {
     final n = name.toLowerCase();
-    if (n.contains('car')) return '🚗';
-    if (n.contains('home') || n.contains('house')) return '🏠';
-    if (n.contains('vacation') || n.contains('travel') || n.contains('trip')) return '✈️';
-    if (n.contains('education') || n.contains('school') || n.contains('college')) return '🎓';
-    if (n.contains('phone') || n.contains('tech') || n.contains('laptop') || n.contains('computer')) return '💻';
-    if (n.contains('wedding') || n.contains('ring')) return '💍';
-    if (n.contains('emergency') || n.contains('fund')) return '🆘';
-    if (n.contains('retire')) return '🏖️';
-    if (n.contains('baby') || n.contains('child')) return '👶';
-    return '🎯';
+    if (n.contains('car')) return Icons.directions_car_rounded;
+    if (n.contains('home') || n.contains('house')) return Icons.home_rounded;
+    if (n.contains('vacation') || n.contains('travel') || n.contains('trip')) return Icons.flight_rounded;
+    if (n.contains('education') || n.contains('school') || n.contains('college')) return Icons.school_rounded;
+    if (n.contains('phone') || n.contains('tech') || n.contains('laptop') || n.contains('computer')) return Icons.devices_rounded;
+    if (n.contains('wedding') || n.contains('ring')) return Icons.favorite_rounded;
+    if (n.contains('emergency') || n.contains('fund')) return Icons.shield_rounded;
+    if (n.contains('retire')) return Icons.beach_access_rounded;
+    if (n.contains('baby') || n.contains('child')) return Icons.child_care_rounded;
+    return Icons.savings_rounded;
   }
 
   @override
@@ -235,7 +238,11 @@ class _SavingsScreenState extends State<SavingsScreen> {
                       )
                     : Column(
                 children: [
-                  const ScreenHeader('Goals'),
+                  const ScreenHeader(
+                    'Goals',
+                    icon: Icons.emoji_events_rounded,
+                    subtitle: 'Track your financial targets',
+                  ),
                   // -- Summary Card --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -251,31 +258,10 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   // -- List --
                   Expanded(
                     child: _goals.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.emoji_events_outlined, size: 56, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
-                                const SizedBox(height: 12),
-                                Text('No savings goals yet',
-                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 15)),
-                                const SizedBox(height: 16),
-                                GestureDetector(
-                                  onTap: () => _showForm(null),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      gradient: ThemeService.instance.cardGradient,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: ThemeService.instance.primaryShadow,
-                                    ),
-                                    child: Text('Add your first goal',
-                                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
+                        ? EmptyStates.savingsGoals(context, onAdd: () async {
+                            await HapticFeedbackHelper.lightImpact();
+                            _showForm(null);
+                          })
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView(
@@ -285,7 +271,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                                   _GoalsSection(
                                     label: 'In Progress',
                                     goals: inProgress,
-                                    emojiFor: _emojiForGoal,
+                                    iconFor: _iconForGoal,
                                     fmt: fmt,
                                     onTap: _showForm,
                                   ),
@@ -293,7 +279,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                                   _GoalsSection(
                                     label: 'Completed',
                                     goals: completed,
-                                    emojiFor: _emojiForGoal,
+                                    iconFor: _iconForGoal,
                                     fmt: fmt,
                                     onTap: _showForm,
                                   ),
@@ -309,7 +295,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
               child: CalendarFab(),
             ),
             Positioned(
-              bottom: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
               right: 16,
               child: SpeedDialFab(
                 actions: [
@@ -359,45 +345,27 @@ class _GoalsSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: ThemeService.instance.primaryShadow,
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.emoji_events_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Savings Goals',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text('Track your financial targets',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12)),
-                ],
-              ),
-              const Spacer(),
+              Text('Total Saved', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.12),
+                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('$goalCount goals',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 12)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8), fontSize: 12)),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text('Total Saved', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -409,7 +377,7 @@ class _GoalsSummaryCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('/ ${fmt.format(totalTarget)}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 13)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8), fontSize: 13)),
               ),
             ],
           ),
@@ -419,7 +387,7 @@ class _GoalsSummaryCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: totalProgress,
               minHeight: 6,
-              backgroundColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+              backgroundColor: Theme.of(context).colorScheme.onPrimary.withOpacity(0.25),
               valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.tertiary),
             ),
           ),
@@ -498,14 +466,14 @@ class _StatPill extends StatelessWidget {
 class _GoalsSection extends StatelessWidget {
   final String label;
   final List<SavingsGoal> goals;
-  final String Function(String) emojiFor;
+  final IconData Function(String) iconFor;
   final NumberFormat fmt;
   final void Function(SavingsGoal) onTap;
 
   const _GoalsSection({
     required this.label,
     required this.goals,
-    required this.emojiFor,
+    required this.iconFor,
     required this.fmt,
     required this.onTap,
   });
@@ -536,7 +504,7 @@ class _GoalsSection extends StatelessWidget {
               final isLast = e.key == goals.length - 1;
               return _GoalItem(
                 goal: e.value,
-                emoji: emojiFor(e.value.name),
+                icon: iconFor(e.value.name),
                 fmt: fmt,
                 showDivider: !isLast,
                 onTap: () => onTap(e.value),
@@ -551,17 +519,17 @@ class _GoalsSection extends StatelessWidget {
 
 // -----------------------------------------------------------------------------
 
-/// Single goal row: emoji circle | name + saved/target | progress bar + % badge.
+/// Single goal row: icon circle | name + saved/target | progress bar + % badge.
 class _GoalItem extends StatelessWidget {
   final SavingsGoal goal;
-  final String emoji;
+  final IconData icon;
   final NumberFormat fmt;
   final bool showDivider;
   final VoidCallback onTap;
 
   const _GoalItem({
     required this.goal,
-    required this.emoji,
+    required this.icon,
     required this.fmt,
     required this.showDivider,
     required this.onTap,
@@ -589,12 +557,12 @@ class _GoalItem extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           children: [
             Row(
               children: [
-                // Emoji circle
+                // Icon circle
                 Container(
                   width: 44,
                   height: 44,
@@ -602,8 +570,10 @@ class _GoalItem extends StatelessWidget {
                     color: color.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Center(
-                    child: Text(emoji, style: TextStyle(fontSize: 20)),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: 12),

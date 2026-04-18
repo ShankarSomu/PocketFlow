@@ -146,24 +146,30 @@ class _SpeedDialFabState extends State<SpeedDialFab>
             ),
           ),
         // Main FAB
-        FloatingActionButton(
-          heroTag: null,
-          onPressed: _toggleOpen,
-          backgroundColor: Colors.transparent,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          shape: const CircleBorder(),
-          elevation: 0,
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: ThemeService.instance.cardGradient,
-              shape: BoxShape.circle,
-              boxShadow: ThemeService.instance.primaryShadow,
-            ),
-            child: Center(
-              child: AnimatedRotation(
-                turns: _open ? 0.125 : 0.0,
-                duration: const Duration(milliseconds: 220),
-                child: Icon(Icons.add, size: 28, color: Theme.of(context).colorScheme.onPrimary),
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: ThemeService.instance.cardGradient,
+            shape: BoxShape.circle,
+            boxShadow: ThemeService.instance.primaryShadow,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: _toggleOpen,
+              customBorder: const CircleBorder(),
+              child: Center(
+                child: AnimatedRotation(
+                  turns: _open ? 0.125 : 0.0,
+                  duration: const Duration(milliseconds: 220),
+                  child: Icon(
+                    Icons.add,
+                    size: 28,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ),

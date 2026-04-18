@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/theme_service.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final VoidCallback onGetStarted;
@@ -29,24 +30,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   int _currentPage = 0;
   final PageController _pageController = PageController();
 
-  final List<_OnboardPage> _pages = const [
+  final List<_OnboardPage> _pages = [
     _OnboardPage(
       icon: Icons.account_balance_wallet_rounded,
       title: 'All Your Finances,\nOne Place',
       subtitle: 'Track accounts, budgets, and bills with effortless clarity.',
-      gradient: [Color(0xFF0D9488), Color(0xFF2563EB)],
     ),
     _OnboardPage(
       icon: Icons.insights_rounded,
       title: 'Smart Insights,\nReal Results',
       subtitle: 'AI-powered analytics that reveal where your money actually goes.',
-      gradient: [Color(0xFF6366F1), Color(0xFF2563EB)],
     ),
     _OnboardPage(
       icon: Icons.flag_rounded,
       title: 'Goals You\'ll\nActually Reach',
       subtitle: 'Set savings goals and watch your progress in real time.',
-      gradient: [Color(0xFF0D9488), Color(0xFF0284C7)],
     ),
   ];
 
@@ -57,8 +55,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
     _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 12))
       ..repeat(reverse: true);
 
-    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))
-      ..repeat(reverse: true);
+    // Disable pulse animation on low-end devices
+    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    if (!_shouldReduceAnimations()) {
+      _pulseController.repeat(reverse: true);
+    }
     _pulse = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -91,6 +92,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
     );
 
     _entryController.forward();
+    
+    // Auto-dismiss for returning users after animation completes
+    if (!widget.isFirstTime) {
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        if (mounted) widget.onGetStarted();
+      });
+    }
+  }
+
+  bool _shouldReduceAnimations() {
+    return WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
   }
 
   @override
@@ -129,21 +141,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
               children: [
                 _Orb(
                   size: size.width * 1.2,
-                  color: const Color(0xFF0D9488),
+                  color: ThemeService.instance.primaryColor,
                   opacity: 0.12 + _bgController.value * 0.06,
                   dx: -size.width * 0.3,
                   dy: -size.height * 0.15 + _bgController.value * 40,
                 ),
                 _Orb(
                   size: size.width * 1.0,
-                  color: const Color(0xFF2563EB),
+                  color: ThemeService.instance.primaryColor,
                   opacity: 0.10 + _bgController.value * 0.05,
                   dx: size.width * 0.5,
                   dy: size.height * 0.55 - _bgController.value * 40,
                 ),
                 _Orb(
                   size: size.width * 0.6,
-                  color: const Color(0xFF6366F1),
+                  color: ThemeService.instance.primaryColor,
                   opacity: 0.08 + _bgController.value * 0.04,
                   dx: size.width * 0.3,
                   dy: size.height * 0.3 + _bgController.value * 20,
@@ -189,10 +201,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                                   animation: _entryController,
                                   builder: (_, __) => Opacity(
                                     opacity: _subtitleOpacity.value,
-                                    child: const Text(
-                                      'Experience financial clarity with intelligent\ntracking, beautiful insights, and effortless control.',
+                                    child: Text(
+                                      widget.isFirstTime
+                                          ? 'Experience financial clarity with intelligent\ntracking, beautiful insights, and effortless control.'
+                                          : 'Welcome back! Loading your financial dashboard...',
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         color: Color(0xFF94A3B8),
                                         height: 1.6,
@@ -252,8 +266,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFF0D9488).withValues(alpha: 0.35),
-                  const Color(0xFF2563EB).withValues(alpha: 0.15),
+                  ThemeService.instance.primaryColor.withValues(alpha: 0.35),
+                  ThemeService.instance.primaryColor.withValues(alpha: 0.15),
                   Colors.transparent,
                 ],
               ),
@@ -263,20 +277,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
             width: 96,
             height: 96,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0D9488), Color(0xFF2563EB)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: ThemeService.instance.cardGradient,
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+                  color: ThemeService.instance.primaryColor.withValues(alpha: 0.5),
                   blurRadius: 36,
                   offset: const Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: const Color(0xFF0D9488).withValues(alpha: 0.3),
+                  color: ThemeService.instance.primaryColor.withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: -4,
                   offset: const Offset(0, 4),
@@ -314,11 +324,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF2563EB)]),
+            gradient: ThemeService.instance.cardGradient,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                color: ThemeService.instance.primaryColor.withValues(alpha: 0.4),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -368,13 +378,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
               width: active ? 24 : 8,
               height: 8,
               decoration: BoxDecoration(
-                gradient: active
-                    ? const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF2563EB)])
-                    : null,
+                gradient: active ? ThemeService.instance.cardGradient : null,
                 color: active ? null : const Color(0x33FFFFFF),
                 borderRadius: BorderRadius.circular(4),
                 boxShadow: active
-                    ? [const BoxShadow(color: Color(0x802563EB), blurRadius: 8)]
+                    ? [BoxShadow(color: ThemeService.instance.primaryColor.withValues(alpha: 0.5), blurRadius: 8)]
                     : null,
               ),
             );
@@ -402,11 +410,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
             width: 68,
             height: 68,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: page.gradient),
+              gradient: ThemeService.instance.cardGradient,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: page.gradient.last.withValues(alpha: 0.45),
+                  color: ThemeService.instance.primaryColor.withValues(alpha: 0.45),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -552,6 +560,5 @@ class _OnboardPage {
   final IconData icon;
   final String title;
   final String subtitle;
-  final List<Color> gradient;
-  const _OnboardPage({required this.icon, required this.title, required this.subtitle, required this.gradient});
+  const _OnboardPage({required this.icon, required this.title, required this.subtitle});
 }

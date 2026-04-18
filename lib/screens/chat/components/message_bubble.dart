@@ -46,81 +46,94 @@ class MessageBubble extends StatelessWidget {
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(4),
         ),
-        boxShadow: themeService.primaryShadow,
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: SelectableText(
         msg.text,
         style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onPrimary,
+          color: Colors.white,
           fontWeight: FontWeight.w500,
+          height: 1.4,
         ),
       ),
     );
 
-    final assistantBubble = Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      color: msg.isAi ? theme.colorScheme.surface : theme.colorScheme.surfaceContainerHighest,
-      shape: RoundedRectangleBorder(
+    final assistantBubble = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: msg.isAi 
+            ? theme.colorScheme.surfaceContainer
+            : theme.colorScheme.surfaceContainerHighest,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(4),
           topRight: Radius.circular(20),
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
         ),
-        side: msg.isAi ? BorderSide(color: theme.colorScheme.primary.withOpacity(0.18)) : BorderSide.none,
+        border: msg.isAi 
+            ? Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 1)
+            : null,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (msg.isAi)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(children: [
-                  Icon(Icons.auto_awesome,
-                      size: 12, color: theme.colorScheme.primary),
-                  const SizedBox(width: 4),
-                  Text('AI',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold)),
-                ]),
-              ),
-            Text(msg.text,
-                style: TextStyle(
-                    color: msg.isUser ? theme.colorScheme.onPrimary : null,
-                    fontSize: 14)),
-            if (msg.needsConfirmation && onConfirm != null) ...[
-              const SizedBox(height: 8),
-              Row(children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => onConfirm!(false),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: theme.colorScheme.onSurface,
-                      side: BorderSide(color: theme.colorScheme.outlineVariant),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    child: const Text('No', style: TextStyle(fontSize: 12)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => onConfirm!(true),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    child: const Text('Yes', style: TextStyle(fontSize: 12)),
-                  ),
-                ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (msg.isAi)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(children: [
+                Icon(Icons.auto_awesome_rounded,
+                    size: 13, color: theme.colorScheme.primary),
+                const SizedBox(width: 5),
+                Text('AI Assistant',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700)),
               ]),
-            ],
+            ),
+          SelectableText(
+            msg.text,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          if (msg.needsConfirmation && onConfirm != null) ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => onConfirm!(false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.onSurface,
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('No', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => onConfirm!(true),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Yes', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ]),
           ],
-        ),
+        ],
       ),
     );
 
@@ -129,7 +142,7 @@ class MessageBubble extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6.0),
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.80),
           child: msg.isUser ? userBubble : assistantBubble,
         ),
       ),

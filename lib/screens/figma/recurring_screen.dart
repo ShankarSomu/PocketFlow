@@ -8,7 +8,10 @@ import '../../models/savings_goal.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/app_color_scheme.dart';
 import '../../widgets/error_state_widget.dart';
+import '../../widgets/empty_states.dart';
+import '../../core/haptic_feedback.dart';
 import 'shared.dart';
 
 class RecurringScreen extends StatefulWidget {
@@ -211,6 +214,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                           ),
                         );
                         if (confirm != true) return;
+                        await HapticFeedbackHelper.heavyImpact();
                         await AppDatabase.deleteRecurring(existing.id!);
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -321,7 +325,11 @@ class _RecurringScreenState extends State<RecurringScreen> {
                       )
                     : Column(
                 children: [
-                  const ScreenHeader('Recurring'),
+                  const ScreenHeader(
+                    'Recurring',
+                    icon: Icons.repeat_rounded,
+                    subtitle: 'Monthly commitments',
+                  ),
                   // -- Summary Card --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -335,30 +343,10 @@ class _RecurringScreenState extends State<RecurringScreen> {
                   // -- List --
                   Expanded(
                     child: _items.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.repeat_rounded, size: 56, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
-                                const SizedBox(height: 12),
-                                Text('No recurring items yet',
-                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 15)),
-                                const SizedBox(height: 16),
-                                GestureDetector(
-                                  onTap: () => _showForm(null),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      gradient: ThemeService.instance.cardGradient,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: ThemeService.instance.primaryShadow,
-                                    ),
-                                    child: Text('Add your first', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.w600)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
+                        ? EmptyStates.recurring(context, onAdd: () async {
+                            await HapticFeedbackHelper.lightImpact();
+                            _showForm(null);
+                          })
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView(
@@ -398,7 +386,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
               child: CalendarFab(),
             ),
             Positioned(
-              bottom: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
               right: 16,
               child: SpeedDialFab(
                 actions: [
@@ -442,35 +430,13 @@ class _RecurringSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: ThemeService.instance.primaryShadow,
+        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.repeat_rounded, color: Theme.of(context).colorScheme.onPrimary, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Recurring Schedule',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text('Monthly commitments',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12)),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('Total / month', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text('Total / month', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9), fontSize: 13, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(fmt.format(totalMonthly),
               style: TextStyle(
@@ -515,7 +481,7 @@ class _StatPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -669,7 +635,7 @@ class _RecurringItem extends StatelessWidget {
       onTap: onEdit,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           children: [
             Row(
@@ -718,7 +684,7 @@ class _RecurringItem extends StatelessWidget {
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: item.isActive
-                            ? (item.type == 'income' ? AppTheme.emerald : Theme.of(context).colorScheme.onSurface)
+                            ? (item.type == 'income' ? Theme.of(context).extension<AppColorScheme>()!.success : Theme.of(context).colorScheme.onSurface)
                             : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                       ),
                     ),

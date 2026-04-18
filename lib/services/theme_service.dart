@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../theme/app_color_scheme.dart';
 
 enum AppAccentColor { emerald, blue, purple, orange, rose, slate }
 
@@ -44,12 +45,12 @@ class ThemeService extends ChangeNotifier {
   // ── Accent color mapping ──────────────────────────────────────────────────
 
   static const Map<AppAccentColor, Color> accentColors = {
-    AppAccentColor.emerald: Color(0xFF10B981),
-    AppAccentColor.blue: Color(0xFF3B82F6),
-    AppAccentColor.purple: Color(0xFF8B5CF6),
-    AppAccentColor.orange: Color(0xFFF97316),
-    AppAccentColor.rose: Color(0xFFE11D48),
-    AppAccentColor.slate: Color(0xFF64748B),
+    AppAccentColor.emerald: Color(0xFF059669),
+    AppAccentColor.blue: Color(0xFF2563EB),
+    AppAccentColor.purple: Color(0xFF7C3AED),
+    AppAccentColor.orange: Color(0xFFEA580C),
+    AppAccentColor.rose: Color(0xFFBE123C),
+    AppAccentColor.slate: Color(0xFF475569),
   };
 
   static const Map<AppAccentColor, String> accentNames = {
@@ -80,7 +81,7 @@ class ThemeService extends ChangeNotifier {
 
   /// A dynamic card gradient using the primary color — replaces AppTheme.cardDarkGradient.
   LinearGradient get cardGradient => LinearGradient(
-    colors: [primaryDeep, primaryDark],
+    colors: [primaryColor, primaryDark],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -176,8 +177,11 @@ class ThemeService extends ChangeNotifier {
       primary: seed,
       onPrimary: Colors.white,
       secondary: seed.withOpacity(0.7),
-      surface: Colors.white,
-      onSurface: const Color(0xFF0F172A),
+      surface: const Color(0xFFFAFAFA),
+      surfaceContainer: const Color(0xFFF5F5F5),
+      surfaceContainerHighest: const Color(0xFFEEEEEE),
+      onSurface: const Color(0xFF1A1A1A),
+      onSurfaceVariant: const Color(0xFF616161),
       error: const Color(0xFFEF4444),
     );
 
@@ -185,24 +189,25 @@ class ThemeService extends ChangeNotifier {
       useMaterial3: true,
       colorScheme: scheme,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF7F5F0),
+      scaffoldBackgroundColor: const Color(0xFFF5F5F5),
       cardTheme: CardThemeData(
-        color: Colors.white,
-        elevation: _contrast > 1.05 ? 2 : 0,
+        color: const Color(0xFFFAFAFA),
+        elevation: 0,
+        shadowColor: Colors.black.withOpacity(0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: seed.withOpacity((_contrast * 0.08).clamp(0.05, 0.2))),
+          side: BorderSide(color: const Color(0xFFE0E0E0).withOpacity(0.5)),
         ),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Color(0xFFF5F5F5),
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: Color(0xFF334155)),
+        iconTheme: IconThemeData(color: Color(0xFF424242)),
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF0F172A),
+          color: Color(0xFF1A1A1A),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -217,7 +222,7 @@ class ThemeService extends ChangeNotifier {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: seed,
-          side: BorderSide(color: seed.withOpacity(0.5)),
+          side: BorderSide(color: seed.withOpacity(0.4)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -227,26 +232,26 @@ class ThemeService extends ChangeNotifier {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFFAFAFA),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: seed, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: seed,
         foregroundColor: Colors.white,
-        elevation: 4,
+        elevation: 2,
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((s) =>
@@ -254,7 +259,10 @@ class ThemeService extends ChangeNotifier {
         trackColor: WidgetStateProperty.resolveWith((s) =>
             s.contains(WidgetState.selected) ? seed.withOpacity(0.4) : null),
       ),
-      dividerTheme: const DividerThemeData(color: Color(0xFFE2E8F0), thickness: 1, space: 1),
+      dividerTheme: const DividerThemeData(color: Color(0xFFE0E0E0), thickness: 1, space: 1),
+      extensions: const <ThemeExtension<dynamic>>[
+        AppColorScheme.light,
+      ],
     );
   }
 
@@ -266,34 +274,37 @@ class ThemeService extends ChangeNotifier {
     ).copyWith(
       primary: seed,
       onPrimary: Colors.white,
-      surface: const Color(0xFF1E293B),
-      onSurface: Colors.white,
-      surfaceContainerHighest: const Color(0xFF0F172A),
-      error: const Color(0xFFEF4444),
+      surface: const Color(0xFF1C1C1E),
+      surfaceContainer: const Color(0xFF2C2C2E),
+      surfaceContainerHighest: const Color(0xFF3A3A3C),
+      onSurface: const Color(0xFFE5E5E7),
+      onSurfaceVariant: const Color(0xFFAEAEB2),
+      error: const Color(0xFFFF453A),
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF0F172A),
+      scaffoldBackgroundColor: const Color(0xFF000000),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1E293B),
+        color: const Color(0xFF1C1C1E),
         elevation: 0,
+        shadowColor: Colors.black.withOpacity(0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: seed.withOpacity(0.15)),
+          side: BorderSide(color: const Color(0xFF3A3A3C).withOpacity(0.3)),
         ),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Color(0xFF000000),
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: Colors.white70),
+        iconTheme: IconThemeData(color: Color(0xFFE5E5E7)),
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: Color(0xFFE5E5E7),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -308,7 +319,7 @@ class ThemeService extends ChangeNotifier {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: seed,
-          side: BorderSide(color: seed.withOpacity(0.5)),
+          side: BorderSide(color: seed.withOpacity(0.4)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -318,26 +329,26 @@ class ThemeService extends ChangeNotifier {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF334155),
+        fillColor: const Color(0xFF2C2C2E),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF475569)),
+          borderSide: const BorderSide(color: Color(0xFF3A3A3C)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF475569)),
+          borderSide: const BorderSide(color: Color(0xFF3A3A3C)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: seed, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        hintStyle: const TextStyle(color: Color(0xFF8E8E93)),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: seed,
         foregroundColor: Colors.white,
-        elevation: 4,
+        elevation: 2,
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((s) =>
@@ -345,7 +356,10 @@ class ThemeService extends ChangeNotifier {
         trackColor: WidgetStateProperty.resolveWith((s) =>
             s.contains(WidgetState.selected) ? seed.withOpacity(0.4) : null),
       ),
-      dividerTheme: const DividerThemeData(color: Color(0xFF334155), thickness: 1, space: 1),
+      dividerTheme: const DividerThemeData(color: Color(0xFF3A3A3C), thickness: 1, space: 1),
+      extensions: const <ThemeExtension<dynamic>>[
+        AppColorScheme.dark,
+      ],
     );
   }
 }

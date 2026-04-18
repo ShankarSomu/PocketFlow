@@ -7,6 +7,8 @@ class Transaction {
   final DateTime date;
   final int? accountId;
   final int? recurringId;
+  final String? smsSource;
+  final int? deletedAt;
 
   Transaction({
     this.id,
@@ -17,6 +19,8 @@ class Transaction {
     required this.date,
     this.accountId,
     this.recurringId,
+    this.smsSource,
+    this.deletedAt,
   });
 
   Map<String, dynamic> toMap() => {
@@ -28,6 +32,8 @@ class Transaction {
         'date': date.toIso8601String(),
         'account_id': accountId,
         'recurring_id': recurringId,
+        'sms_source': smsSource,
+        'deleted_at': deletedAt,
       };
 
   factory Transaction.fromMap(Map<String, dynamic> m) => Transaction(
@@ -39,5 +45,7 @@ class Transaction {
         date: DateTime.parse(m['date']),
         accountId: m['account_id'],
         recurringId: m['recurring_id'],
+        smsSource: m['sms_source'],
+        deletedAt: m['deleted_at'],
       );
 }

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../db/database.dart';
 import '../../services/app_logger.dart';
 import '../../services/auth_service.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/seed_data.dart';
+import '../../services/sms_service.dart';
 import '../../services/theme_service.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/error_state_widget.dart';
-import 'shared.dart';
+import '../../theme/app_color_scheme.dart';
+import '../export_screen.dart';
+import 'components/profile_hero_card.dart';
+import 'components/profile_section_card.dart';
+import 'components/profile_tile_row.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -71,14 +76,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _signIn() async {
-    setState(() {
-      _loading = true;
-    });
+    setState(() => _loading = true);
     final user = await AuthService.signIn();
     if (!mounted) return;
-    setState(() {
-      _loading = false;
-    });
+    setState(() => _loading = false);
     if (user != null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Signed in as ${user.email}')));
@@ -94,74 +95,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Signed out')));
-  }
-
-  Future<void> _showProfileMenu() async {
-    final user = AuthService.currentUser;
-    final isSignedIn = AuthService.isSignedIn;
-    await showModalBottomSheet(
-      context: context,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isSignedIn) ...[
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundImage:
-                      user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
-                  child: user?.photoUrl == null
-                      ? const Icon(Icons.person)
-                      : null,
-                ),
-                title: Text(user?.displayName ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(user?.email ?? '',
-                    style: const TextStyle(fontSize: 12)),
-              ),
-              const Divider(),
-              ListTile(
-                leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-                title: Text('Sign Out',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _signOut();
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),
-                title: Text('Delete All Data',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                subtitle: const Text('Permanently delete all local data',
-                    style: TextStyle(fontSize: 11)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _deleteAllData();
-                },
-              ),
-            ] else ...[
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                    'Sign in to access backups and premium features',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
-              ),
-              ListTile(
-                leading: Icon(Icons.login, color: Theme.of(context).colorScheme.primary),
-                title: const Text('Sign in with Google'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _signIn();
-                },
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _deleteAllData() async {
@@ -184,23 +117,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (confirm != true) return;
 
-    setState(() {
-      _loading = true;
-    });
+    setState(() => _loading = true);
     try {
       await AppDatabase.deleteAllData();
       notifyDataChanged();
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('All data deleted successfully')));
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
       AppLogger.err('profile_delete_all_data', e);
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Failed to delete data')));
@@ -226,27 +153,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (confirm != true) return;
 
-    setState(() {
-      _loading = true;
-    });
+    setState(() => _loading = true);
     try {
       await SeedData.load();
       notifyDataChanged();
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sample data loaded successfully! 🎉')));
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
       AppLogger.err('profile_load_sample_data', e);
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Failed to load sample data')));
     }
+  }
+
+  Future<void> _rescanSms() async {
+    setState(() => _loading = true);
+    try {
+      final result = await SmsService.scanAndImport(force: true);
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('SMS scan complete! Found ${result.imported} transactions')),
+      );
+      notifyDataChanged();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      AppLogger.err('profile_rescan_sms', e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to scan SMS')),
+      );
+    }
+  }
+
+  Future<void> _inviteFriends() async {
+    const playStoreLink = 'https://play.google.com/store/apps/details?id=com.pocketflow.app';
+    const message = 'Check out PocketFlow - Smart expense tracking made easy! $playStoreLink';
+    
+    final uri = Uri(
+      scheme: 'sms',
+      queryParameters: {'body': message},
+    );
+    
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open SMS app')),
+      );
+    }
+  }
+
+  Future<void> _rateApp() async {
+    const packageName = 'com.pocketflow.app';
+    final uri = Uri.parse('https://play.google.com/store/apps/details?id=$packageName');
+    
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open Play Store')),
+      );
+    }
+  }
+
+  Future<void> _contactUs() async {
+    const email = 'support@pocketflow.app';
+    const subject = 'Feedback:';
+    final uri = Uri(
+      scheme: 'mailto',
+      path: email,
+      queryParameters: {'subject': subject},
+    );
+    
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open email app')),
+      );
+    }
+  }
+
+  void _showSubscription() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Subscription'),
+        content: const Text('Free Plan\n\nYou are currently on the free plan with unlimited access to all features.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelp() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Help'),
+        content: const Text('Help documentation coming soon!\n\nIn the meantime, explore the app features or contact us for assistance.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -255,440 +280,177 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isSignedIn = AuthService.isSignedIn;
 
     return Scaffold(
-      body: SafeArea(
-        child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppTheme.emerald))
-            : ListenableBuilder(
-                listenable: ThemeService.instance,
-                builder: (context, _) {
-                  return Container(
-                    color: Theme.of(context).colorScheme.surface,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                          child: Row(
+      backgroundColor: Colors.transparent,
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity! < -500) {
+            Navigator.pop(context);
+          }
+        },
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.75,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(28),
+                bottomRight: Radius.circular(28),
+              ),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  blurRadius: 30,
+                  offset: const Offset(8, 0),
+                  spreadRadius: -2,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(28),
+                bottomRight: Radius.circular(28),
+              ),
+              child: SafeArea(
+                child: _loading
+                  ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
+                  : ListenableBuilder(
+                      listenable: ThemeService.instance,
+                      builder: (context, _) {
+                        return Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primaryContainer,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: AppTheme.cardShadow,
-                                ),
-                                child: Icon(Icons.person_rounded,
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer, size: 20),
+                              ProfileHeroCard(
+                                user: user,
+                                isSignedIn: isSignedIn,
+                                savingsRate: _savingsRate,
+                                budgetCompliance: _budgetCompliance,
+                                goalsOnTrack: _goalsOnTrack,
+                                totalGoals: _totalGoals,
                               ),
+                              const SizedBox(height: 8),
                               Expanded(
-                                child: Text(
-                                  'Profile',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: Theme.of(context).colorScheme.onSurface),
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    children: [
+                                          ProfileSectionCard(
+                                            title: 'Account',
+                                            icon: Icons.manage_accounts_rounded,
+                                            children: [
+                                              ProfileTileRow(
+                                                icon: isSignedIn ? Icons.logout_rounded : Icons.login_rounded,
+                                                label: isSignedIn ? 'Sign Out' : 'Sign In',
+                                                color: isSignedIn
+                                                    ? Theme.of(context).extension<AppColorScheme>()!.error
+                                                    : Theme.of(context).extension<AppColorScheme>()!.success,
+                                                onTap: isSignedIn ? _signOut : _signIn,
+                                              ),
+                                              if (isSignedIn) ...[ 
+                                                Divider(height: 1, color: Theme.of(context).dividerColor),
+                                                ProfileTileRow(
+                                                  icon: Icons.delete_forever_rounded,
+                                                  label: 'Delete All Data',
+                                                  color: Theme.of(context).extension<AppColorScheme>()!.error,
+                                                  onTap: _deleteAllData,
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                      const SizedBox(height: 6),
+                                      ProfileSectionCard(
+                                        title: 'Menu',
+                                            icon: Icons.menu_rounded,
+                                            children: [
+                                              ProfileTileRow(
+                                                icon: Icons.settings_rounded,
+                                                label: 'Settings',
+                                                color: Theme.of(context).colorScheme.primary,
+                                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                                              ),
+                                              Divider(height: 1, color: Theme.of(context).dividerColor),
+                                              ProfileTileRow(
+                                                icon: Icons.file_download_rounded,
+                                                label: 'Export Data',
+                                                color: Theme.of(context).extension<AppColorScheme>()!.primary,
+                                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ExportScreen())),
+                                              ),
+                                              Divider(height: 1, color: Theme.of(context).dividerColor),
+                                              ProfileTileRow(
+                                                icon: Icons.sms_rounded,
+                                                label: 'Rescan SMS',
+                                                color: Theme.of(context).extension<AppColorScheme>()!.primary,
+                                                onTap: _rescanSms,
+                                              ),
+                                              Divider(height: 1, color: Theme.of(context).dividerColor),
+                                              ProfileTileRow(
+                                                icon: Icons.share_rounded,
+                                                label: 'Invite Friends',
+                                                color: Theme.of(context).extension<AppColorScheme>()!.success,
+                                                onTap: _inviteFriends,
+                                              ),
+                                              Divider(height: 1, color: Theme.of(context).dividerColor),
+                                              ProfileTileRow(
+                                                icon: Icons.star_rounded,
+                                                label: 'Rate PocketFlow',
+                                                color: Theme.of(context).extension<AppColorScheme>()!.warning,
+                                                onTap: _rateApp,
+                                              ),
+                                              Divider(height: 1, color: Theme.of(context).dividerColor),
+                                              ProfileTileRow(
+                                                icon: Icons.email_rounded,
+                                                label: 'Contact Us',
+                                                color: Theme.of(context).extension<AppColorScheme>()!.primary,
+                                                onTap: _contactUs,
+                                              ),
+                                              Divider(height: 1, color: Theme.of(context).dividerColor),
+                                              ProfileTileRow(
+                                                icon: Icons.card_membership_rounded,
+                                                label: 'Subscription',
+                                                color: Theme.of(context).colorScheme.secondary,
+                                                onTap: _showSubscription,
+                                              ),
+                                              Divider(height: 1, color: Theme.of(context).dividerColor),
+                                              ProfileTileRow(
+                                                icon: Icons.help_rounded,
+                                                label: 'Help',
+                                                color: Theme.of(context).extension<AppColorScheme>()!.primary,
+                                                onTap: _showHelp,
+                                              ),
+                                            ],
+                                          ),
+                                      const SizedBox(height: 6),
+                                      ProfileSectionCard(
+                                        title: 'Developer',
+                                            icon: Icons.code_rounded,
+                                            children: [
+                                              ProfileTileRow(
+                                                icon: Icons.data_object_rounded,
+                                                label: 'Load Sample Data',
+                                                color: Theme.of(context).extension<AppColorScheme>()!.primary,
+                                                onTap: _loadSampleData,
+                                              ),
+                                            ],
+                                          ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 40),
                             ],
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                          child: _ProfileHeroCard(
-                            user: user,
-                            isSignedIn: isSignedIn,
-                            savingsRate: _savingsRate,
-                            budgetCompliance: _budgetCompliance,
-                            goalsOnTrack: _goalsOnTrack,
-                            totalGoals: _totalGoals,
-                            onAvatarTap: _showProfileMenu,
-                          ),
-                        ),
-                        Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                            children: [
-                              _SectionCard(
-                                title: 'Account',
-                                icon: Icons.manage_accounts_rounded,
-                                children: [
-                                  _TileRow(
-                                    icon: isSignedIn
-                                        ? Icons.logout_rounded
-                                        : Icons.login_rounded,
-                                    label: isSignedIn
-                                        ? 'Sign Out'
-                                        : 'Sign In with Google',
-                                    color: isSignedIn
-                                        ? AppTheme.error
-                                        : AppTheme.emerald,
-                                    onTap: isSignedIn ? _signOut : _signIn,
-                                  ),
-                                  if (isSignedIn) ...[
-                                    Divider(height: 1, color: Theme.of(context).dividerColor),
-                                    _TileRow(
-                                      icon: Icons.delete_forever_rounded,
-                                      label: 'Delete All Data',
-                                      color: AppTheme.error,
-                                      onTap: _deleteAllData,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              _SectionCard(
-                                title: 'Developer',
-                                icon: Icons.code_rounded,
-                                children: [
-                                  _TileRow(
-                                    icon: Icons.data_object_rounded,
-                                    label: 'Load Sample Data',
-                                    color: AppTheme.blue,
-                                    onTap: _loadSampleData,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
               ),
-      ),
-    );
-  }
-}
-
-class _ProfileHeroCard extends StatelessWidget {
-  final dynamic user;
-  final bool isSignedIn;
-  final double savingsRate, budgetCompliance;
-  final int goalsOnTrack, totalGoals;
-  final VoidCallback onAvatarTap;
-
-  const _ProfileHeroCard({
-    required this.user,
-    required this.isSignedIn,
-    required this.savingsRate,
-    required this.budgetCompliance,
-    required this.goalsOnTrack,
-    required this.totalGoals,
-    required this.onAvatarTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer,
-            Theme.of(context).colorScheme.primary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: onAvatarTap,
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.emeraldGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: Theme.of(context).colorScheme.tertiary.withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4))
-                    ],
-                  ),
-                  child: user?.photoUrl != null
-                      ? ClipOval(
-                          child: Image.network(user!.photoUrl!, fit: BoxFit.cover))
-                      : Icon(Icons.person_rounded,
-                          size: 32, color: Theme.of(context).colorScheme.onPrimary),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user?.displayName ?? 'Profile',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onPrimary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      isSignedIn ? (user?.email ?? '') : 'Not signed in',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        isSignedIn ? 'Premium Member' : 'Guest',
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _StatChip(
-                  label: 'Savings Rate',
-                  value: '${savingsRate.toStringAsFixed(0)}%',
-                  good: savingsRate >= 20,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatChip(
-                  label: 'Budget',
-                  value: '${budgetCompliance.toStringAsFixed(0)}%',
-                  good: budgetCompliance >= 80,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatChip(
-                  label: 'Goals',
-                  value: '$goalsOnTrack/$totalGoals',
-                  good: goalsOnTrack == totalGoals && totalGoals > 0,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final String label, value;
-  final bool good;
-  const _StatChip({required this.label, required this.value, required this.good});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = good 
-        ? Theme.of(context).colorScheme.tertiary 
-        : Theme.of(context).colorScheme.secondary;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.54),
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500)),
-          const SizedBox(height: 4),
-          Text(value,
-              style: TextStyle(
-                  color: color, fontSize: 16, fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final List<Widget> children;
-  const _SectionCard({required this.title, required this.icon, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: ThemeService.instance,
-      builder: (context, _) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.cardShadow,
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 6),
-                  Text(title,
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface)),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ...children,
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label, value;
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 11,
-                color: AppTheme.slate500,
-                fontWeight: FontWeight.w500)),
-        const SizedBox(height: 3),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 13,
-                color: AppTheme.slate900,
-                fontWeight: FontWeight.w500),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis),
-      ],
-    );
-  }
-}
-
-class _OutlineActionButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool fullWidth;
-  const _OutlineActionButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    this.fullWidth = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: fullWidth ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.slate200),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 15, color: AppTheme.emerald),
-            const SizedBox(width: 6),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.slate700)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TileRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  const _TileRow({required this.icon, required this.label, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: color),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(label,
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: color)),
-            ),
-            Icon(Icons.chevron_right_rounded,
-                size: 20, color: color.withOpacity(0.5)),
-          ],
+          ),
         ),
       ),
     );
   }
 }
-

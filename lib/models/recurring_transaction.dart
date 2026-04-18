@@ -10,6 +10,7 @@ class RecurringTransaction {
   final String frequency;
   final DateTime nextDueDate;
   final bool isActive;
+  final int? deletedAt;
 
   RecurringTransaction({
     this.id,
@@ -23,6 +24,7 @@ class RecurringTransaction {
     required this.frequency,
     required this.nextDueDate,
     this.isActive = true,
+    this.deletedAt,
   });
 
   DateTime nextAfter(DateTime from) {
@@ -54,6 +56,7 @@ class RecurringTransaction {
         'frequency': frequency,
         'next_due_date': nextDueDate.toIso8601String(),
         'is_active': isActive ? 1 : 0,
+        'deleted_at': deletedAt,
       };
 
   factory RecurringTransaction.fromMap(Map<String, dynamic> m) =>
@@ -69,5 +72,6 @@ class RecurringTransaction {
         frequency: m['frequency'],
         nextDueDate: DateTime.parse(m['next_due_date']),
         isActive: m['is_active'] == 1,
+        deletedAt: m['deleted_at'],
       );
 }

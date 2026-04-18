@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../models/budget.dart';
+import '../../../../theme/app_color_scheme.dart';
 import '../../shared.dart';
 
 /// Budget progress tracker showing spending vs limits
@@ -15,10 +16,11 @@ class BudgetProgressPage extends StatelessWidget {
   });
 
   Color _barColor(BuildContext context, double pct) {
-    if (pct > 1.0) return Theme.of(context).colorScheme.error;
-    if (pct >= 0.9) return Theme.of(context).colorScheme.tertiaryContainer; // Warning orange
-    if (pct >= 0.7) return Theme.of(context).colorScheme.secondary;
-    return Theme.of(context).colorScheme.tertiary;
+    final appColors = Theme.of(context).extension<AppColorScheme>()!;
+    if (pct > 1.0) return appColors.error;
+    if (pct >= 0.9) return appColors.warning;
+    if (pct >= 0.7) return appColors.primaryVariant;
+    return appColors.success;
   }
 
   @override
@@ -51,14 +53,14 @@ class BudgetProgressPage extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                    color: Theme.of(context).extension<AppColorScheme>()!.error.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text('Over Budget!',
                       style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.error)),
+                          color: Theme.of(context).extension<AppColorScheme>()!.error)),
                 ),
             ],
           ),
@@ -98,7 +100,7 @@ class BudgetProgressPage extends StatelessWidget {
                             Padding(
                               padding: EdgeInsets.only(right: 3),
                               child: Icon(Icons.warning_amber_rounded,
-                                  size: 11, color: Theme.of(context).colorScheme.error),
+                                  size: 11, color: Theme.of(context).extension<AppColorScheme>()!.error),
                             ),
                           Expanded(
                             child: Text(
@@ -109,7 +111,7 @@ class BudgetProgressPage extends StatelessWidget {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: isOver
-                                    ? Theme.of(context).colorScheme.error
+                                    ? Theme.of(context).extension<AppColorScheme>()!.error
                                     : Theme.of(context).colorScheme.onSurface,
                               ),
                               overflow: TextOverflow.ellipsis,

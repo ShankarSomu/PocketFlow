@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../models/budget.dart';
 import '../../../../services/theme_service.dart';
-import '../../../../theme/app_theme.dart';
+import '../../../../theme/app_color_scheme.dart';
 import '../../savings_screen.dart';
 import '../../shared.dart';
 import '../../transactions_screen.dart';
@@ -28,7 +28,8 @@ class HomeSmartInsights extends StatelessWidget {
       .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 
-  List<Map<String, dynamic>> _generateInsights() {
+  List<Map<String, dynamic>> _generateInsights(BuildContext context) {
+    final appColors = Theme.of(context).extension<AppColorScheme>()!;
     final list = <Map<String, dynamic>>[];
 
     // Top spending category
@@ -38,7 +39,7 @@ class HomeSmartInsights extends StatelessWidget {
       final pct = expenses > 0 ? (top.value / expenses * 100).round() : 0;
       list.add({
         'icon': Icons.pie_chart_rounded,
-        'color': AppTheme.warning,
+        'color': appColors.warning,
         'message':
             '${_titleCase(top.key)} is $pct% of your expenses this month.',
         'cta': 'Details',
@@ -54,7 +55,7 @@ class HomeSmartInsights extends StatelessWidget {
           final over = ((spent - b.limit) / b.limit * 100).round();
           list.add({
             'icon': Icons.warning_amber_rounded,
-            'color': AppTheme.error,
+            'color': appColors.error,
             'message':
                 '${_titleCase(b.category)} budget exceeded by $over%.',
             'cta': 'Review',
@@ -71,7 +72,7 @@ class HomeSmartInsights extends StatelessWidget {
       final good = savingsRate >= 0.2;
       list.add({
         'icon': Icons.savings_rounded,
-        'color': good ? AppTheme.emerald : ThemeService.instance.primaryColor,
+        'color': good ? appColors.success : appColors.primaryVariant,
         'message': good
             ? 'Great! You\'re saving $sz% of income this month.'
             : 'Savings at $sz%. Aim for 20% to build a safety net.',
@@ -83,7 +84,7 @@ class HomeSmartInsights extends StatelessWidget {
     if (list.isEmpty) {
       list.add({
         'icon': Icons.lightbulb_rounded,
-        'color': ThemeService.instance.primaryColor,
+        'color': appColors.primary,
         'message': 'Add transactions to unlock personalized insights.',
         'cta': 'Start',
         'route': 'none',
@@ -95,7 +96,7 @@ class HomeSmartInsights extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final insights = _generateInsights();
+    final insights = _generateInsights(context);
 
     return FigmaPanel(
       padding: const EdgeInsets.all(12),

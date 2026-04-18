@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../core/color_extensions.dart';
 import '../../../../core/formatters.dart';
+import '../../../../theme/category_colors.dart';
 import '../../shared.dart';
 
 /// Interactive donut chart showing spending by category
@@ -23,16 +24,9 @@ class _InteractiveDonutState extends State<InteractiveDonut>
   late AnimationController _controller;
   late Animation<double> _animation;
 
-  List<Color> get _colors => [
-    Theme.of(context).colorScheme.tertiary,
-    Theme.of(context).colorScheme.primary,
-    Theme.of(context).colorScheme.primary,
-    Theme.of(context).colorScheme.secondary,
-    Theme.of(context).colorScheme.secondaryContainer,
-    Theme.of(context).colorScheme.secondary,
-    Theme.of(context).colorScheme.error,
-    Theme.of(context).colorScheme.inversePrimary,
-  ];
+  List<Color> get _colors => CategoryColors.getChartPalette(
+    isDark: Theme.of(context).brightness == Brightness.dark,
+  );
 
   @override
   void initState() {

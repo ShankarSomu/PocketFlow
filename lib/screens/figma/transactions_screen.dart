@@ -8,6 +8,7 @@ import '../../models/transaction.dart' as model;
 import '../../models/account.dart';
 import '../../services/refresh_notifier.dart';
 import '../../widgets/category_picker.dart';
+import '../../widgets/empty_state_widget.dart';
 import '../../widgets/error_state_widget.dart';
 import 'shared.dart';
 import 'transactions/components/transactions_components.dart';
@@ -259,7 +260,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       )
                     : Column(
                 children: [
-                  const ScreenHeader('Transactions'),
+                  const ScreenHeader(
+                    'Transactions',
+                    icon: Icons.receipt_long_rounded,
+                    subtitle: 'All income and expenses',
+                  ),
                   // -- Account Carousel --
                   if (_accounts.isNotEmpty)
                     Padding(
@@ -299,22 +304,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   // -- Grouped Transaction List --
                   Expanded(
                     child: filtered.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.receipt_long_outlined, size: 56, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
-                                const SizedBox(height: 12),
-                                Text('No transactions found',
-                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 15)),
-                              ],
-                            ),
-                          )
+                        ? EmptyStates.transactions(context, _showAddTransactionForm)
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView.builder(
                               padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                               itemCount: groupKeys.length,
+                              addAutomaticKeepAlives: false,
+                              addRepaintBoundaries: true,
+                              cacheExtent: 500,
                               itemBuilder: (context, i) {
                                 final dateLabel = groupKeys[i];
                                 final txns = groups[dateLabel]!;
@@ -337,7 +335,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               child: CalendarFab(),
             ),
             Positioned(
-              bottom: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
               right: 16,
               child: SpeedDialFab(
                 actions: [
@@ -583,6 +581,49 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               controller: noteCtrl,
               decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder()),
             ),
+            if (transaction.smsSource != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.sms_outlined, 
+                          size: 16, 
+                          color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'SMS Source',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      transaction.smsSource!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.end, children: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),

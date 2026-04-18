@@ -294,11 +294,25 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
         ),
         const Divider(height: 1),
         ...filtered.map((s) => ListTile(
-              leading: CircleAvatar(
-                backgroundColor: _hexColor(parent.color).withValues(alpha: 0.1),
-                child: Text(parent.icon, style: const TextStyle(fontSize: 16)),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _hexColor(parent.color).withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    parent.icon,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _hexColor(parent.color),
+                    ),
+                  ),
+                ),
               ),
-              title: Text(s.name),
+              title: Text(s.name, style: const TextStyle(fontSize: 14)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               onTap: () => _pick(s.name),
             )),
       ],

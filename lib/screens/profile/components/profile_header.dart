@@ -54,7 +54,7 @@ class ProfileHeader extends StatelessWidget {
                   children: [
                     ShaderMask(
                       shaderCallback: (bounds) => LinearGradient(
-                        colors: [Theme.of(context).colorScheme.onPrimary, AppTheme.emeraldLight],
+                        colors: [Theme.of(context).colorScheme.onPrimary, AppTheme.emerald],
                       ).createShader(bounds),
                       child: Text(
                         user?.displayName ?? 'Profile',
@@ -70,8 +70,8 @@ class ProfileHeader extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppTheme.emeraldLight, AppTheme.blueLight],
+                          gradient: LinearGradient(
+                            colors: [AppTheme.emerald.withValues(alpha: 0.2), AppTheme.blue.withValues(alpha: 0.2)],
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),

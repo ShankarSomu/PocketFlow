@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../../../models/account.dart';
 import '../../../../models/transaction.dart' as model;
 import '../../../../theme/app_theme.dart';
-import '../../../../theme/app_color_scheme.dart';
 import '../../transactions_screen.dart';
 import 'home_transaction_item.dart';
 
@@ -76,80 +75,70 @@ class HomeRecentTransactions extends StatelessWidget {
               final subtitle =
                   account != null ? '${account.name} • $timeStr' : timeStr;
 
-              final appColors = Theme.of(context).extension<AppColorScheme>()!;
               return Column(
                 children: [
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        left: BorderSide(
-                          color: isIncome ? appColors.success : appColors.error,
-                          width: 4,
-                        ),
-                      ),
-                      color: (isIncome ? appColors.success : appColors.error).withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: InkWell(
-                      onTap: () {},
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: (isIncome ? appColors.success : appColors.error).withOpacity(0.20),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(icon, 
-                                    color: isIncome ? appColors.success : appColors.error, 
-                                    size: 20),
+                  InkWell(
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const TransactionsScreen())),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.12),
+                                  shape: BoxShape.circle,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(t.category,
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface)),
-                                      const SizedBox(height: 3),
-                                      Text(subtitle,
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.5)),
-                                          overflow: TextOverflow.ellipsis),
-                                    ],
-                                  ),
+                                child: Icon(icon,
+                                  color: color,
+                                  size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(t.category,
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface)),
+                                    const SizedBox(height: 3),
+                                    Text(subtitle,
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.5)),
+                                        overflow: TextOverflow.ellipsis),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '${isIncome ? '+' : '−'}${fmt.format(t.amount.abs())}',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: isIncome
-                                        ? appColors.success
-                                        : appColors.error,
-                                  ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${isIncome ? '+' : '−'}${fmt.format(t.amount.abs())}',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: isIncome
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurface,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
                           if (t.note != null && t.note!.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Padding(
@@ -161,24 +150,22 @@ class HomeRecentTransactions extends StatelessWidget {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurface
-                                        .withOpacity(0.5),
-                                    fontStyle: FontStyle.italic),
-                                maxLines: 1,
+                                        .withOpacity(0.5)),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
+                          if (i < transactions.length - 1)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10, left: 56),
+                              child: Divider(
+                                  height: 1,
+                                  color: Theme.of(context).colorScheme.outlineVariant),
+                            ),
                         ],
                       ),
                     ),
                   ),
-                ),
-                  if (i < transactions.length - 1)
-                    Divider(
-                        height: 1,
-                        indent: 70,
-                        endIndent: 16,
-                        color: Theme.of(context).colorScheme.outlineVariant),
                 ],
               );
             }),

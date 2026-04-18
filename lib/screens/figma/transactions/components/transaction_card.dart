@@ -50,7 +50,7 @@ class TransactionCard extends StatelessWidget {
                   child: Icon(
                     iconForCategory(transaction.category),
                     color: color,
-                    size: 22,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: 12),

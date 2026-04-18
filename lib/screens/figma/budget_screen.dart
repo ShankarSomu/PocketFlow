@@ -573,16 +573,12 @@ class _BudgetItem extends StatelessWidget {
         ? budget.category[0].toUpperCase() + budget.category.substring(1)
         : 'Unbudgeted';
 
-    return Card(
-      elevation: 0,
-      color: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Column(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
             children: [
               Row(
                 children: [
@@ -672,8 +668,7 @@ class _BudgetItem extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

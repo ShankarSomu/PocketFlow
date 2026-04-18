@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/image_cache_service.dart';
-import '../screens/figma/settings/components/settings_widgets.dart';
+import '../screens/settings/components/settings_widgets.dart';
 
 class PerformanceSettings extends StatefulWidget {
   const PerformanceSettings({super.key});

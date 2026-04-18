@@ -37,13 +37,25 @@ class SavingsOverviewCard extends StatelessWidget {
                                     fontWeight: FontWeight.bold)),
                           ]),
                       const SizedBox(height: 3),
-                      LinearProgressIndicator(
-                        value: g.progress,
-                        color: Theme.of(context).colorScheme.primary,
-                        backgroundColor:
-                            Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(3),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3), 
+                            width: 0.5
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: g.progress,
+                            color: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.05),
+                            minHeight: 7,
+                          ),
+                        ),
                       ),
                       Text(
                           '${fmt.format(g.saved)} of ${fmt.format(g.target)}',

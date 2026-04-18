@@ -84,18 +84,22 @@ class BudgetOverviewCard extends StatelessWidget {
                     ]),
                   ]),
                   const SizedBox(height: 4),
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: ratio,
-                          minHeight: 8,
-                          backgroundColor: color.withValues(alpha: 0.15),
-                          valueColor: AlwaysStoppedAnimation(color),
-                        ),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: ratio,
+                        minHeight: 8,
+                        backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05),
+                        valueColor: AlwaysStoppedAnimation(color),
                       ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 3),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [

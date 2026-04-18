@@ -114,14 +114,25 @@ class MonthlySummaryCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: spentRatio,
-                minHeight: 12,
-                backgroundColor: AppTheme.emerald.veryFaint,
-                valueColor: AlwaysStoppedAnimation(
-                  expenses > income ? AppTheme.error : AppTheme.emerald,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: (expenses > income ? AppTheme.error : AppTheme.emerald).withOpacity(0.3), 
+                  width: 1
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: spentRatio,
+                  minHeight: 12,
+                  backgroundColor: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white.withOpacity(0.1)
+                    : AppTheme.emerald.veryFaint,
+                  valueColor: AlwaysStoppedAnimation(
+                    expenses > income ? AppTheme.error : AppTheme.emerald,
+                  ),
                 ),
               ),
             ),

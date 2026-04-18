@@ -42,13 +42,21 @@ class BudgetCards extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: percentage,
-                        minHeight: 8,
-                        backgroundColor: AppTheme.slate200,
-                        valueColor: AlwaysStoppedAnimation(AppTheme.blue),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.blue.withOpacity(0.3), width: 0.5),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: percentage,
+                          minHeight: 8,
+                          backgroundColor: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.08)
+                            : AppTheme.slate200,
+                          valueColor: AlwaysStoppedAnimation(AppTheme.blue),
+                        ),
                       ),
                     ),
                   ],

@@ -50,9 +50,22 @@ class SpendingSnapshot extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(value: ratio, minHeight: 10, backgroundColor: AppTheme.slate200, valueColor: AlwaysStoppedAnimation(AppTheme.error)),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.error.withOpacity(0.3), width: 1),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: ratio, 
+                minHeight: 10, 
+                backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white.withOpacity(0.1)
+                  : AppTheme.slate200, 
+                valueColor: AlwaysStoppedAnimation(AppTheme.error)
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Text('${(ratio * 100).toStringAsFixed(0)}% of income spent', style: const TextStyle(fontSize: 12, color: AppTheme.slate500)),
@@ -181,13 +194,21 @@ class SpendingSnapshot extends StatelessWidget {
                                 children: [
                                   Text(label, style: TextStyle(fontSize: 13, fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500, color: AppTheme.slate900)),
                                   const SizedBox(height: 4),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(
-                                      value: percent,
-                                      minHeight: 6,
-                                      backgroundColor: AppTheme.slate200,
-                                      valueColor: AlwaysStoppedAnimation(AppTheme.indigo),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: AppTheme.indigo.withOpacity(0.3), width: 0.5),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: LinearProgressIndicator(
+                                        value: percent,
+                                        minHeight: 7,
+                                        backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.white.withOpacity(0.08)
+                                          : AppTheme.slate200,
+                                        valueColor: AlwaysStoppedAnimation(AppTheme.indigo),
+                                      ),
                                     ),
                                   ),
                                 ],

@@ -6,11 +6,6 @@ import '../services/connectivity_service.dart';
 /// A reusable error state widget that displays error information
 /// and provides a retry option.
 class ErrorStateWidget extends StatelessWidget {
-  final String? message;
-  final AppError? appError;
-  final VoidCallback? onRetry;
-  final String? retryButtonText;
-  final String? title;
 
   const ErrorStateWidget({
     super.key,
@@ -20,6 +15,11 @@ class ErrorStateWidget extends StatelessWidget {
     this.retryButtonText = 'Try Again',
     this.title,
   }) : assert(message != null || appError != null, 'Either message or appError must be provided');
+  final String? message;
+  final AppError? appError;
+  final VoidCallback? onRetry;
+  final String? retryButtonText;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +65,7 @@ class ErrorStateWidget extends StatelessWidget {
             Icon(
               icon,
               size: 64,
-              color: iconColor.withOpacity(0.7),
+              color: iconColor.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 16),
             Text(
@@ -79,7 +79,7 @@ class ErrorStateWidget extends StatelessWidget {
               finalError.userMessage,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
             ),
             
@@ -89,9 +89,9 @@ class ErrorStateWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
+                  border: Border.all(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -135,14 +135,14 @@ class ErrorStateWidget extends StatelessWidget {
 /// A widget that displays a compact error message with retry option,
 /// suitable for smaller areas like list tiles or cards.
 class CompactErrorWidget extends StatelessWidget {
-  final String message;
-  final VoidCallback? onRetry;
 
   const CompactErrorWidget({
     super.key,
     this.message = 'Failed to load data',
     this.onRetry,
   });
+  final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -174,3 +174,4 @@ class CompactErrorWidget extends StatelessWidget {
     );
   }
 }
+

@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 
 class ProfileTileRow extends StatefulWidget {
+  
+  const ProfileTileRow({
+    required this.icon, required this.label, required this.color, required this.onTap, super.key,
+  });
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
-  
-  const ProfileTileRow({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
 
   @override
   State<ProfileTileRow> createState() => _ProfileTileRowState();
@@ -41,12 +37,12 @@ class _ProfileTileRowState extends State<ProfileTileRow> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    widget.color.withOpacity(_isPressed ? 0.25 : 0.15),
-                    widget.color.withOpacity(_isPressed ? 0.15 : 0.08),
+                    widget.color.withValues(alpha: _isPressed ? 0.25 : 0.15),
+                    widget.color.withValues(alpha: _isPressed ? 0.15 : 0.08),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: widget.color.withOpacity(0.2), width: 1),
+                border: Border.all(color: widget.color.withValues(alpha: 0.2)),
               ),
               child: Icon(widget.icon, size: 16, color: widget.color),
             ),
@@ -59,10 +55,11 @@ class _ProfileTileRowState extends State<ProfileTileRow> {
                       color: Theme.of(context).colorScheme.onSurface)),
             ),
             Icon(Icons.arrow_forward_ios_rounded,
-                size: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+                size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
           ],
         ),
       ),
     );
   }
 }
+

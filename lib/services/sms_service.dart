@@ -70,11 +70,11 @@ const _creditKeywords = [
 
 /// Financial sender IDs (short codes, alphanumeric senders)
 final _bankSenderRe = RegExp(
-  r'^(?:AD-|BZ-|VK-|AX-|JD-|HD-|SB-|IC-|KO-|UN-|CX-|AM-)?'
-  r'(?:HDFCBK|ICICIBK|SBIINB|AXISBK|KOTAKB|PNBSMS|BOBIMT|CITIBK|'
-  r'SCBANK|HSBCIN|RBLBK|YESBK|IDFCBK|AUBANK|FEDERAL|INDUSIND|'
-  r'CANBNK|BOIIND|UNIONBK|SYNDICBK|BANDHAN|JPBANK|DBANK|AMEXIN|'
-  r'PAYTM|GPAY|PHONEPE|AMAZONP|FREECHARGE|MOBIKWIK|BAJAJFIN)',
+  '^(?:AD-|BZ-|VK-|AX-|JD-|HD-|SB-|IC-|KO-|UN-|CX-|AM-)?'
+  '(?:HDFCBK|ICICIBK|SBIINB|AXISBK|KOTAKB|PNBSMS|BOBIMT|CITIBK|'
+  'SCBANK|HSBCIN|RBLBK|YESBK|IDFCBK|AUBANK|FEDERAL|INDUSIND|'
+  'CANBNK|BOIIND|UNIONBK|SYNDICBK|BANDHAN|JPBANK|DBANK|AMEXIN|'
+  'PAYTM|GPAY|PHONEPE|AMAZONP|FREECHARGE|MOBIKWIK|BAJAJFIN)',
   caseSensitive: false,
 );
 
@@ -228,7 +228,7 @@ class SmsService {
   /// Returns [SmsImportResult] with stats.
   static Future<SmsImportResult> scanAndImport({bool force = false}) async {
     if (!await hasPermission()) {
-      return SmsImportResult(error: 'SMS permission not granted');
+      return const SmsImportResult(error: 'SMS permission not granted');
     }
 
     final range = await getScanRange();
@@ -333,8 +333,9 @@ class SmsService {
     final toMatch = _merchantToRe.firstMatch(body);
     final forMatch = _merchantForRe.firstMatch(body);
 
-    if (atMatch != null) merchant = atMatch.group(1)?.trim() ?? '';
-    else if (type == 'expense' && toMatch != null) merchant = toMatch.group(1)?.trim() ?? '';
+    if (atMatch != null) {
+      merchant = atMatch.group(1)?.trim() ?? '';
+    } else if (type == 'expense' && toMatch != null) merchant = toMatch.group(1)?.trim() ?? '';
     else if (type == 'income' && toMatch != null) merchant = toMatch.group(1)?.trim() ?? '';
     else if (forMatch != null) merchant = forMatch.group(1)?.trim() ?? '';
 
@@ -363,10 +364,6 @@ class SmsService {
 // ── Result ────────────────────────────────────────────────────────────────────
 
 class SmsImportResult {
-  final int imported;
-  final int skipped;
-  final int failed;
-  final String? error;
 
   const SmsImportResult({
     this.imported = 0,
@@ -374,6 +371,10 @@ class SmsImportResult {
     this.failed = 0,
     this.error,
   });
+  final int imported;
+  final int skipped;
+  final int failed;
+  final String? error;
 
   bool get hasError => error != null;
 

@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 
 /// Carousel navigation arrow button
 class CarouselArrow extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
 
   const CarouselArrow({
-    super.key,
-    required this.icon,
-    required this.onTap,
+    required this.icon, required this.onTap, super.key,
   });
+  final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +17,11 @@ class CarouselArrow extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -38,16 +36,13 @@ class CarouselArrow extends StatelessWidget {
 
 /// Carousel page indicator
 class CarouselIndicator extends StatelessWidget {
+
+  const CarouselIndicator({
+    required this.currentPage, required this.pageCount, required this.label, super.key,
+  });
   final int currentPage;
   final int pageCount;
   final String label;
-
-  const CarouselIndicator({
-    super.key,
-    required this.currentPage,
-    required this.pageCount,
-    required this.label,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +57,7 @@ class CarouselIndicator extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -77,7 +72,7 @@ class CarouselIndicator extends StatelessWidget {
             decoration: BoxDecoration(
               color: i == currentPage
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(5),
             ),
           ),
@@ -89,16 +84,14 @@ class CarouselIndicator extends StatelessWidget {
 
 /// Page view with navigation controls and indicators
 class NavigablePageView extends StatefulWidget {
+
+  const NavigablePageView({
+    required this.pages, required this.labels, super.key,
+    this.height = 260,
+  });
   final List<Widget> pages;
   final List<String> labels;
   final double height;
-
-  const NavigablePageView({
-    super.key,
-    required this.pages,
-    required this.labels,
-    this.height = 260,
-  });
 
   @override
   State<NavigablePageView> createState() => _NavigablePageViewState();
@@ -183,3 +176,4 @@ class _NavigablePageViewState extends State<NavigablePageView> {
     );
   }
 }
+

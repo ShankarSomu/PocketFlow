@@ -6,27 +6,27 @@ import '../account_repository.dart';
 class AccountRepositoryImpl implements AccountRepository {
   @override
   Future<int> insert(Account account) async {
-    final db = await AppDatabase.db;
+    final db = await AppDatabase.db();
     return db.insert('accounts', account.toMap()..remove('id'));
   }
 
   @override
   Future<List<Account>> getAll() async {
-    final db = await AppDatabase.db;
+    final db = await AppDatabase.db();
     final rows = await db.query('accounts', orderBy: 'name ASC');
     return rows.map(Account.fromMap).toList();
   }
 
   @override
   Future<void> update(Account account) async {
-    final db = await AppDatabase.db;
+    final db = await AppDatabase.db();
     await db.update('accounts', account.toMap(), 
         where: 'id=?', whereArgs: [account.id]);
   }
 
   @override
   Future<void> delete(int id) async {
-    final db = await AppDatabase.db;
+    final db = await AppDatabase.db();
     // Nullify account_id on all transactions before deleting
     await db.update('transactions', {'account_id': null},
         where: 'account_id=?', whereArgs: [id]);
@@ -35,7 +35,7 @@ class AccountRepositoryImpl implements AccountRepository {
 
   @override
   Future<double> getBalance(int accountId, Account account) async {
-    final db = await AppDatabase.db;
+    final db = await AppDatabase.db();
     final income = await db.rawQuery(
       "SELECT SUM(amount) as t FROM transactions WHERE account_id=? AND type='income'",
       [accountId],
@@ -58,7 +58,7 @@ class AccountRepositoryImpl implements AccountRepository {
     String? note,
     DateTime? date,
   }) async {
-    final db = await AppDatabase.db;
+    final db = await AppDatabase.db();
     final now = date ?? DateTime.now();
     final memo = note ?? 'transfer';
     

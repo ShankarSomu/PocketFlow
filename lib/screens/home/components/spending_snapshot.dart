@@ -4,22 +4,16 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class SpendingSnapshot extends StatelessWidget {
+
+  const SpendingSnapshot({
+    required this.income, required this.expenses, required this.categorySpend, required this.fmt, required this.selectedIndex, required this.onCategorySelected, super.key,
+  });
   final double income;
   final double expenses;
   final Map<String, double> categorySpend;
   final NumberFormat fmt;
   final int selectedIndex;
   final ValueChanged<int> onCategorySelected;
-
-  const SpendingSnapshot({
-    super.key,
-    required this.income,
-    required this.expenses,
-    required this.categorySpend,
-    required this.fmt,
-    required this.selectedIndex,
-    required this.onCategorySelected,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +47,7 @@ class SpendingSnapshot extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.error.withOpacity(0.3), width: 1),
+              border: Border.all(color: AppTheme.error.withValues(alpha: 0.3)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -61,9 +55,9 @@ class SpendingSnapshot extends StatelessWidget {
                 value: ratio, 
                 minHeight: 10, 
                 backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withOpacity(0.1)
+                  ? Colors.white.withValues(alpha: 0.1)
                   : AppTheme.slate200, 
-                valueColor: AlwaysStoppedAnimation(AppTheme.error)
+                valueColor: const AlwaysStoppedAnimation(AppTheme.error)
               ),
             ),
           ),
@@ -73,7 +67,6 @@ class SpendingSnapshot extends StatelessWidget {
           const Text('Spending by Category', style: TextStyle(fontSize: 14, color: AppTheme.slate700, fontWeight: FontWeight.w600)),
           const SizedBox(height: 14),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 flex: 5,
@@ -89,7 +82,7 @@ class SpendingSnapshot extends StatelessWidget {
                       ),
                       child: Center(
                         child: TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: selectedCategory != null && totalSpend > 0 ? (selectedCategory!.value / totalSpend).clamp(0.0, 1.0) : 0.0),
+                          tween: Tween(begin: 0.0, end: selectedCategory != null && totalSpend > 0 ? (selectedCategory.value / totalSpend).clamp(0.0, 1.0) : 0.0),
                           duration: const Duration(milliseconds: 600),
                           curve: Curves.easeOut,
                           builder: (context, value, child) {
@@ -103,7 +96,7 @@ class SpendingSnapshot extends StatelessWidget {
                                     value: value,
                                     strokeWidth: 18,
                                     backgroundColor: AppTheme.slate200,
-                                    valueColor: AlwaysStoppedAnimation(AppTheme.blue),
+                                    valueColor: const AlwaysStoppedAnimation(AppTheme.blue),
                                   ),
                                 ),
                                 Column(
@@ -197,7 +190,7 @@ class SpendingSnapshot extends StatelessWidget {
                                   Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: AppTheme.indigo.withOpacity(0.3), width: 0.5),
+                                      border: Border.all(color: AppTheme.indigo.withValues(alpha: 0.3), width: 0.5),
                                     ),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(6),
@@ -205,9 +198,9 @@ class SpendingSnapshot extends StatelessWidget {
                                         value: percent,
                                         minHeight: 7,
                                         backgroundColor: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.white.withOpacity(0.08)
+                                          ? Colors.white.withValues(alpha: 0.08)
                                           : AppTheme.slate200,
-                                        valueColor: AlwaysStoppedAnimation(AppTheme.indigo),
+                                        valueColor: const AlwaysStoppedAnimation(AppTheme.indigo),
                                       ),
                                     ),
                                   ),
@@ -232,10 +225,10 @@ class SpendingSnapshot extends StatelessWidget {
 }
 
 class SmallStat extends StatelessWidget {
+  const SmallStat({required this.label, required this.value, required this.color, super.key});
   final String label;
   final String value;
   final Color color;
-  const SmallStat({super.key, required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -256,3 +249,4 @@ class SmallStat extends StatelessWidget {
     );
   }
 }
+

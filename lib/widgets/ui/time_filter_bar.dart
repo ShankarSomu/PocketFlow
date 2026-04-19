@@ -3,8 +3,8 @@ import '../../services/time_filter.dart';
 
 /// A horizontal bar for selecting the global time filter.
 class TimeFilterBar extends StatelessWidget {
-  final EdgeInsetsGeometry padding;
   const TimeFilterBar({super.key, this.padding = const EdgeInsets.symmetric(vertical: 8)});
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {

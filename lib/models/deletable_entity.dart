@@ -25,7 +25,7 @@ mixin DeletableEntity {
 class SoftDeleteHelper {
   /// Create WHERE clause to exclude deleted items
   static String excludeDeleted([String? additionalWhere]) {
-    final base = 'deleted_at IS NULL';
+    const base = 'deleted_at IS NULL';
     if (additionalWhere == null || additionalWhere.isEmpty) {
       return base;
     }
@@ -34,7 +34,7 @@ class SoftDeleteHelper {
   
   /// Create WHERE clause to only include deleted items
   static String onlyDeleted([String? additionalWhere]) {
-    final base = 'deleted_at IS NOT NULL';
+    const base = 'deleted_at IS NOT NULL';
     if (additionalWhere == null || additionalWhere.isEmpty) {
       return base;
     }
@@ -65,11 +65,6 @@ class SoftDeleteHelper {
 
 /// Statistics about deleted items
 class DeletedItemsStats {
-  final int transactions;
-  final int accounts;
-  final int budgets;
-  final int goals;
-  final int recurring;
   
   const DeletedItemsStats({
     required this.transactions,
@@ -78,6 +73,11 @@ class DeletedItemsStats {
     required this.goals,
     required this.recurring,
   });
+  final int transactions;
+  final int accounts;
+  final int budgets;
+  final int goals;
+  final int recurring;
   
   int get total => transactions + accounts + budgets + goals + recurring;
   

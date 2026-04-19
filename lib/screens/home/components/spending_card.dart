@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class SpendingCard extends StatelessWidget {
+  const SpendingCard(
+      {required this.categorySpend, required this.fmt, super.key});
   final Map<String, double> categorySpend;
   final NumberFormat fmt;
-  const SpendingCard(
-      {super.key, required this.categorySpend, required this.fmt});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class SpendingCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                         width: 0.5
                       ),
                     ),
@@ -49,8 +49,8 @@ class SpendingCard extends StatelessWidget {
                         value: ratio,
                         color: Theme.of(context).colorScheme.primary,
                         backgroundColor: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withOpacity(0.08)
-                          : Colors.black.withOpacity(0.05),
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.05),
                         minHeight: 7,
                       ),
                     ),
@@ -68,3 +68,4 @@ class SpendingCard extends StatelessWidget {
     );
   }
 }
+

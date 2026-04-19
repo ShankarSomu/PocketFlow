@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// A rounded linear progress indicator with custom color.
-class FigmaProgressBar extends StatelessWidget {
+class ProgressBar extends StatelessWidget {
+  const ProgressBar({required this.value, required this.color, super.key});
   final double value;
   final Color color;
-  const FigmaProgressBar({super.key, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -14,8 +14,9 @@ class FigmaProgressBar extends StatelessWidget {
         minHeight: 10,
         value: value.clamp(0, 1),
         valueColor: AlwaysStoppedAnimation<Color>(color),
-        backgroundColor: color.withOpacity(0.18),
+        backgroundColor: color.withValues(alpha: 0.18),
       ),
     );
   }
 }
+

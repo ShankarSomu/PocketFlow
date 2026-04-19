@@ -6,27 +6,27 @@ import 'package:flutter/material.dart';
 List<Color> accountGradient(BuildContext context, String type) => switch (type) {
       'checking' || 'debit' => [
           Theme.of(context).colorScheme.primary,
-          Theme.of(context).colorScheme.primary.withOpacity(0.8)
+          Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)
         ],
       'savings' => [
           Theme.of(context).colorScheme.tertiary,
-          Theme.of(context).colorScheme.tertiary.withOpacity(0.8)
+          Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.8)
         ],
       'credit' => [
           Theme.of(context).colorScheme.error,
-          Theme.of(context).colorScheme.error.withOpacity(0.8)
+          Theme.of(context).colorScheme.error.withValues(alpha: 0.8)
         ],
       'cash' => [
           Theme.of(context).colorScheme.secondary,
-          Theme.of(context).colorScheme.secondary.withOpacity(0.8)
+          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8)
         ],
       'investment' => [
           Theme.of(context).colorScheme.inversePrimary,
-          Theme.of(context).colorScheme.inversePrimary.withOpacity(0.8)
+          Theme.of(context).colorScheme.inversePrimary.withValues(alpha: 0.8)
         ],
       _ => [
           Theme.of(context).colorScheme.primaryContainer,
-          Theme.of(context).colorScheme.primaryContainer.withOpacity(0.8)
+          Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.8)
         ],
     };
 
@@ -186,3 +186,4 @@ IconData iconForCategory(String category) {
   }
   return Icons.receipt_rounded;
 }
+

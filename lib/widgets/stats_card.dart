@@ -3,6 +3,17 @@ import 'package:intl/intl.dart';
 
 /// Stats card showing a metric with value and optional change percentage
 class StatsCard extends StatelessWidget {
+
+  const StatsCard({
+    required this.title, required this.value, super.key,
+    this.valuePrefix,
+    this.valueSuffix,
+    this.percentChange,
+    this.icon,
+    this.iconColor,
+    this.backgroundColor,
+    this.onTap,
+  });
   final String title;
   final double value;
   final String? valuePrefix;
@@ -12,19 +23,6 @@ class StatsCard extends StatelessWidget {
   final Color? iconColor;
   final Color? backgroundColor;
   final VoidCallback? onTap;
-
-  const StatsCard({
-    super.key,
-    required this.title,
-    required this.value,
-    this.valuePrefix,
-    this.valueSuffix,
-    this.percentChange,
-    this.icon,
-    this.iconColor,
-    this.backgroundColor,
-    this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +38,7 @@ class StatsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -56,7 +54,7 @@ class StatsCard extends StatelessWidget {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: (iconColor ?? theme.colorScheme.primary)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(icon, size: 16, color: iconColor),
@@ -67,7 +65,7 @@ class StatsCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -80,10 +78,10 @@ class StatsCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: percentChange!.startsWith('+')
-                          ? Theme.of(context).colorScheme.tertiary.withOpacity(0.1)
+                          ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1)
                           : percentChange!.startsWith('-')
-                              ? Theme.of(context).colorScheme.error.withOpacity(0.1)
-                              : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                              ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1)
+                              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -95,7 +93,7 @@ class StatsCard extends StatelessWidget {
                             ? Theme.of(context).colorScheme.tertiary
                             : percentChange!.startsWith('-')
                                 ? Theme.of(context).colorScheme.error
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
@@ -119,16 +117,15 @@ class StatsCard extends StatelessWidget {
 
 /// Grid layout for multiple stat cards
 class StatsGrid extends StatelessWidget {
-  final List<StatsCard> cards;
-  final int crossAxisCount;
-  final double spacing;
 
   const StatsGrid({
-    super.key,
-    required this.cards,
+    required this.cards, super.key,
     this.crossAxisCount = 2,
     this.spacing = 12,
   });
+  final List<StatsCard> cards;
+  final int crossAxisCount;
+  final double spacing;
 
   @override
   Widget build(BuildContext context) {
@@ -143,3 +140,4 @@ class StatsGrid extends StatelessWidget {
     );
   }
 }
+

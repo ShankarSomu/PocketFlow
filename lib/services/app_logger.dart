@@ -14,12 +14,6 @@ enum LogCategory {
 }
 
 class LogEntry {
-  final DateTime timestamp;
-  final LogLevel level;
-  final LogCategory category;
-  final String action;
-  final String? detail;
-  final String? error;
 
   LogEntry({
     required this.timestamp,
@@ -29,6 +23,12 @@ class LogEntry {
     this.detail,
     this.error,
   });
+  final DateTime timestamp;
+  final LogLevel level;
+  final LogCategory category;
+  final String action;
+  final String? detail;
+  final String? error;
 
   Map<String, dynamic> toMap() => {
         'ts': timestamp.toIso8601String(),
@@ -127,7 +127,7 @@ class AppLogger {
   static void nav(String screen) =>
       log(LogLevel.debug, LogCategory.navigation, 'Navigate to $screen');
 
-  static void err(String action, dynamic error, {LogCategory? category}) =>
+  static void err(String action, error, {LogCategory? category}) =>
       log(LogLevel.error, category ?? LogCategory.error, action,
           error: error.toString());
 
@@ -179,37 +179,48 @@ class AppLogger {
   static List<LogEntry> getErrors() =>
       _buffer.where((e) => e.level == LogLevel.error).toList();
 
-  static String exportText() {
+  static String exportText({bool errorsOnly = false}) {
     final buf = StringBuffer();
     buf.writeln('=== PocketFlow Diagnostics ===');
     buf.writeln('Exported: ${DateTime.now().toIso8601String()}');
-    buf.writeln('Total entries: ${_buffer.length}');
-    buf.writeln('');
+    buf.writeln('Type: ${errorsOnly ? "Error Logs Only" : "Full Technical Logs"}');
+    buf.writeln();
+
+    final source = errorsOnly 
+        ? _buffer.where((e) => e.level == LogLevel.error || e.level == LogLevel.warning).toList()
+        : _buffer;
+
+    buf.writeln('Total entries: ${source.length}');
+    buf.writeln();
 
     // Summary
-    final errors = _buffer.where((e) => e.level == LogLevel.error).length;
-    final warnings = _buffer.where((e) => e.level == LogLevel.warning).length;
+    final errors = source.where((e) => e.level == LogLevel.error).length;
+    final warnings = source.where((e) => e.level == LogLevel.warning).length;
     buf.writeln('--- Summary ---');
     buf.writeln('Errors: $errors');
     buf.writeln('Warnings: $warnings');
-    buf.writeln('');
+    buf.writeln();
 
     // Group by category
     for (final cat in LogCategory.values) {
-      final entries = _buffer.where((e) => e.category == cat).toList();
+      final entries = source.where((e) => e.category == cat).toList();
       if (entries.isEmpty) continue;
       buf.writeln('--- ${cat.name.toUpperCase()} (${entries.length}) ---');
       for (final e in entries) {
         buf.writeln(e.toLogLine());
       }
-      buf.writeln('');
+      buf.writeln();
     }
 
     return buf.toString();
   }
 
-  static String exportJson() =>
-      jsonEncode(_buffer.map((e) => e.toMap()).toList());
+  static String exportJson({bool errorsOnly = false}) {
+    final source = errorsOnly 
+        ? _buffer.where((e) => e.level == LogLevel.error || e.level == LogLevel.warning).toList()
+        : _buffer;
+    return jsonEncode(source.map((e) => e.toMap()).toList());
+  }
 
   static Future<void> clear() async {
     _buffer.clear();

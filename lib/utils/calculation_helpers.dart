@@ -1,6 +1,7 @@
 /// Calculation helper utilities
 /// Extracted from transaction_helpers and other components
 /// Provides reusable calculation logic for financial metrics
+library;
 
 /// Calculate savings rate as percentage
 /// 

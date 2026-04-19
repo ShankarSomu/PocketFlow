@@ -4,6 +4,10 @@ import '../../../services/sms_service.dart';
 import '../../../theme/app_theme.dart';
 
 class SmsMonitoringSection extends StatelessWidget {
+
+  const SmsMonitoringSection({
+    required this.smsEnabled, required this.smsScanRange, required this.smsLastScan, required this.smsScanning, required this.smsResult, required this.onToggleSms, required this.onRangeChanged, required this.onRunScan, super.key,
+  });
   final bool smsEnabled;
   final SmsScanRange smsScanRange;
   final DateTime? smsLastScan;
@@ -13,18 +17,6 @@ class SmsMonitoringSection extends StatelessWidget {
   final Function(SmsScanRange) onRangeChanged;
   final VoidCallback onRunScan;
 
-  const SmsMonitoringSection({
-    super.key,
-    required this.smsEnabled,
-    required this.smsScanRange,
-    required this.smsLastScan,
-    required this.smsScanning,
-    required this.smsResult,
-    required this.onToggleSms,
-    required this.onRangeChanged,
-    required this.onRunScan,
-  });
-
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
@@ -32,7 +24,7 @@ class SmsMonitoringSection extends StatelessWidget {
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withOpacity(0.7)],
+            colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0.7)],
           ),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -43,7 +35,7 @@ class SmsMonitoringSection extends StatelessWidget {
         smsEnabled ? 'Active — reads financial SMS' : 'Disabled',
         style: TextStyle(
           fontSize: 12,
-          color: smsEnabled ? AppTheme.emerald : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          color: smsEnabled ? AppTheme.emerald : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
         ),
       ),
       children: [
@@ -56,9 +48,9 @@ class SmsMonitoringSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.08).withValues(alpha: 0.08),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.25).withValues(alpha: 0.25)),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25).withValues(alpha: 0.25)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,7 +60,7 @@ class SmsMonitoringSection extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'PocketFlow reads only financial SMS (bank/wallet alerts) to record transactions automatically. Messages are processed locally on your device and never uploaded.',
-                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
                       ),
                     ),
                   ],
@@ -79,7 +71,7 @@ class SmsMonitoringSection extends StatelessWidget {
               // Enable toggle
               Row(
                 children: [
-                  Icon(Icons.toggle_on_outlined, size: 20, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6)),
+                  Icon(Icons.toggle_on_outlined, size: 20, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6)),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text('Enable SMS Import',
@@ -97,7 +89,7 @@ class SmsMonitoringSection extends StatelessWidget {
               // Scan range
               Row(
                 children: [
-                  Icon(Icons.date_range_outlined, size: 20, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6)),
+                  Icon(Icons.date_range_outlined, size: 20, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6)),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text('Scan range', style: TextStyle(fontSize: 13)),
@@ -128,11 +120,11 @@ class SmsMonitoringSection extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Row(
                     children: [
-                      Icon(Icons.access_time, size: 14, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.38)),
+                      Icon(Icons.access_time, size: 14, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.38)),
                       const SizedBox(width: 6),
                       Text(
                         'Last scan: ${DateFormat('MMM d, h:mm a').format(smsLastScan!)}',
-                        style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.38)),
+                        style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.38)),
                       ),
                     ],
                   ),
@@ -150,7 +142,7 @@ class SmsMonitoringSection extends StatelessWidget {
                   ),
                   child: Text(
                     smsResult!,
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
                   ),
                 ),
 
@@ -180,3 +172,4 @@ class SmsMonitoringSection extends StatelessWidget {
     );
   }
 }
+

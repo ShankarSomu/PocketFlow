@@ -12,9 +12,9 @@ abstract class SanitizationRule {
 
 /// Rule for maximum length validation
 class MaxLengthRule implements SanitizationRule {
-  final int maxLength;
   
   const MaxLengthRule(this.maxLength);
+  final int maxLength;
   
   @override
   bool validate(String value) => value.length <= maxLength;
@@ -25,9 +25,9 @@ class MaxLengthRule implements SanitizationRule {
 
 /// Rule for minimum length validation
 class MinLengthRule implements SanitizationRule {
-  final int minLength;
   
   const MinLengthRule(this.minLength);
+  final int minLength;
   
   @override
   bool validate(String value) => value.length >= minLength;
@@ -38,10 +38,10 @@ class MinLengthRule implements SanitizationRule {
 
 /// Rule for allowed characters
 class AllowedCharactersRule implements SanitizationRule {
-  final String pattern;
-  final String description;
   
   const AllowedCharactersRule(this.pattern, {required this.description});
+  final String pattern;
+  final String description;
   
   @override
   bool validate(String value) {
@@ -55,10 +55,10 @@ class AllowedCharactersRule implements SanitizationRule {
 
 /// Rule for disallowed patterns (security)
 class DisallowedPatternRule implements SanitizationRule {
-  final List<RegExp> patterns;
-  final String description;
   
   const DisallowedPatternRule(this.patterns, {required this.description});
+  final List<RegExp> patterns;
+  final String description;
   
   @override
   bool validate(String value) {
@@ -81,7 +81,7 @@ class SecurityPatterns {
       RegExp(r'\bDROP\b', caseSensitive: false),
       RegExp(r'\bUNION\b', caseSensitive: false),
       RegExp(r'\bEXEC\b', caseSensitive: false),
-      RegExp(r';--'),
+      RegExp(';--'),
       RegExp(r'/\*.*\*/'),
       RegExp(r'\bxp_\w+', caseSensitive: false),
       RegExp(r'\bsp_\w+', caseSensitive: false),
@@ -92,17 +92,17 @@ class SecurityPatterns {
   /// XSS (Cross-Site Scripting) patterns
   static final xss = DisallowedPatternRule(
     [
-      RegExp(r'<script', caseSensitive: false),
-      RegExp(r'</script>', caseSensitive: false),
-      RegExp(r'javascript:', caseSensitive: false),
+      RegExp('<script', caseSensitive: false),
+      RegExp('</script>', caseSensitive: false),
+      RegExp('javascript:', caseSensitive: false),
       RegExp(r'onerror\s*=', caseSensitive: false),
       RegExp(r'onload\s*=', caseSensitive: false),
       RegExp(r'onclick\s*=', caseSensitive: false),
       RegExp(r'onmouseover\s*=', caseSensitive: false),
       RegExp(r'onfocus\s*=', caseSensitive: false),
-      RegExp(r'<iframe', caseSensitive: false),
-      RegExp(r'<embed', caseSensitive: false),
-      RegExp(r'<object', caseSensitive: false),
+      RegExp('<iframe', caseSensitive: false),
+      RegExp('<embed', caseSensitive: false),
+      RegExp('<object', caseSensitive: false),
     ],
     description: 'Script tags and event handlers',
   );
@@ -110,7 +110,7 @@ class SecurityPatterns {
   /// HTML injection patterns
   static final htmlInjection = DisallowedPatternRule(
     [
-      RegExp(r'<[^>]+>'),
+      RegExp('<[^>]+>'),
     ],
     description: 'HTML tags',
   );
@@ -168,9 +168,9 @@ class RuleSets {
 
 /// Validator that checks multiple rules
 class RuleValidator {
-  final List<SanitizationRule> rules;
   
   const RuleValidator(this.rules);
+  final List<SanitizationRule> rules;
   
   /// Validate value against all rules
   /// Returns null if valid, otherwise returns error message

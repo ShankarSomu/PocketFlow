@@ -7,7 +7,7 @@ abstract class ILoggerService {
   void userAction(String action, {String? detail});
 
   /// Log an error
-  void error(String message, {dynamic error, StackTrace? stackTrace});
+  void error(String message, {error, StackTrace? stackTrace});
 
   /// Log info
   void info(String message);

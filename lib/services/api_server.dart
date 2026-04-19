@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
+
 import '../db/database.dart';
-import '../models/transaction.dart' as model;
 import '../models/budget.dart';
 import '../models/savings_goal.dart';
+import '../models/transaction.dart' as model;
 
 class ApiServer {
   static HttpServer? _server;
@@ -27,7 +29,7 @@ class ApiServer {
       ..post('/savings', _addGoal)
       ..post('/savings/<name>/contribute', _contribute);
 
-    final handler = Pipeline()
+    final handler = const Pipeline()
         .addMiddleware(_cors())
         .addMiddleware(logRequests())
         .addHandler(router.call);

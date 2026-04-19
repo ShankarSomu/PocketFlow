@@ -4,6 +4,15 @@ import 'standard_buttons.dart';
 
 /// Enhanced empty state with illustrations
 class IllustratedEmptyState extends StatelessWidget {
+
+  const IllustratedEmptyState({
+    required this.title, required this.subtitle, super.key,
+    this.icon,
+    this.illustration,
+    this.actionText,
+    this.onAction,
+    this.illustrationColor,
+  });
   final String title;
   final String subtitle;
   final IconData? icon;
@@ -12,22 +21,11 @@ class IllustratedEmptyState extends StatelessWidget {
   final VoidCallback? onAction;
   final Color? illustrationColor;
 
-  const IllustratedEmptyState({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    this.icon,
-    this.illustration,
-    this.actionText,
-    this.onAction,
-    this.illustrationColor,
-  });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final effectiveColor = illustrationColor ??
-        theme.colorScheme.primary.withOpacity(0.3);
+        theme.colorScheme.primary.withValues(alpha: 0.3);
 
     return Center(
       child: Padding(
@@ -70,7 +68,7 @@ class IllustratedEmptyState extends StatelessWidget {
             Text(
               subtitle,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               textAlign: TextAlign.center,
             ),
@@ -82,7 +80,6 @@ class IllustratedEmptyState extends StatelessWidget {
                 label: actionText!,
                 onPressed: onAction,
                 icon: Icons.add,
-                size: ButtonSize.large,
               ),
             ],
           ],
@@ -169,7 +166,7 @@ class EmptyStates {
       icon: Icons.wifi_off,
       actionText: 'Retry',
       onAction: onRetry,
-      illustrationColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+      illustrationColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
     );
   }
 
@@ -181,7 +178,7 @@ class EmptyStates {
       icon: Icons.error_outline,
       actionText: 'Try Again',
       onAction: onRetry,
-      illustrationColor: Theme.of(context).colorScheme.error.withOpacity(0.2),
+      illustrationColor: Theme.of(context).colorScheme.error.withValues(alpha: 0.2),
     );
   }
 
@@ -193,7 +190,7 @@ class EmptyStates {
       icon: Icons.lock_outline,
       actionText: 'Open Settings',
       onAction: onSettings,
-      illustrationColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+      illustrationColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
     );
   }
 
@@ -209,18 +206,17 @@ class EmptyStates {
 
 /// Custom illustration widget
 class CustomIllustration extends StatelessWidget {
-  final String assetPath;
-  final double? width;
-  final double? height;
-  final Color? color;
 
   const CustomIllustration({
-    super.key,
-    required this.assetPath,
+    required this.assetPath, super.key,
     this.width = 200,
     this.height = 200,
     this.color,
   });
+  final String assetPath;
+  final double? width;
+  final double? height;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -236,18 +232,17 @@ class CustomIllustration extends StatelessWidget {
 
 /// SVG illustration widget
 class SvgIllustration extends StatelessWidget {
-  final String assetPath;
-  final double? width;
-  final double? height;
-  final Color? color;
 
   const SvgIllustration({
-    super.key,
-    required this.assetPath,
+    required this.assetPath, super.key,
     this.width = 200,
     this.height = 200,
     this.color,
   });
+  final String assetPath;
+  final double? width;
+  final double? height;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +252,7 @@ class SvgIllustration extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: color ?? Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        color: color ?? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(LayoutConstants.borderRadiusL),
       ),
       child: Icon(
@@ -271,20 +266,17 @@ class SvgIllustration extends StatelessWidget {
 
 /// Animated empty state with fade-in
 class AnimatedEmptyState extends StatefulWidget {
+
+  const AnimatedEmptyState({
+    required this.title, required this.subtitle, required this.icon, super.key,
+    this.actionText,
+    this.onAction,
+  });
   final String title;
   final String subtitle;
   final IconData icon;
   final String? actionText;
   final VoidCallback? onAction;
-
-  const AnimatedEmptyState({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    this.actionText,
-    this.onAction,
-  });
 
   @override
   State<AnimatedEmptyState> createState() => _AnimatedEmptyStateState();
@@ -338,3 +330,4 @@ class _AnimatedEmptyStateState extends State<AnimatedEmptyState>
     );
   }
 }
+

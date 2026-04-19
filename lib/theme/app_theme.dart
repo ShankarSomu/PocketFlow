@@ -82,8 +82,6 @@ class AppTheme {
   static LinearGradient horizontalGradient(Color startColor, Color endColor) {
     return LinearGradient(
       colors: [startColor, endColor],
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
     );
   }
 }

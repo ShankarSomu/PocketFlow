@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
-import '../repositories/transaction_repository.dart';
-import '../repositories/account_repository.dart';
-import '../models/transaction.dart' as model;
 import '../models/account.dart';
 import '../models/time_range.dart';
+import '../models/transaction.dart' as model;
+import '../repositories/account_repository.dart';
+import '../repositories/transaction_repository.dart';
 
 /// ViewModel for Transactions Screen
 class TransactionsViewModel extends ChangeNotifier {
-  final TransactionRepository _transactionRepo;
-  final AccountRepository _accountRepo;
 
   TransactionsViewModel({
     required TransactionRepository transactionRepo,
     required AccountRepository accountRepo,
   })  : _transactionRepo = transactionRepo,
         _accountRepo = accountRepo;
+  final TransactionRepository _transactionRepo;
+  final AccountRepository _accountRepo;
 
   bool _loading = true;
   String? _error;

@@ -3,20 +3,15 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class StatsGrid extends StatelessWidget {
+
+  const StatsGrid({
+    required this.savingsRate, required this.budgetCompliance, required this.goalsOnTrack, required this.totalGoals, required this.activeAccounts, super.key,
+  });
   final double savingsRate;
   final double budgetCompliance;
   final int goalsOnTrack;
   final int totalGoals;
   final int activeAccounts;
-
-  const StatsGrid({
-    super.key,
-    required this.savingsRate,
-    required this.budgetCompliance,
-    required this.goalsOnTrack,
-    required this.totalGoals,
-    required this.activeAccounts,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +90,10 @@ class StatsGrid extends StatelessWidget {
 }
 
 class StatGridCard extends StatelessWidget {
+
+  const StatGridCard({
+    required this.label, required this.value, required this.icon, required this.gradient, required this.trend, required this.trendUp, super.key,
+  });
   final String label;
   final String value;
   final IconData icon;
@@ -102,21 +101,10 @@ class StatGridCard extends StatelessWidget {
   final String trend;
   final bool trendUp;
 
-  const StatGridCard({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.gradient,
-    required this.trend,
-    required this.trendUp,
-  });
-
   @override
   Widget build(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
-      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

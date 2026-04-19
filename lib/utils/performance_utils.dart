@@ -136,14 +136,13 @@ class PerformanceMonitor {
 
 /// Widget that conditionally renders based on performance
 class PerformanceAwareWidget extends StatelessWidget {
-  final Widget child;
-  final Widget? lowPerformanceChild;
 
   const PerformanceAwareWidget({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.lowPerformanceChild,
   });
+  final Widget child;
+  final Widget? lowPerformanceChild;
 
   @override
   Widget build(BuildContext context) {

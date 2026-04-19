@@ -3,25 +3,6 @@ import 'package:flutter/material.dart';
 /// Semantic color tokens for the finance app, supporting light/dark modes.
 @immutable
 class AppColorScheme extends ThemeExtension<AppColorScheme> {
-  // Core tokens
-  final Color primary;
-  final Color primaryVariant;
-  final Color success;
-  final Color warning;
-  final Color error;
-  final Color surface;
-  final Color onSurface;
-  final Color onSurfaceVariant;
-  final Color outline;
-
-  // Graph tokens
-  final Color graphPositiveStart;
-  final Color graphPositiveEnd;
-  final Color graphNegativeStart;
-  final Color graphNegativeEnd;
-  final Color graphNeutralStart;
-  final Color graphNeutralEnd;
-  final Color graphBackground;
 
   const AppColorScheme({
     required this.primary,
@@ -41,6 +22,25 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     required this.graphNeutralEnd,
     required this.graphBackground,
   });
+  // Core tokens
+  final Color primary;
+  final Color primaryVariant;
+  final Color success;
+  final Color warning;
+  final Color error;
+  final Color surface;
+  final Color onSurface;
+  final Color onSurfaceVariant;
+  final Color outline;
+
+  // Graph tokens
+  final Color graphPositiveStart;
+  final Color graphPositiveEnd;
+  final Color graphNegativeStart;
+  final Color graphNegativeEnd;
+  final Color graphNeutralStart;
+  final Color graphNeutralEnd;
+  final Color graphBackground;
 
   static const light = AppColorScheme(
     primary: Color(0xFF5B8DBE),

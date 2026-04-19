@@ -3,20 +3,19 @@ import '../core/app_constants.dart';
 
 /// Shimmer loading effect for skeleton screens
 class ShimmerLoading extends StatefulWidget {
-  final Widget child;
-  final bool isLoading;
-  final Color? baseColor;
-  final Color? highlightColor;
-  final Duration period;
 
   const ShimmerLoading({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.isLoading = true,
     this.baseColor,
     this.highlightColor,
     this.period = const Duration(milliseconds: 1500),
   });
+  final Widget child;
+  final bool isLoading;
+  final Color? baseColor;
+  final Color? highlightColor;
+  final Duration period;
 
   @override
   State<ShimmerLoading> createState() => _ShimmerLoadingState();
@@ -82,9 +81,9 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
 }
 
 class _SlidingGradientTransform extends GradientTransform {
-  final double slidePercent;
 
   const _SlidingGradientTransform(this.slidePercent);
+  final double slidePercent;
 
   @override
   Matrix4 transform(Rect bounds, {TextDirection? textDirection}) {
@@ -94,10 +93,6 @@ class _SlidingGradientTransform extends GradientTransform {
 
 /// Skeleton box for loading state
 class SkeletonBox extends StatelessWidget {
-  final double? width;
-  final double? height;
-  final double borderRadius;
-  final EdgeInsets? margin;
 
   const SkeletonBox({
     super.key,
@@ -106,6 +101,10 @@ class SkeletonBox extends StatelessWidget {
     this.borderRadius = LayoutConstants.borderRadiusM,
     this.margin,
   });
+  final double? width;
+  final double? height;
+  final double borderRadius;
+  final EdgeInsets? margin;
 
   @override
   Widget build(BuildContext context) {
@@ -123,9 +122,6 @@ class SkeletonBox extends StatelessWidget {
 
 /// Skeleton line for text loading
 class SkeletonLine extends StatelessWidget {
-  final double width;
-  final double height;
-  final EdgeInsets? margin;
 
   const SkeletonLine({
     super.key,
@@ -133,6 +129,9 @@ class SkeletonLine extends StatelessWidget {
     this.height = 16,
     this.margin,
   });
+  final double width;
+  final double height;
+  final EdgeInsets? margin;
 
   @override
   Widget build(BuildContext context) {
@@ -147,14 +146,14 @@ class SkeletonLine extends StatelessWidget {
 
 /// Skeleton circle for avatar loading
 class SkeletonCircle extends StatelessWidget {
-  final double size;
-  final EdgeInsets? margin;
 
   const SkeletonCircle({
     super.key,
     this.size = 48,
     this.margin,
   });
+  final double size;
+  final EdgeInsets? margin;
 
   @override
   Widget build(BuildContext context) {
@@ -172,9 +171,6 @@ class SkeletonCircle extends StatelessWidget {
 
 /// Pre-built skeleton for list items
 class SkeletonListTile extends StatelessWidget {
-  final bool hasLeading;
-  final bool hasTrailing;
-  final int lineCount;
 
   const SkeletonListTile({
     super.key,
@@ -182,6 +178,9 @@ class SkeletonListTile extends StatelessWidget {
     this.hasTrailing = true,
     this.lineCount = 2,
   });
+  final bool hasLeading;
+  final bool hasTrailing;
+  final int lineCount;
 
   @override
   Widget build(BuildContext context) {
@@ -194,17 +193,14 @@ class SkeletonListTile extends StatelessWidget {
         children: [
           if (hasLeading)
             const SkeletonCircle(
-              size: 48,
               margin: EdgeInsets.only(right: LayoutConstants.paddingM),
             ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SkeletonLine(
-                  width: double.infinity,
-                  height: 16,
-                  margin: const EdgeInsets.only(bottom: LayoutConstants.paddingXS),
+                const SkeletonLine(
+                  margin: EdgeInsets.only(bottom: LayoutConstants.paddingXS),
                 ),
                 if (lineCount > 1)
                   SkeletonLine(
@@ -234,9 +230,6 @@ class SkeletonListTile extends StatelessWidget {
 
 /// Skeleton for card loading
 class SkeletonCard extends StatelessWidget {
-  final double? width;
-  final double height;
-  final EdgeInsets? margin;
 
   const SkeletonCard({
     super.key,
@@ -244,6 +237,9 @@ class SkeletonCard extends StatelessWidget {
     this.height = 120,
     this.margin,
   });
+  final double? width;
+  final double height;
+  final EdgeInsets? margin;
 
   @override
   Widget build(BuildContext context) {
@@ -266,10 +262,10 @@ class SkeletonCard extends StatelessWidget {
             height: 24,
           ),
           const Spacer(),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SkeletonLine(width: 80, height: 12),
+              SkeletonLine(width: 80, height: 12),
               SkeletonBox(
                 width: 60,
                 height: 28,
@@ -285,12 +281,12 @@ class SkeletonCard extends StatelessWidget {
 
 /// Complete skeleton screen for transactions
 class TransactionListSkeleton extends StatelessWidget {
-  final int itemCount;
 
   const TransactionListSkeleton({
     super.key,
     this.itemCount = 10,
   });
+  final int itemCount;
 
   @override
   Widget build(BuildContext context) {
@@ -298,9 +294,7 @@ class TransactionListSkeleton extends StatelessWidget {
       child: ListView.builder(
         itemCount: itemCount,
         itemBuilder: (context, index) => const SkeletonListTile(
-          hasLeading: true,
-          hasTrailing: true,
-          lineCount: 2,
+          
         ),
       ),
     );
@@ -309,12 +303,12 @@ class TransactionListSkeleton extends StatelessWidget {
 
 /// Skeleton screen for stats cards
 class StatsCardsSkeleton extends StatelessWidget {
-  final int cardCount;
 
   const StatsCardsSkeleton({
     super.key,
     this.cardCount = 4,
   });
+  final int cardCount;
 
   @override
   Widget build(BuildContext context) {
@@ -350,15 +344,13 @@ class ProfileSkeleton extends StatelessWidget {
             const SizedBox(height: LayoutConstants.paddingM),
             const SkeletonLine(width: 150, height: 24),
             const SizedBox(height: LayoutConstants.paddingS),
-            const SkeletonLine(width: 200, height: 16),
+            const SkeletonLine(width: 200),
             const SizedBox(height: LayoutConstants.paddingXL),
             ...List.generate(
               6,
               (index) => const Padding(
                 padding: EdgeInsets.only(bottom: LayoutConstants.paddingM),
                 child: SkeletonListTile(
-                  hasLeading: true,
-                  hasTrailing: true,
                   lineCount: 1,
                 ),
               ),

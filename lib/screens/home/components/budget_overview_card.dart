@@ -3,11 +3,11 @@ import 'package:intl/intl.dart';
 import '../../../models/budget.dart';
 
 class BudgetOverviewCard extends StatelessWidget {
+  const BudgetOverviewCard(
+      {required this.budgets, required this.spent, required this.fmt, super.key});
   final List<Budget> budgets;
   final Map<String, double> spent;
   final NumberFormat fmt;
-  const BudgetOverviewCard(
-      {super.key, required this.budgets, required this.spent, required this.fmt});
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,7 @@ class BudgetOverviewCard extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+                      border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
@@ -95,8 +95,8 @@ class BudgetOverviewCard extends StatelessWidget {
                         value: ratio,
                         minHeight: 8,
                         backgroundColor: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withOpacity(0.08)
-                          : Colors.black.withOpacity(0.05),
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.05),
                         valueColor: AlwaysStoppedAnimation(color),
                       ),
                     ),
@@ -120,3 +120,4 @@ class BudgetOverviewCard extends StatelessWidget {
     );
   }
 }
+

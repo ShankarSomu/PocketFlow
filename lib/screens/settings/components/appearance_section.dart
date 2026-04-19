@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../services/theme_service.dart';
-import '../../../../theme/app_theme.dart';
 import 'settings_widgets.dart';
 
 class AppearanceSection extends StatefulWidget {
@@ -39,7 +38,7 @@ class AppearanceSectionState extends State<AppearanceSection> {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Text('Accent Color',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
           ),
           Wrap(
             spacing: 10,
@@ -65,7 +64,7 @@ class AppearanceSectionState extends State<AppearanceSection> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: color.withOpacity(selected ? 0.5 : 0.2),
+                          color: color.withValues(alpha: selected ? 0.5 : 0.2),
                           blurRadius: selected ? 10 : 4,
                           offset: const Offset(0, 2),
                         ),
@@ -86,11 +85,11 @@ class AppearanceSectionState extends State<AppearanceSection> {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Text('Contrast',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
           ),
           Row(
             children: [
-              Icon(Icons.contrast_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+              Icon(Icons.contrast_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
               Expanded(
                 child: Slider(
                   value: ts.contrast,
@@ -98,7 +97,7 @@ class AppearanceSectionState extends State<AppearanceSection> {
                   max: 1.3,
                   divisions: 30,
                   label: '${((ts.contrast - 0.7) / 0.6 * 100).round()}%',
-                  onChanged: (v) => ts.setContrast(v),
+                  onChanged: ts.setContrast,
                 ),
               ),
               Text('${((ts.contrast - 0.7) / 0.6 * 100).round()}%',
@@ -112,15 +111,14 @@ class AppearanceSectionState extends State<AppearanceSection> {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Text('Text Size',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
           ),
           Row(
             children: [
-              Icon(Icons.text_fields_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+              Icon(Icons.text_fields_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
               Expanded(
                 child: Slider(
                   value: ts.textSizeIndex.toDouble(),
-                  min: 0,
                   max: 2,
                   divisions: 2,
                   label: ts.textSizeIndex == 0 ? 'Small' : ts.textSizeIndex == 1 ? 'Normal' : 'Large',
@@ -140,7 +138,7 @@ class AppearanceSectionState extends State<AppearanceSection> {
             title: 'Left-Handed Mode',
             subtitle: 'Moves FAB to left side',
             value: ts.leftHanded,
-            onChanged: (v) => ts.setLeftHanded(v),
+            onChanged: ts.setLeftHanded,
           ),
           const SizedBox(height: 16),
           Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
@@ -149,21 +147,15 @@ class AppearanceSectionState extends State<AppearanceSection> {
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Text('Theme',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
           ),
           Row(
-            children: AppThemeMode.values.map((m) {
+            children: [AppThemeMode.light, AppThemeMode.dark].map((m) {
               final selected = ts.mode == m;
-              final label = m == AppThemeMode.system
-                  ? 'System'
-                  : m == AppThemeMode.light
-                      ? 'Light'
-                      : 'Dark';
-              final icon = m == AppThemeMode.system
-                  ? Icons.brightness_auto_rounded
-                  : m == AppThemeMode.light
-                      ? Icons.light_mode_rounded
-                      : Icons.dark_mode_rounded;
+              final label = m == AppThemeMode.light ? 'Light' : 'Dark';
+              final icon = m == AppThemeMode.light
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded;
               return Expanded(
                 child: GestureDetector(
                   onTap: () => ts.setMode(m),
@@ -180,13 +172,13 @@ class AppearanceSectionState extends State<AppearanceSection> {
                       children: [
                         Icon(icon,
                             size: 20,
-                            color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                            color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                         const SizedBox(height: 4),
                         Text(label,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                              color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             )),
                       ],
                     ),
@@ -200,3 +192,4 @@ class AppearanceSectionState extends State<AppearanceSection> {
     );
   }
 }
+

@@ -14,8 +14,8 @@ Future<String?> showCategoryPicker(BuildContext context,
 }
 
 class _CategoryPickerSheet extends StatefulWidget {
-  final String? current;
   const _CategoryPickerSheet({this.current});
+  final String? current;
 
   @override
   State<_CategoryPickerSheet> createState() => _CategoryPickerSheetState();
@@ -111,7 +111,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
                             color: _hexColor(c),
                             shape: BoxShape.circle,
                             border: color == c
-                                ? Border.all(color: Colors.black, width: 2)
+                                ? Border.all(width: 2)
                                 : null,
                           ),
                         ),
@@ -135,7 +135,6 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
                   parentId: parent?.id,
                   icon: parent?.icon ?? icon,
                   color: parent?.color ?? color,
-                  isDefault: false,
                 );
                 await AppDatabase.insertCategory(cat);
                 if (!mounted) return;
@@ -267,7 +266,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
             child: Text(c.icon, style: const TextStyle(fontSize: 18)),
           ),
           title: Text(c.name),
-          trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+          trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
           onTap: () => _selectParent(c),
           onLongPress: () => _pick(c.name),
         );
@@ -321,8 +320,8 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
 }
 
 class _CustomEntry extends StatefulWidget {
-  final ValueChanged<String> onPick;
   const _CustomEntry({required this.onPick});
+  final ValueChanged<String> onPick;
 
   @override
   State<_CustomEntry> createState() => _CustomEntryState();
@@ -378,3 +377,4 @@ const _kEmojis = [
   '🔄','🏋️','🎵','🐾','🌿','☕','🍕','🎁','💡','🔧','📊','🏦',
   '🎓','👶','🌍','⚽','🎨','🍷','🚀','💎',
 ];
+

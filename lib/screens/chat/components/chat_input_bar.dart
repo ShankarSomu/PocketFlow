@@ -2,20 +2,15 @@ import 'package:flutter/material.dart';
 
 /// Chat input bar with text field, voice button, and send button
 class ChatInputBar extends StatelessWidget {
+
+  const ChatInputBar({
+    required this.controller, required this.onSubmit, required this.isRecording, required this.isTranscribing, required this.onVoiceToggle, super.key,
+  });
   final TextEditingController controller;
   final VoidCallback onSubmit;
   final bool isRecording;
   final bool isTranscribing;
   final VoidCallback onVoiceToggle;
-
-  const ChatInputBar({
-    super.key,
-    required this.controller,
-    required this.onSubmit,
-    required this.isRecording,
-    required this.isTranscribing,
-    required this.onVoiceToggle,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +20,7 @@ class ChatInputBar extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(8, 8, 8, 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28),
-        side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+        side: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Container(
@@ -79,3 +74,4 @@ class ChatInputBar extends StatelessWidget {
     );
   }
 }
+

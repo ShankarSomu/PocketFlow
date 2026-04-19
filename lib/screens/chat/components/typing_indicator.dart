@@ -37,7 +37,7 @@ class TypingIndicatorState extends State<TypingIndicator>
       color: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.3)),
+        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -54,3 +54,4 @@ class TypingIndicatorState extends State<TypingIndicator>
     );
   }
 }
+

@@ -7,9 +7,6 @@ import 'global_filter_button.dart';
 /// Shows the [title] on the left and the active time-filter as a tappable pill
 /// on the right. Reacts automatically when the global filter changes.
 class ScreenHeader extends StatelessWidget {
-  final String title;
-  final IconData? icon;
-  final String? subtitle;
   
   const ScreenHeader(
     this.title, {
@@ -17,6 +14,9 @@ class ScreenHeader extends StatelessWidget {
     this.subtitle,
     super.key,
   });
+  final String title;
+  final IconData? icon;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -30,16 +30,15 @@ class ScreenHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                    Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                  width: 1,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                 ),
               ),
               child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
@@ -69,7 +68,7 @@ class ScreenHeader extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -107,7 +106,7 @@ class ScreenHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 3),
                     Icon(Icons.keyboard_arrow_down_rounded,
-                        size: 14, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)),
+                        size: 14, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)),
                   ],
                 ),
               ),
@@ -118,3 +117,4 @@ class ScreenHeader extends StatelessWidget {
     );
   }
 }
+

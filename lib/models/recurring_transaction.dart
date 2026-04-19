@@ -1,4 +1,30 @@
 class RecurringTransaction {
+
+  RecurringTransaction({
+    required this.type, required this.amount, required this.category, required this.frequency, required this.nextDueDate, this.id,
+    this.note,
+    this.accountId,
+    this.toAccountId,
+    this.goalId,
+    this.isActive = true,
+    this.deletedAt,
+  });
+
+  factory RecurringTransaction.fromMap(Map<String, dynamic> m) =>
+      RecurringTransaction(
+        id: m['id'],
+        type: m['type'],
+        amount: m['amount'],
+        category: m['category'],
+        note: m['note'],
+        accountId: m['account_id'],
+        toAccountId: m['to_account_id'],
+        goalId: m['goal_id'],
+        frequency: m['frequency'],
+        nextDueDate: DateTime.parse(m['next_due_date']),
+        isActive: m['is_active'] == 1,
+        deletedAt: m['deleted_at'],
+      );
   final int? id;
   final String type; // 'income' | 'expense' | 'transfer' | 'goal'
   final double amount;
@@ -11,21 +37,6 @@ class RecurringTransaction {
   final DateTime nextDueDate;
   final bool isActive;
   final int? deletedAt;
-
-  RecurringTransaction({
-    this.id,
-    required this.type,
-    required this.amount,
-    required this.category,
-    this.note,
-    this.accountId,
-    this.toAccountId,
-    this.goalId,
-    required this.frequency,
-    required this.nextDueDate,
-    this.isActive = true,
-    this.deletedAt,
-  });
 
   DateTime nextAfter(DateTime from) {
     return switch (frequency) {
@@ -58,20 +69,4 @@ class RecurringTransaction {
         'is_active': isActive ? 1 : 0,
         'deleted_at': deletedAt,
       };
-
-  factory RecurringTransaction.fromMap(Map<String, dynamic> m) =>
-      RecurringTransaction(
-        id: m['id'],
-        type: m['type'],
-        amount: m['amount'],
-        category: m['category'],
-        note: m['note'],
-        accountId: m['account_id'],
-        toAccountId: m['to_account_id'],
-        goalId: m['goal_id'],
-        frequency: m['frequency'],
-        nextDueDate: DateTime.parse(m['next_due_date']),
-        isActive: m['is_active'] == 1,
-        deletedAt: m['deleted_at'],
-      );
 }

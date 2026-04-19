@@ -263,14 +263,11 @@ import 'package:pocket_flow/utils/calculation_helpers.dart';
 Based on duplication analysis, these files will benefit most:
 
 1. **High Impact** (10+ formatter instances):
-   - `lib/screens/figma/home/components/interactive_donut.dart`
    - `lib/screens/home/components/monthly_summary_card.dart`
    - `lib/screens/home/components/spending_snapshot.dart`
-   - `lib/screens/figma/home/components/budget_progress_page.dart`
 
 2. **Medium Impact** (5-10 instances):
    - `lib/screens/home/components/stats_grid.dart`
-   - `lib/screens/figma/home/components/home_stats_row.dart`
    - `lib/screens/profile/components/account_health_card.dart`
 
 3. **All components with color opacity** (80+ files):

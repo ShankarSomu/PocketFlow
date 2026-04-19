@@ -341,12 +341,7 @@ class HomeScreen extends StatelessWidget {
 ### Files to Update
 
 **High Priority** (Direct database access):
-- `lib/screens/figma/home_screen.dart` - Use HomeViewModel
-- `lib/screens/figma/accounts_screen.dart` - Use AccountsViewModel
-- `lib/screens/figma/transactions_screen.dart` - Use TransactionsViewModel
-- `lib/screens/figma/budget_screen.dart` - Use BudgetViewModel
-- `lib/screens/figma/savings_screen.dart` - Use SavingsViewModel
-- `lib/screens/figma/recurring_screen.dart` - Use RecurringViewModel
+- Main screen files already using proper ViewModels
 
 **Medium Priority** (Service interfaces):
 - `lib/services/auth_service.dart` - Implement IAuthService

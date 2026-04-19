@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../../models/budget.dart';
-import '../../../../services/theme_service.dart';
 import '../../../../theme/app_color_scheme.dart';
-import '../../../widgets/figma/figma_panel.dart';
+import '../../../widgets/ui/panel.dart';
 import '../../savings/savings_screen.dart';
 import '../../shared/shared.dart';
 import '../../transactions/transactions_screen.dart';
 
 /// Smart insights widget showing AI-generated financial insights
 class HomeSmartInsights extends StatelessWidget {
+
+  const HomeSmartInsights({
+    required this.categorySpend, required this.budgets, required this.income, required this.expenses, required this.savingsRate, super.key,
+  });
   final Map<String, double> categorySpend;
   final List<Budget> budgets;
   final double income;
   final double expenses;
   final double savingsRate;
-
-  const HomeSmartInsights({
-    super.key,
-    required this.categorySpend,
-    required this.budgets,
-    required this.income,
-    required this.expenses,
-    required this.savingsRate,
-  });
 
   static String _titleCase(String s) => s
       .split(' ')
@@ -99,7 +93,7 @@ class HomeSmartInsights extends StatelessWidget {
   Widget build(BuildContext context) {
     final insights = _generateInsights(context);
 
-    return FigmaPanel(
+    return Panel(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,16 +118,16 @@ class HomeSmartInsights extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 6),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.07),
+                color: color.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: color.withOpacity(0.18)),
+                border: Border.all(color: color.withValues(alpha: 0.18)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                        color: color.withOpacity(0.15),
+                        color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8)),
                     child: Icon(insight['icon'] as IconData,
                         color: color, size: 14),
@@ -146,11 +140,11 @@ class HomeSmartInsights extends StatelessWidget {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurface
-                                  .withOpacity(0.8)))),
+                                  .withValues(alpha: 0.8)))),
                   const SizedBox(width: 8),
                   TextButton(
                     style: TextButton.styleFrom(
-                      backgroundColor: color.withOpacity(0.12),
+                      backgroundColor: color.withValues(alpha: 0.12),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       minimumSize: Size.zero,
@@ -192,3 +186,4 @@ class HomeSmartInsights extends StatelessWidget {
     );
   }
 }
+

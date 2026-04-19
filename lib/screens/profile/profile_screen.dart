@@ -1,5 +1,11 @@
+import 'dart:io';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../db/database.dart';
 import '../../services/app_logger.dart';
 import '../../services/auth_service.dart';
@@ -9,10 +15,11 @@ import '../../services/sms_service.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_color_scheme.dart';
 import '../export_screen.dart';
+import '../help/help_screen.dart';
+import '../settings/settings_screen.dart';
 import 'components/profile_hero_card.dart';
 import 'components/profile_section_card.dart';
 import 'components/profile_tile_row.dart';
-import '../settings/settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,6 +30,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = false;
+  bool _sharing = false; // Prevent multiple share dialogs
+  bool _isSigningIn = false; // Prevent double sign-in without UI change
+  bool _isAboutExpanded = false; // About section expansion state
   String? _error;
   double _savingsRate = 0;
   double _budgetCompliance = 0;
@@ -76,25 +86,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _signIn() async {
-    setState(() => _loading = true);
-    final user = await AuthService.signIn();
-    if (!mounted) return;
-    setState(() => _loading = false);
-    if (user != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Signed in as ${user.email}')));
-    } else {
+    if (_isSigningIn) return; // Prevent double-tap without hiding UI
+    _isSigningIn = true;
+    try {
+      final user = await AuthService.signIn();
+      if (!mounted) return;
+      if (user != null) {
+        // Reload account health after sign-in
+        await _loadAccountHealth();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Signed in as ${user.email}')));
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Sign in failed')));
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Sign in failed')));
+    } finally {
+      _isSigningIn = false;
     }
   }
 
   Future<void> _signOut() async {
-    await AuthService.signOut();
-    await AuthService.clearSelectedFolder();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Signed out')));
+    if (_loading) return; // Prevent double-tap
+    setState(() => _loading = true);
+    try {
+      await AuthService.signOut();
+      await AuthService.clearSelectedFolder();
+      if (!mounted) return;
+      // Reset all state to guest values
+      setState(() {
+        _savingsRate = 0;
+        _budgetCompliance = 0;
+        _goalsOnTrack = 0;
+        _totalGoals = 0;
+        _loading = false;
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Signed out')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Sign out failed')));
+    }
   }
 
   Future<void> _deleteAllData() async {
@@ -134,6 +172,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _showAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('App Version'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Version: ${packageInfo.version}'),
+              const SizedBox(height: 8),
+              Text('Build: ${packageInfo.buildNumber}'),
+              const SizedBox(height: 8),
+              Text('Package: ${packageInfo.packageName}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      AppLogger.err('profile_show_app_version', e);
+    }
+  }
+
   Future<void> _loadSampleData() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -170,6 +240,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _sendDiagnostics() async {
+    bool includeTransactionHistory = false;
+
+    // Show confirmation dialog with privacy notice
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Send Diagnostics?'),
+        content: StatefulBuilder(
+          builder: (context, setLocalState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                  'This will send technical diagnostic information to help improve the app.\n\n'
+                  'Privacy: By default, only technical metadata and error logs are included.'),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: const Text('Include transaction history'),
+                subtitle: const Text('May help if you have issues with categories or balances.'),
+                value: includeTransactionHistory,
+                contentPadding: EdgeInsets.zero,
+                onChanged: (val) {
+                  setLocalState(() => includeTransactionHistory = val ?? false);
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Send')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    setState(() => _loading = true);
+    try {
+      // Collect diagnostic information
+      final packageInfo = await PackageInfo.fromPlatform();
+      final connectivityResult = await Connectivity().checkConnectivity();
+      
+      final diagnosticsData = {
+        'timestamp': DateTime.now().toIso8601String(),
+        'app_version': packageInfo.version,
+        'build_number': packageInfo.buildNumber,
+        'package_name': packageInfo.packageName,
+        'platform': Platform.operatingSystem,
+        'platform_version': Platform.operatingSystemVersion,
+        'connectivity': connectivityResult.toString(),
+        'logs': AppLogger.exportJson(errorsOnly: !includeTransactionHistory),
+      };
+
+      // In a real implementation, you would send this to your backend
+      // For now, we'll just share it locally for the user to send manually
+      final diagnosticsText = '''
+=== PocketFlow Diagnostics Report ===
+Generated: ${DateTime.now()}
+Privacy Mode: ${includeTransactionHistory ? "Detailed (Included Transactions)" : "Standard (System Errors Only)"}
+
+App Version: ${packageInfo.version} (${packageInfo.buildNumber})
+Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}
+Connectivity: $connectivityResult
+
+${AppLogger.exportText(errorsOnly: !includeTransactionHistory)}
+''';
+
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      // Share the diagnostics report
+      await Share.share(
+        diagnosticsText,
+        subject: 'PocketFlow Diagnostics Report',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Diagnostics report generated! Share via your preferred method.')));
+      
+      AppLogger.userAction('send_diagnostics', detail: 'Diagnostics report shared');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      AppLogger.err('profile_send_diagnostics', e);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Failed to generate diagnostics report')));
+    }
+  }
+
   Future<void> _rescanSms() async {
     setState(() => _loading = true);
     try {
@@ -191,21 +356,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _inviteFriends() async {
+    if (_sharing) return; // Prevent multiple simultaneous shares
+    setState(() => _sharing = true);
+    
     const playStoreLink = 'https://play.google.com/store/apps/details?id=com.pocketflow.app';
     const message = 'Check out PocketFlow - Smart expense tracking made easy! $playStoreLink';
     
-    final uri = Uri(
-      scheme: 'sms',
-      queryParameters: {'body': message},
-    );
-    
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open SMS app')),
+    try {
+      await Share.share(
+        message,
+        subject: 'Try PocketFlow App',
       );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not share invitation')),
+        );
+      }
+    } finally {
+      // Always reset sharing state
+      if (mounted) {
+        setState(() => _sharing = false);
+      }
     }
   }
 
@@ -225,19 +397,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _contactUs() async {
     const email = 'support@pocketflow.app';
-    const subject = 'Feedback:';
+    const subject = 'Feedback/Query from PocketFlow';
+    
     final uri = Uri(
       scheme: 'mailto',
       path: email,
-      queryParameters: {'subject': subject},
+      query: 'subject=${Uri.encodeComponent(subject)}',
     );
     
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open email app')),
+    try {
+      final launched = await launchUrl(uri);
+      if (!launched) {
+        // Fallback: use share instead
+        await Share.share(
+          'Contact PocketFlow Support at: $email',
+          subject: subject,
+        );
+      }
+    } catch (e) {
+      // Fallback: use share
+      await Share.share(
+        'Contact PocketFlow Support at: $email',
+        subject: subject,
       );
     }
   }
@@ -259,18 +440,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showHelp() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Help'),
-        content: const Text('Help documentation coming soon!\n\nIn the meantime, explore the app features or contact us for assistance.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HelpScreen()),
     );
   }
 
@@ -299,12 +471,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 bottomRight: Radius.circular(28),
               ),
               border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                   blurRadius: 30,
                   offset: const Offset(8, 0),
                   spreadRadius: -2,
@@ -351,15 +523,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     : Theme.of(context).extension<AppColorScheme>()!.success,
                                                 onTap: isSignedIn ? _signOut : _signIn,
                                               ),
-                                              if (isSignedIn) ...[ 
-                                                Divider(height: 1, color: Theme.of(context).dividerColor),
-                                                ProfileTileRow(
-                                                  icon: Icons.delete_forever_rounded,
-                                                  label: 'Delete All Data',
-                                                  color: Theme.of(context).extension<AppColorScheme>()!.error,
-                                                  onTap: _deleteAllData,
-                                                ),
-                                              ],
                                             ],
                                           ),
                                       const SizedBox(height: 6),
@@ -411,7 +574,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               Divider(height: 1, color: Theme.of(context).dividerColor),
                                               ProfileTileRow(
                                                 icon: Icons.card_membership_rounded,
-                                                label: 'Subscription',
+                                                label: 'Subscription (Free)',
                                                 color: Theme.of(context).colorScheme.secondary,
                                                 onTap: _showSubscription,
                                               ),
@@ -426,17 +589,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ),
                                       const SizedBox(height: 6),
                                       ProfileSectionCard(
-                                        title: 'Developer',
-                                            icon: Icons.code_rounded,
-                                            children: [
-                                              ProfileTileRow(
-                                                icon: Icons.data_object_rounded,
-                                                label: 'Load Sample Data',
-                                                color: Theme.of(context).extension<AppColorScheme>()!.primary,
-                                                onTap: _loadSampleData,
-                                              ),
-                                            ],
+                                        title: 'About',
+                                        icon: Icons.info_rounded,
+                                        isExpandable: true,
+                                        isExpanded: _isAboutExpanded,
+                                        onToggleExpanded: () {
+                                          setState(() {
+                                            _isAboutExpanded = !_isAboutExpanded;
+                                          });
+                                        },
+                                        children: [
+                                          FutureBuilder<PackageInfo>(
+                                            future: PackageInfo.fromPlatform(),
+                                            builder: (context, snapshot) {
+                                              final version = snapshot.data?.version ?? '...';
+                                              final buildNumber = snapshot.data?.buildNumber ?? '...';
+                                              return Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.apps_rounded,
+                                                      size: 18,
+                                                      color: Theme.of(context).colorScheme.tertiary,
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            'Version',
+                                                            style: TextStyle(
+                                                              fontSize: 13,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: Theme.of(context).colorScheme.onSurface,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(height: 2),
+                                                          Text(
+                                                            'v$version ($buildNumber)',
+                                                            style: TextStyle(
+                                                              fontSize: 12,
+                                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
                                           ),
+                                          Divider(height: 1, color: Theme.of(context).dividerColor),
+                                          ProfileTileRow(
+                                            icon: Icons.data_object_rounded,
+                                            label: 'Load Sample Data',
+                                            color: Theme.of(context).extension<AppColorScheme>()!.warning,
+                                            onTap: _loadSampleData,
+                                          ),
+                                          Divider(height: 1, color: Theme.of(context).dividerColor),
+                                          ProfileTileRow(
+                                            icon: Icons.bug_report_rounded,
+                                            label: 'Send Diagnostics',
+                                            color: Theme.of(context).colorScheme.secondary,
+                                            onTap: _sendDiagnostics,
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -454,3 +675,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

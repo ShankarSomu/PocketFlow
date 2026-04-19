@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import '../core/app_constants.dart';
 
 /// Accessibility utilities for better screen reader support
 class AccessibilityHelper {
@@ -88,6 +87,18 @@ class AccessibilityHelper {
 
 /// Accessible widget wrapper with semantic labels
 class AccessibleWidget extends StatelessWidget {
+
+  const AccessibleWidget({
+    required this.child, required this.label, super.key,
+    this.hint,
+    this.value,
+    this.isButton = false,
+    this.isHeader = false,
+    this.isLink = false,
+    this.isLiveRegion = false,
+    this.excludeSemantics = false,
+    this.onTap,
+  });
   final Widget child;
   final String label;
   final String? hint;
@@ -98,20 +109,6 @@ class AccessibleWidget extends StatelessWidget {
   final bool isLiveRegion;
   final bool excludeSemantics;
   final VoidCallback? onTap;
-
-  const AccessibleWidget({
-    super.key,
-    required this.child,
-    required this.label,
-    this.hint,
-    this.value,
-    this.isButton = false,
-    this.isHeader = false,
-    this.isLink = false,
-    this.isLiveRegion = false,
-    this.excludeSemantics = false,
-    this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -132,14 +129,13 @@ class AccessibleWidget extends StatelessWidget {
 
 /// Minimum tap target wrapper
 class MinimumTapTarget extends StatelessWidget {
-  final Widget child;
-  final double minSize;
 
   const MinimumTapTarget({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.minSize = AccessibilityHelper.minTapTargetSize,
   });
+  final Widget child;
+  final double minSize;
 
   @override
   Widget build(BuildContext context) {
@@ -155,22 +151,19 @@ class MinimumTapTarget extends StatelessWidget {
 
 /// Accessible icon button with proper tap target
 class AccessibleIconButton extends StatelessWidget {
+
+  const AccessibleIconButton({
+    required this.icon, required this.onPressed, required this.label, super.key,
+    this.tooltip,
+    this.size = 24.0,
+    this.color,
+  });
   final IconData icon;
   final VoidCallback? onPressed;
   final String label;
   final String? tooltip;
   final double size;
   final Color? color;
-
-  const AccessibleIconButton({
-    super.key,
-    required this.icon,
-    required this.onPressed,
-    required this.label,
-    this.tooltip,
-    this.size = 24.0,
-    this.color,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -195,14 +188,13 @@ class AccessibleIconButton extends StatelessWidget {
 
 /// Skip to content link for keyboard navigation
 class SkipToContentLink extends StatelessWidget {
-  final GlobalKey contentKey;
-  final String label;
 
   const SkipToContentLink({
-    super.key,
-    required this.contentKey,
+    required this.contentKey, super.key,
     this.label = 'Skip to main content',
   });
+  final GlobalKey contentKey;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -292,16 +284,14 @@ class SemanticAnnouncer {
 
 /// Live region for dynamic content
 class LiveRegion extends StatelessWidget {
+
+  const LiveRegion({
+    required this.child, required this.announcement, super.key,
+    this.isPolite = true,
+  });
   final Widget child;
   final String announcement;
   final bool isPolite;
-
-  const LiveRegion({
-    super.key,
-    required this.child,
-    required this.announcement,
-    this.isPolite = true,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -315,19 +305,9 @@ class LiveRegion extends StatelessWidget {
 
 /// Accessible form field with proper labeling
 class AccessibleFormField extends StatelessWidget {
-  final String label;
-  final String? hint;
-  final TextEditingController? controller;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-  final String? Function(String?)? validator;
-  final void Function(String)? onChanged;
-  final FocusNode? focusNode;
-  final bool required;
 
   const AccessibleFormField({
-    super.key,
-    required this.label,
+    required this.label, super.key,
     this.hint,
     this.controller,
     this.keyboardType,
@@ -337,6 +317,15 @@ class AccessibleFormField extends StatelessWidget {
     this.focusNode,
     this.required = false,
   });
+  final String label;
+  final String? hint;
+  final TextEditingController? controller;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
+  final FocusNode? focusNode;
+  final bool required;
 
   @override
   Widget build(BuildContext context) {
@@ -365,16 +354,15 @@ class AccessibleFormField extends StatelessWidget {
 
 /// Accessible card with semantic grouping
 class AccessibleCard extends StatelessWidget {
-  final Widget child;
-  final String? label;
-  final VoidCallback? onTap;
 
   const AccessibleCard({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.label,
     this.onTap,
   });
+  final Widget child;
+  final String? label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -393,11 +381,6 @@ class AccessibleCard extends StatelessWidget {
 
 /// Text with proper contrast
 class AccessibleText extends StatelessWidget {
-  final String text;
-  final TextStyle? style;
-  final TextAlign? textAlign;
-  final int? maxLines;
-  final bool ensureContrast;
 
   const AccessibleText(
     this.text, {
@@ -407,6 +390,11 @@ class AccessibleText extends StatelessWidget {
     this.maxLines,
     this.ensureContrast = true,
   });
+  final String text;
+  final TextStyle? style;
+  final TextAlign? textAlign;
+  final int? maxLines;
+  final bool ensureContrast;
 
   @override
   Widget build(BuildContext context) {
@@ -434,14 +422,12 @@ class AccessibleText extends StatelessWidget {
 
 /// Keyboard shortcut handler
 class KeyboardShortcuts extends StatelessWidget {
-  final Widget child;
-  final Map<LogicalKeySet, VoidCallback> shortcuts;
 
   const KeyboardShortcuts({
-    super.key,
-    required this.child,
-    required this.shortcuts,
+    required this.child, required this.shortcuts, super.key,
   });
+  final Widget child;
+  final Map<LogicalKeySet, VoidCallback> shortcuts;
 
   @override
   Widget build(BuildContext context) {

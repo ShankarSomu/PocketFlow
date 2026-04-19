@@ -322,7 +322,7 @@ class PdfExportService {
       border: pw.TableBorder.all(color: PdfColors.grey300),
       columnWidths: {
         0: const pw.FlexColumnWidth(1.5), // Date
-        1: const pw.FlexColumnWidth(1), // Type
+        1: const pw.FlexColumnWidth(), // Type
         2: const pw.FlexColumnWidth(1.5), // Amount
         3: const pw.FlexColumnWidth(2), // Category
         4: const pw.FlexColumnWidth(2), // Account
@@ -435,7 +435,7 @@ class PdfExportService {
           pw.Table(
             border: pw.TableBorder.all(color: PdfColors.grey300),
             columnWidths: {
-              0: const pw.FlexColumnWidth(1), // Month
+              0: const pw.FlexColumnWidth(), // Month
               1: const pw.FlexColumnWidth(2), // Category
               2: const pw.FlexColumnWidth(1.5), // Limit
               3: const pw.FlexColumnWidth(1.5), // Spent
@@ -680,7 +680,7 @@ class PdfExportService {
     final allBudgets = <Budget>[];
 
     for (int i = 0; i < 12; i++) {
-      final date = DateTime(now.year, now.month - i, 1);
+      final date = DateTime(now.year, now.month - i);
       final budgets = await AppDatabase.getBudgets(date.month, date.year);
       allBudgets.addAll(budgets);
     }

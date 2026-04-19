@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../../db/database.dart';
+import '../../../../services/notification_service.dart';
 import '../../../../services/refresh_notifier.dart';
 import '../../../../services/sms_service.dart';
-import '../../../../widgets/performance_settings.dart';
 import 'appearance_section.dart';
 import 'settings_card.dart';
 import 'settings_widgets.dart';
@@ -179,6 +180,86 @@ class PreferencesTabState extends State<PreferencesTab> {
     }
   }
 
+  void _showManualSalaryPicker() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        int selectedDay = _detectedSalaryDay ?? 1;
+        
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Set Salary Day'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Select the day of the month when you typically receive your salary:',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: 31,
+                      itemBuilder: (context, index) {
+                        final day = index + 1;
+                        final isSelected = selectedDay == day;
+                        
+                        return ListTile(
+                          dense: true,
+                          selected: isSelected,
+                          selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
+                          title: Text(
+                            '$day${_getDaySuffix(day)} of each month',
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              color: isSelected 
+                                  ? Theme.of(context).colorScheme.primary 
+                                  : null,
+                            ),
+                          ),
+                          trailing: isSelected 
+                              ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+                              : null,
+                          onTap: () {
+                            setDialogState(() => selectedDay = day);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    setState(() {
+                      _detectedSalaryDay = selectedDay;
+                      _lastSalaryDate = DateTime.now();
+                    });
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Salary day set to $selectedDay${_getDaySuffix(selectedDay)} of each month'),
+                      ),
+                    );
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -197,6 +278,14 @@ class PreferencesTabState extends State<PreferencesTab> {
               onChanged: (v) {
                 setState(() => _notifyTransactions = v);
                 _setNotifPref('notif_transactions', v);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(v 
+                        ? 'Transaction alerts enabled. You\'ll be notified when transactions are added.'
+                        : 'Transaction alerts disabled.'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
               },
             ),
             Divider(height: 1, color: theme.colorScheme.outlineVariant),
@@ -208,6 +297,14 @@ class PreferencesTabState extends State<PreferencesTab> {
               onChanged: (v) {
                 setState(() => _notifyBudget = v);
                 _setNotifPref('notif_budget', v);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(v 
+                        ? 'Budget warnings enabled. You\'ll be alerted when approaching budget limits.'
+                        : 'Budget warnings disabled.'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
               },
             ),
             Divider(height: 1, color: theme.colorScheme.outlineVariant),
@@ -216,29 +313,58 @@ class PreferencesTabState extends State<PreferencesTab> {
               title: 'Weekly Summary',
               subtitle: 'Get a weekly spending digest',
               value: _notifyWeekly,
-              onChanged: (v) {
+              onChanged: (v) async {
+                // Show immediate feedback
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(v 
+                          ? 'Enabling weekly summary...'
+                          : 'Disabling weekly summary...'),
+                      duration: const Duration(milliseconds: 800),
+                    ),
+                  );
+                }
+                
                 setState(() => _notifyWeekly = v);
                 _setNotifPref('notif_weekly', v);
+                
+                // Reschedule or cancel weekly summary
+                await NotificationService.scheduleWeeklySummary();
+                
+                // Show final confirmation
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(v 
+                          ? '✓ Weekly summary enabled. You\'ll receive a spending digest every week.'
+                          : '✓ Weekly summary disabled.'),
+                      duration: const Duration(seconds: 3),
+                      backgroundColor: theme.colorScheme.tertiary,
+                    ),
+                  );
+                }
               },
             ),
           ],
         ),
         const SizedBox(height: 12),
-        SettingsCard(
+        const SettingsCard(
           title: 'Appearance',
           icon: Icons.palette_rounded,
-          children: const [
+          children: [
             AppearanceSection(),
           ],
         ),
-        const SizedBox(height: 12),
-        SettingsCard(
-          title: 'Performance',
-          icon: Icons.speed_rounded,
-          children: const [
-            PerformanceSettings(),
-          ],
-        ),
+        // Performance section disabled as it's for development only
+        // const SizedBox(height: 12),
+        // SettingsCard(
+        //   title: 'Performance',
+        //   icon: Icons.speed_rounded,
+        //   children: const [
+        //     PerformanceSettings(),
+        //   ],
+        // ),
         const SizedBox(height: 12),
         SettingsCard(
           title: 'Financial Period',
@@ -248,9 +374,9 @@ class PreferencesTabState extends State<PreferencesTab> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.07),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,11 +403,11 @@ class PreferencesTabState extends State<PreferencesTab> {
                           'Your salary is typically credited on or around the ',
                           style: TextStyle(
                             fontSize: 12,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         Text(
-                          '${_detectedSalaryDay}${_getDaySuffix(_detectedSalaryDay!)}',
+                          '$_detectedSalaryDay${_getDaySuffix(_detectedSalaryDay!)}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -296,7 +422,7 @@ class PreferencesTabState extends State<PreferencesTab> {
                         'Last detected: ${DateFormat('MMM d, yyyy').format(_lastSalaryDate!)}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -304,10 +430,24 @@ class PreferencesTabState extends State<PreferencesTab> {
                 ),
               ),
               const SizedBox(height: 10),
-              SettingsActionButton(
-                label: 'Refresh Salary Detection',
-                icon: Icons.refresh_rounded,
-                onTap: _detectSalaryDate,
+              Row(
+                children: [
+                  Expanded(
+                    child: SettingsActionButton(
+                      label: 'Refresh Salary Detection',
+                      icon: Icons.refresh_rounded,
+                      onTap: _detectSalaryDate,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SettingsActionButton(
+                      label: 'Set Manually',
+                      icon: Icons.edit_calendar_rounded,
+                      onTap: _showManualSalaryPicker,
+                    ),
+                  ),
+                ],
               ),
             ] else ...[
               Padding(
@@ -319,19 +459,25 @@ class PreferencesTabState extends State<PreferencesTab> {
                       'No salary transactions detected yet',
                       style: TextStyle(
                         fontSize: 13,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Once you have income transactions marked as "Salary", we\'ll automatically detect your typical salary date.',
+                      'Once you have income transactions marked as "Salary", we\'ll automatically detect your typical salary date. Or you can set it manually.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 10),
+              SettingsActionButton(
+                label: 'Set Salary Day Manually',
+                icon: Icons.edit_calendar_rounded,
+                onTap: _showManualSalaryPicker,
               ),
             ],
           ],
@@ -344,9 +490,9 @@ class PreferencesTabState extends State<PreferencesTab> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.07),
+                color: theme.colorScheme.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,7 +505,7 @@ class PreferencesTabState extends State<PreferencesTab> {
                       'Reads only bank/wallet SMS locally on your device. Never uploaded.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ),
@@ -383,7 +529,7 @@ class PreferencesTabState extends State<PreferencesTab> {
                 children: [
                   Icon(Icons.date_range_outlined,
                       size: 18,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text('Scan range',
@@ -420,7 +566,7 @@ class PreferencesTabState extends State<PreferencesTab> {
                   'Last scan: ${_formatLastScan(_smsLastScan!)}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -431,7 +577,7 @@ class PreferencesTabState extends State<PreferencesTab> {
                   _smsResult!,
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -451,3 +597,4 @@ class PreferencesTabState extends State<PreferencesTab> {
     );
   }
 }
+

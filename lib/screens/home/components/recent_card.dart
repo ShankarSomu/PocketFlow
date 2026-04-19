@@ -4,9 +4,9 @@ import '../../../models/transaction.dart' as model;
 import '../../../theme/app_theme.dart';
 
 class RecentCard extends StatelessWidget {
+  const RecentCard({required this.recent, required this.fmt, super.key});
   final List<model.Transaction> recent;
   final NumberFormat fmt;
-  const RecentCard({super.key, required this.recent, required this.fmt});
 
   @override
   Widget build(BuildContext context) {

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../repositories/budget_repository.dart';
-import '../repositories/transaction_repository.dart';
 import '../models/budget.dart';
 import '../models/time_range.dart';
+import '../repositories/budget_repository.dart';
+import '../repositories/transaction_repository.dart';
 
 /// ViewModel for Budget Screen
 class BudgetViewModel extends ChangeNotifier {
-  final BudgetRepository _budgetRepo;
-  final TransactionRepository _transactionRepo;
 
   BudgetViewModel({
     required BudgetRepository budgetRepo,
     required TransactionRepository transactionRepo,
   })  : _budgetRepo = budgetRepo,
         _transactionRepo = transactionRepo;
+  final BudgetRepository _budgetRepo;
+  final TransactionRepository _transactionRepo;
 
   bool _loading = true;
   String? _error;

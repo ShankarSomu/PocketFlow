@@ -19,6 +19,14 @@ mixin NavigationGuard on Widget {
 /// Automatically shows a confirmation dialog when user tries to leave
 /// a screen with unsaved changes.
 class NavigationGuardWrapper extends StatelessWidget {
+
+  const NavigationGuardWrapper({
+    required this.child, required this.hasUnsavedChanges, super.key,
+    this.onSave,
+    this.onDiscard,
+    this.title,
+    this.message,
+  });
   final Widget child;
   final bool hasUnsavedChanges;
   final VoidCallback? onSave;
@@ -26,26 +34,16 @@ class NavigationGuardWrapper extends StatelessWidget {
   final String? title;
   final String? message;
 
-  const NavigationGuardWrapper({
-    super.key,
-    required this.child,
-    required this.hasUnsavedChanges,
-    this.onSave,
-    this.onDiscard,
-    this.title,
-    this.message,
-  });
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !hasUnsavedChanges,
-      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+      onPopInvokedWithResult: (bool didPop, result) async {
         if (didPop) return;
         
         if (hasUnsavedChanges) {
           final shouldPop = await _showUnsavedChangesDialog(context);
-          if (shouldPop == true && context.mounted) {
+          if ((shouldPop ?? false) && context.mounted) {
             Navigator.of(context).pop();
           }
         }
@@ -69,10 +67,6 @@ class NavigationGuardWrapper extends StatelessWidget {
 
 /// Dialog shown when user tries to navigate away with unsaved changes
 class UnsavedChangesDialog extends StatelessWidget {
-  final String? title;
-  final String? message;
-  final VoidCallback? onSave;
-  final VoidCallback? onDiscard;
 
   const UnsavedChangesDialog({
     super.key,
@@ -81,6 +75,10 @@ class UnsavedChangesDialog extends StatelessWidget {
     this.onSave,
     this.onDiscard,
   });
+  final String? title;
+  final String? message;
+  final VoidCallback? onSave;
+  final VoidCallback? onDiscard;
 
   @override
   Widget build(BuildContext context) {
@@ -191,9 +189,9 @@ typedef NavigationGuardCallback = Future<bool> Function();
 
 /// Service for managing navigation guards globally
 class NavigationGuardService {
-  static final NavigationGuardService _instance = NavigationGuardService._internal();
   factory NavigationGuardService() => _instance;
   NavigationGuardService._internal();
+  static final NavigationGuardService _instance = NavigationGuardService._internal();
 
   /// Current guard callback (set by active screen)
   NavigationGuardCallback? _currentGuard;
@@ -211,7 +209,7 @@ class NavigationGuardService {
   /// Check if navigation is allowed
   Future<bool> canNavigate() async {
     if (_currentGuard == null) return true;
-    return await _currentGuard!();
+    return _currentGuard!();
   }
 
   /// Check and navigate if allowed

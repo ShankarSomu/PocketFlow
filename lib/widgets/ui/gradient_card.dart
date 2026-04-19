@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 
 /// A card with a gradient background and soft shadow.
-class FigmaGradientCard extends StatelessWidget {
+class GradientCard extends StatelessWidget {
+  const GradientCard({
+    required this.child, required this.gradient, super.key,
+    this.padding = const EdgeInsets.all(20),
+    this.borderRadius = 24,
+  });
   final Widget child;
   final Gradient gradient;
   final EdgeInsetsGeometry padding;
   final double borderRadius;
-  const FigmaGradientCard({
-    super.key,
-    required this.child,
-    required this.gradient,
-    this.padding = const EdgeInsets.all(20),
-    this.borderRadius = 24,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +20,7 @@ class FigmaGradientCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -35,3 +33,4 @@ class FigmaGradientCard extends StatelessWidget {
     );
   }
 }
+

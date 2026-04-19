@@ -3,16 +3,15 @@ import '../services/app_logger.dart';
 
 /// Error boundary widget that catches and handles widget build errors
 class ErrorBoundary extends StatefulWidget {
-  final Widget child;
-  final Widget Function(BuildContext context, Object error, StackTrace? stackTrace)? errorBuilder;
-  final void Function(Object error, StackTrace? stackTrace)? onError;
 
   const ErrorBoundary({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.errorBuilder,
     this.onError,
   });
+  final Widget child;
+  final Widget Function(BuildContext context, Object error, StackTrace? stackTrace)? errorBuilder;
+  final void Function(Object error, StackTrace? stackTrace)? onError;
 
   @override
   State<ErrorBoundary> createState() => _ErrorBoundaryState();
@@ -106,15 +105,14 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
 
 /// Default error view displayed when error boundary catches an error
 class _DefaultErrorView extends StatelessWidget {
-  final Object error;
-  final StackTrace? stackTrace;
-  final VoidCallback onReset;
 
   const _DefaultErrorView({
     required this.error,
-    this.stackTrace,
-    required this.onReset,
+    required this.onReset, this.stackTrace,
   });
+  final Object error;
+  final StackTrace? stackTrace;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +140,7 @@ class _DefaultErrorView extends StatelessWidget {
               Text(
                 'The app encountered an unexpected error.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -160,15 +158,15 @@ class _DefaultErrorView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Error:',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(error.toString()),
                           const SizedBox(height: 12),
-                          Text(
+                          const Text(
                             'Stack Trace:',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
                             stackTrace.toString(),
@@ -214,14 +212,13 @@ class _DefaultErrorView extends StatelessWidget {
 
 /// Widget that catches errors in a specific subtree
 class SafeWidget extends StatelessWidget {
-  final Widget child;
-  final Widget Function(BuildContext, Object)? errorBuilder;
 
   const SafeWidget({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.errorBuilder,
   });
+  final Widget child;
+  final Widget Function(BuildContext, Object)? errorBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -233,3 +230,4 @@ class SafeWidget extends StatelessWidget {
     );
   }
 }
+

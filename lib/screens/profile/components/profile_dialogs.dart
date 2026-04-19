@@ -139,8 +139,8 @@ class ProfileDialogs {
 }
 
 class FolderPickerSheet extends StatefulWidget {
+  const FolderPickerSheet({required this.folders, super.key});
   final List<DriveFolder> folders;
-  const FolderPickerSheet({super.key, required this.folders});
 
   @override
   State<FolderPickerSheet> createState() => _FolderPickerSheetState();
@@ -181,7 +181,7 @@ class _FolderPickerSheetState extends State<FolderPickerSheet> {
             width: 40, height: 4,
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3).withValues(alpha: 0.3),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3).withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -251,3 +251,4 @@ class _FolderPickerSheetState extends State<FolderPickerSheet> {
     );
   }
 }
+

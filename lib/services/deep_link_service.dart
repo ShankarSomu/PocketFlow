@@ -14,9 +14,9 @@ import 'package:flutter/material.dart';
 /// - pocketflow://settings - Navigate to settings/profile screen
 /// - pocketflow://chat - Navigate to chat screen
 class DeepLinkService {
-  static final DeepLinkService _instance = DeepLinkService._internal();
   factory DeepLinkService() => _instance;
   DeepLinkService._internal();
+  static final DeepLinkService _instance = DeepLinkService._internal();
 
   final _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSubscription;
@@ -39,9 +39,7 @@ class DeepLinkService {
 
     // Handle links when app is already running (warm start)
     _linkSubscription = _appLinks.uriLinkStream.listen(
-      (uri) {
-        _handleDeepLink(uri);
-      },
+      _handleDeepLink,
       onError: (err) {
         debugPrint('Deep link error: $err');
       },
@@ -120,13 +118,13 @@ class DeepLinkService {
 
 /// Represents a parsed deep link route
 class DeepLinkRoute {
-  final String route;
-  final Map<String, String> params;
 
   DeepLinkRoute({
     required this.route,
     this.params = const {},
   });
+  final String route;
+  final Map<String, String> params;
 
   @override
   String toString() => 'DeepLinkRoute(route: $route, params: $params)';

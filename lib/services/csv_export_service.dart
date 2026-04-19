@@ -1,11 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
+
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pocket_flow/db/database.dart';
+import 'package:pocket_flow/models/account.dart';
 import 'package:pocket_flow/models/export_models.dart';
 import 'package:pocket_flow/models/transaction.dart';
-import 'package:pocket_flow/models/account.dart';
-import 'package:intl/intl.dart';
 
 /// CSV export templates
 enum CsvTemplate {
@@ -30,10 +30,10 @@ enum CsvTemplate {
 
 /// Service for exporting data in CSV format
 class CsvExportService {
-  static const _csvSeparator = ',';
-  static const _lineBreak = '\r\n';
 
   CsvExportService();
+  static const _csvSeparator = ',';
+  static const _lineBreak = '\r\n';
 
   /// Export transactions to CSV
   Future<ExportResult> export(
@@ -132,7 +132,7 @@ class CsvExportService {
   /// Get accounts as a map for quick lookup
   Future<Map<int, Account>> _getAccountsMap() async {
     final accounts = await AppDatabase.getAccounts();
-    return {for (var acc in accounts) if (acc.id != null) acc.id!: acc};
+    return {for (final acc in accounts) if (acc.id != null) acc.id!: acc};
   }
 
   /// Generate CSV content based on template
@@ -317,7 +317,7 @@ class CsvExportService {
     final file = File('${exportsDir.path}/$fileName');
 
     // Write data with UTF-8 encoding
-    await file.writeAsString(csvContent, encoding: utf8);
+    await file.writeAsString(csvContent);
 
     return file.path;
   }

@@ -1,15 +1,16 @@
-import '../../services/time_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../core/haptic_feedback.dart';
 import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../models/savings_goal.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/theme_service.dart';
+import '../../services/time_filter.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/error_state_widget.dart';
 import '../../widgets/empty_states.dart';
-import '../../core/haptic_feedback.dart';
+import '../../widgets/error_state_widget.dart';
 import '../shared/shared.dart';
 
 class SavingsScreen extends StatefulWidget {
@@ -88,7 +89,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(existing == null ? 'New Goal' : 'Edit Goal',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameCtrl,
@@ -108,17 +109,17 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int?>(
-                  value: accountId,
+                  initialValue: accountId,
                   decoration: const InputDecoration(labelText: 'Linked Account (optional)', border: OutlineInputBorder()),
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('No account')),
+                    const DropdownMenuItem(child: Text('No account')),
                     ..._accounts.map((a) => DropdownMenuItem(value: a.id, child: Text('${a.name} (\$${_accountBalances[a.id]?.toStringAsFixed(0) ?? '0'})'))),
                   ],
                   onChanged: (v) => setLocal(() => accountId = v),
                 ),
                 const SizedBox(height: 12),
                 Row(children: [
-                  Text('Priority: ', style: TextStyle(fontSize: 14)),
+                  const Text('Priority: ', style: TextStyle(fontSize: 14)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Slider(
@@ -133,7 +134,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   Container(
                     width: 32,
                     alignment: Alignment.center,
-                    child: Text('$priority', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text('$priority', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ]),
                 const SizedBox(height: 16),
@@ -144,14 +145,14 @@ class _SavingsScreenState extends State<SavingsScreen> {
                         final confirm = await showDialog<bool>(
                           context: ctx,
                           builder: (c) => AlertDialog(
-                            title: Text('Delete Goal?'),
+                            title: const Text('Delete Goal?'),
                             content: Text('Delete "${existing.name}"?'),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(c, false), child: Text('Cancel')),
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
                               FilledButton(
                                 onPressed: () => Navigator.pop(c, true),
                                 style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
-                                child: Text('Delete'),
+                                child: const Text('Delete'),
                               ),
                             ],
                           ),
@@ -166,7 +167,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                       label: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   const Spacer(),
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () async {
@@ -220,7 +221,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
     final fmt = NumberFormat.currency(symbol: '\$');
     final totalTarget = _goals.fold(0.0, (sum, g) => sum + g.target);
     final totalSaved = _goals.fold(0.0, (sum, g) => sum + g.saved);
-    final totalProgress = totalTarget <= 0 ? 0.0 : (totalSaved / totalTarget).clamp(0.0, 1.0) as double;
+    final totalProgress = totalTarget <= 0 ? 0.0 : (totalSaved / totalTarget).clamp(0.0, 1.0);
     final completed = _goals.where((g) => g.saved >= g.target).toList();
     final inProgress = _goals.where((g) => g.saved < g.target).toList();
 
@@ -233,7 +234,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                 ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
                 : _error != null
                     ? ErrorStateWidget(
-                        message: _error!,
+                        message: _error,
                         onRetry: _load,
                       )
                     : Column(
@@ -260,7 +261,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                     child: _goals.isEmpty
                         ? EmptyStates.savingsGoals(context, onAdd: () async {
                             await HapticFeedbackHelper.lightImpact();
-                            _showForm(null);
+                            _showForm();
                           })
                         : RefreshIndicator(
                             onRefresh: _load,
@@ -302,7 +303,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   SpeedDialAction(
                     icon: Icons.add,
                     label: 'Add Goal',
-                    onPressed: () => _showForm(null),
+                    onPressed: _showForm,
                   ),
                 ],
               ),
@@ -320,12 +321,6 @@ class _SavingsScreenState extends State<SavingsScreen> {
 
 /// Summary card � dark gradient, total saved vs target, overall progress bar.
 class _GoalsSummaryCard extends StatelessWidget {
-  final double totalSaved;
-  final double totalTarget;
-  final double totalProgress;
-  final int goalCount;
-  final int completedCount;
-  final NumberFormat fmt;
 
   const _GoalsSummaryCard({
     required this.totalSaved,
@@ -335,6 +330,12 @@ class _GoalsSummaryCard extends StatelessWidget {
     required this.completedCount,
     required this.fmt,
   });
+  final double totalSaved;
+  final double totalTarget;
+  final double totalProgress;
+  final int goalCount;
+  final int completedCount;
+  final NumberFormat fmt;
 
   @override
   Widget build(BuildContext context) {
@@ -346,7 +347,7 @@ class _GoalsSummaryCard extends StatelessWidget {
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppTheme.cardShadow,
-        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,11 +359,11 @@ class _GoalsSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('$goalCount goals',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8), fontSize: 12)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8), fontSize: 12)),
               ),
             ],
           ),
@@ -377,7 +378,7 @@ class _GoalsSummaryCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('/ ${fmt.format(totalTarget)}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8), fontSize: 13)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8), fontSize: 13)),
               ),
             ],
           ),
@@ -385,7 +386,7 @@ class _GoalsSummaryCard extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2), width: 1),
+              border: Border.all(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -393,8 +394,8 @@ class _GoalsSummaryCard extends StatelessWidget {
                 value: totalProgress,
                 minHeight: 8,
                 backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.white.withOpacity(0.15)
-                  : Colors.black.withOpacity(0.1),
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Theme.of(context).brightness == Brightness.dark
                     ? Colors.greenAccent
@@ -432,18 +433,18 @@ class _GoalsSummaryCard extends StatelessWidget {
 }
 
 class _StatPill extends StatelessWidget {
+  const _StatPill({required this.label, required this.amount, required this.icon, required this.color});
   final String label;
   final String amount;
   final IconData icon;
   final Color color;
-  const _StatPill({required this.label, required this.amount, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -451,7 +452,7 @@ class _StatPill extends StatelessWidget {
           Container(
             width: 26,
             height: 26,
-            decoration: BoxDecoration(color: color.withOpacity(0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 13),
           ),
           const SizedBox(width: 8),
@@ -476,11 +477,6 @@ class _StatPill extends StatelessWidget {
 
 /// Section � label header + white card containing _GoalItem rows.
 class _GoalsSection extends StatelessWidget {
-  final String label;
-  final List<SavingsGoal> goals;
-  final IconData Function(String) iconFor;
-  final NumberFormat fmt;
-  final void Function(SavingsGoal) onTap;
 
   const _GoalsSection({
     required this.label,
@@ -489,6 +485,11 @@ class _GoalsSection extends StatelessWidget {
     required this.fmt,
     required this.onTap,
   });
+  final String label;
+  final List<SavingsGoal> goals;
+  final IconData Function(String) iconFor;
+  final NumberFormat fmt;
+  final void Function(SavingsGoal) onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -502,7 +503,7 @@ class _GoalsSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               letterSpacing: 0.2,
             ),
           ),
@@ -533,11 +534,6 @@ class _GoalsSection extends StatelessWidget {
 
 /// Single goal row: icon circle | name + saved/target | progress bar + % badge.
 class _GoalItem extends StatelessWidget {
-  final SavingsGoal goal;
-  final IconData icon;
-  final NumberFormat fmt;
-  final bool showDivider;
-  final VoidCallback onTap;
 
   const _GoalItem({
     required this.goal,
@@ -546,22 +542,27 @@ class _GoalItem extends StatelessWidget {
     required this.showDivider,
     required this.onTap,
   });
+  final SavingsGoal goal;
+  final IconData icon;
+  final NumberFormat fmt;
+  final bool showDivider;
+  final VoidCallback onTap;
 
   static Color _colorForGoal(BuildContext context, String name) {
     final colorScheme = Theme.of(context).colorScheme;
     final n = name.toLowerCase();
     if (n.contains('emergency') || n.contains('fund')) return colorScheme.primary;
-    if (n.contains('car')) return colorScheme.primary.withOpacity(0.7);
+    if (n.contains('car')) return colorScheme.primary.withValues(alpha: 0.7);
     if (n.contains('vacation') || n.contains('travel')) return colorScheme.primary;
     if (n.contains('home') || n.contains('house')) return colorScheme.secondary;
-    if (n.contains('wedding')) return colorScheme.error.withOpacity(0.7);
-    if (n.contains('education') || n.contains('school')) return colorScheme.primary.withOpacity(0.6);
+    if (n.contains('wedding')) return colorScheme.error.withValues(alpha: 0.7);
+    if (n.contains('education') || n.contains('school')) return colorScheme.primary.withValues(alpha: 0.6);
     return colorScheme.tertiary;
   }
 
   @override
   Widget build(BuildContext context) {
-    final progress = goal.target <= 0 ? 0.0 : (goal.saved / goal.target).clamp(0.0, 1.0) as double;
+    final progress = goal.target <= 0 ? 0.0 : (goal.saved / goal.target).clamp(0.0, 1.0);
     final isComplete = goal.saved >= goal.target;
     final color = isComplete ? Theme.of(context).colorScheme.tertiary : _colorForGoal(context, goal.name);
 
@@ -579,7 +580,7 @@ class _GoalItem extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -602,7 +603,7 @@ class _GoalItem extends StatelessWidget {
                       const SizedBox(height: 3),
                       Text(
                         '${fmt.format(goal.saved)} / ${fmt.format(goal.target)}',
-                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -613,7 +614,7 @@ class _GoalItem extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -633,7 +634,7 @@ class _GoalItem extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.3), width: 0.5),
+                  border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3), width: 0.5),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -641,8 +642,8 @@ class _GoalItem extends StatelessWidget {
                     value: progress,
                     minHeight: 8,
                     backgroundColor: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.black.withOpacity(0.05),
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.05),
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
                 ),
@@ -659,4 +660,5 @@ class _GoalItem extends StatelessWidget {
     );
   }
 }
+
 

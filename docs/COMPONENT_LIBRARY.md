@@ -694,23 +694,6 @@ import 'package:pocket_flow/screens/home/components/home_components.dart';
 - `AccountsQuickView` - Account balances
 - `TopBar` - Home screen app bar
 
-### Figma Home Components (`lib/screens/figma/home/components/`)
-
-```dart
-import 'package:pocket_flow/screens/figma/home/components/home_components.dart';
-```
-
-**Available Components:**
-- `InteractiveDonut` - Interactive donut chart
-- `BudgetProgressPage` - Budget progress visualization
-- `HomeHeader` - Figma-style header
-- `HomeStatsRow` - Statistics row
-- `HomeRecentTransactions` - Transaction list
-- `HomeSmartInsights` - AI insights
-- `HomeAccountsOverview` - Account summary
-- `HomeTransactionItem` - Individual transaction
-- `CarouselArrow` - Navigation arrow
-
 ### Chat Components (`lib/screens/chat/components/`)
 
 ```dart
@@ -740,51 +723,22 @@ import 'package:pocket_flow/screens/profile/components/profile_components.dart';
 - `DataManagementSection` - Data management options
 - `ProfileDialogs` - Various profile dialogs
 
-### Settings Components (`lib/screens/figma/settings/components/`)
+### UI Shared Widgets (`lib/widgets/ui/`)
 
 ```dart
-import 'package:pocket_flow/screens/figma/settings/components/settings_components.dart';
-```
-
-**Available Components:**
-- `AITab` - AI configuration tab
-- `BackupTab` - Backup settings tab
-- `PreferencesTab` - Preferences tab
-- `AppearanceSection` - Theme & appearance
-- `SettingsCard` - Standard settings card
-- `SettingsWidgets` - Reusable settings widgets
-- `BackupWidgets` - Backup UI components
-
-### Transaction Components (`lib/screens/figma/transactions/components/`)
-
-```dart
-import 'package:pocket_flow/screens/figma/transactions/components/transactions_components.dart';
-```
-
-**Available Components:**
-- `TransactionCard` - Individual transaction card
-- `TransactionList` - List of transactions
-- `TransactionSummaryCard` - Summary statistics
-- `AccountCarousel` - Account selector carousel
-- `AccountChip` - Account filter chip
-- `TransactionHelpers` - Helper functions
-
-### Figma Shared Widgets (`lib/widgets/figma/`)
-
-```dart
-import 'package:pocket_flow/widgets/figma/figma_widgets.dart';
+import 'package:pocket_flow/widgets/ui/ui_widgets.dart';
 ```
 
 **Available Components:**
 - `TimeFilterBar` - Time period filter
 - `ScreenHeader` - Standard screen header
 - `GlobalFilterButton` - Global filter button
-- `FigmaSectionTitle` - Section title
-- `FigmaGradientCard` - Gradient card
-- `FigmaPanel` - Panel container
-- `FigmaProgressBar` - Progress indicator
-- `FigmaBadge` - Status badge
-- `FigmaIconCircle` - Circular icon
+- `SectionTitle` - Section title
+- `GradientCard` - Gradient card
+- `Panel` - Panel container
+- `ProgressBar` - Progress indicator
+- `Badge` - Status badge
+- `IconCircle` - Circular icon
 - `CalendarFab` - Calendar FAB
 - `SpeedDialFab` - Speed dial FAB
 

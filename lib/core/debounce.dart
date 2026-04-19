@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart';
 
 /// Utility for debouncing and throttling function calls
 class Debouncer {
-  final Duration delay;
-  Timer? _timer;
 
   Debouncer({this.delay = const Duration(milliseconds: 500)});
+  final Duration delay;
+  Timer? _timer;
 
   /// Debounce a function call - only executes after delay has passed with no new calls
   void call(VoidCallback action) {
@@ -27,11 +27,11 @@ class Debouncer {
 
 /// Throttler - ensures function is called at most once per delay period
 class Throttler {
+
+  Throttler({this.delay = const Duration(milliseconds: 500)});
   final Duration delay;
   Timer? _timer;
   bool _isThrottled = false;
-
-  Throttler({this.delay = const Duration(milliseconds: 500)});
 
   /// Throttle a function call - executes immediately, then blocks for delay period
   void call(VoidCallback action) {
@@ -59,15 +59,14 @@ class Throttler {
 
 /// Debounced value notifier - notifies listeners only after value stabilizes
 class DebouncedValueNotifier<T> extends ValueNotifier<T> {
+
+  DebouncedValueNotifier(
+    super.value, {
+    this.delay = const Duration(milliseconds: 500),
+  })  : _pendingValue = value;
   final Duration delay;
   Timer? _timer;
   T _pendingValue;
-
-  DebouncedValueNotifier(
-    T value, {
-    this.delay = const Duration(milliseconds: 500),
-  })  : _pendingValue = value,
-        super(value);
 
   @override
   set value(T newValue) {
@@ -154,15 +153,15 @@ extension DebounceExtension on Function {
 
 /// Search debouncer specifically for search/filter operations
 class SearchDebouncer {
-  final Duration delay;
-  final void Function(String query) onSearch;
-  Timer? _timer;
-  String? _lastQuery;
 
   SearchDebouncer({
     required this.onSearch,
     this.delay = const Duration(milliseconds: 300),
   });
+  final Duration delay;
+  final void Function(String query) onSearch;
+  Timer? _timer;
+  String? _lastQuery;
 
   /// Update search query with debouncing
   void search(String query) {

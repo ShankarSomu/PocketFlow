@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/theme_service.dart';
 
@@ -468,7 +468,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary.withOpacity(0.75),
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.75),
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -502,7 +502,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
           ),
           const SizedBox(height: 14),
           const Text(
-            'No credit card required  •  Free forever',
+            'No credit card required  ?  Free forever',
             style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
           ),
         ],
@@ -511,7 +511,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   }
 }
 
-// ── Supporting types/widgets ──────────────────────────────────────────────────
+// -- Supporting types/widgets --------------------------------------------------
 
 class _Orb extends StatelessWidget {
   final double size, opacity, dx, dy;
@@ -562,3 +562,4 @@ class _OnboardPage {
   final String subtitle;
   const _OnboardPage({required this.icon, required this.title, required this.subtitle});
 }
+

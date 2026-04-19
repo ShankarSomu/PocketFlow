@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/chat/chat_screen.dart';
-import 'screens/budget/budget_screen.dart';
-import 'screens/savings/savings_screen.dart';
-import 'screens/accounts/accounts_screen.dart';
-import 'screens/recurring/recurring_screen.dart';
-import 'screens/profile/profile_screen.dart';
-import 'screens/transactions/transactions_screen.dart';
-import 'screens/welcome_screen.dart';
-import 'screens/tutorial_overlay.dart';
-import 'widgets/feature_hint.dart';
+
+import 'package:pocket_flow/core/app_dependencies.dart';
+import 'package:pocket_flow/screens/accounts/accounts_screen.dart';
+import 'package:pocket_flow/screens/budget/budget_screen.dart';
+import 'package:pocket_flow/screens/chat/chat_screen.dart';
+import 'package:pocket_flow/screens/home/home_screen.dart';
+import 'package:pocket_flow/screens/profile/profile_screen.dart';
+import 'package:pocket_flow/screens/recurring/recurring_screen.dart';
+import 'package:pocket_flow/screens/savings/savings_screen.dart';
+import 'package:pocket_flow/screens/transactions/transactions_screen.dart';
+import 'package:pocket_flow/screens/tutorial_overlay.dart';
+import 'package:pocket_flow/screens/welcome_screen.dart';
+import 'package:pocket_flow/services/app_logger.dart';
+import 'package:pocket_flow/services/auth_service.dart';
+import 'package:pocket_flow/services/deep_link_service.dart';
+import 'package:pocket_flow/services/image_cache_service.dart';
+import 'package:pocket_flow/services/navigation_state.dart';
+import 'services/notification_manager.dart';
+import 'services/notification_service.dart';
 import 'services/recurring_scheduler.dart';
-import 'services/auth_service.dart';
-import 'services/app_logger.dart';
 import 'services/theme_service.dart';
-import 'services/image_cache_service.dart';
-import 'services/navigation_state.dart';
-import 'services/deep_link_service.dart';
 import 'theme/app_theme.dart';
-import 'core/app_dependencies.dart';
 import 'utils/performance_utils.dart';
+import 'widgets/feature_hint.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,11 +55,19 @@ void main() async {
   ));
   await AppLogger.load();
   await AppLogger.init();
-  await AuthService.init();
-  await ThemeService.instance.init();
-  await NavigationState.init();
-  await DeepLinkService().init();
-  await ImageCacheService().init();
+  
+  // Initialize critical services in parallel to speed up boot
+  await Future.wait([
+    AuthService.init(),
+    ThemeService.instance.init(),
+    NavigationState.init(),
+    DeepLinkService().init(),
+    ImageCacheService().init(),
+    NotificationService.initialize(),
+    NotificationManager.instance.init(),
+  ]);
+
+  NotificationService.scheduleWeeklySummary();
   PerformanceMonitor.init();
   AuthService.autoBackupIfDue();
   RecurringScheduler.processDue();
@@ -155,7 +166,6 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
     
     final shouldSignIn = await showDialog<bool>(
       context: context,
-      barrierDismissible: true,
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
@@ -182,7 +192,7 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
       ),
     );
 
-    if (shouldSignIn == true && mounted) {
+    if ((shouldSignIn ?? false) && mounted) {
       final user = await AuthService.signIn();
       if (user != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -197,6 +207,19 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeService.instance.buildLightTheme(),
+        darkTheme: ThemeService.instance.buildDarkTheme(),
+        home: const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return AppDependencies.wrapApp(
       ListenableBuilder(
         listenable: Listenable.merge([ThemeService.instance, _rootNavIndex]),
@@ -442,8 +465,8 @@ class _RootNavState extends State<_RootNav> {
 
 /// Keeps screen state alive while swiping through the PageView.
 class _KeepAlivePage extends StatefulWidget {
-  final Widget child;
   const _KeepAlivePage({required this.child});
+  final Widget child;
   @override
   State<_KeepAlivePage> createState() => _KeepAlivePageState();
 }
@@ -460,23 +483,23 @@ class _KeepAlivePageState extends State<_KeepAlivePage>
 }
 
 class _BottomNav extends StatelessWidget {
+  const _BottomNav({required this.index, required this.onTap});
   final int index;
   final ValueChanged<int> onTap;
-  const _BottomNav({required this.index, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final activeColor = Theme.of(context).colorScheme.primary;
-    final inactiveColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.4);
+    final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4);
 
     final items = [
-      _NavItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
-      _NavItem(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Transactions'),
-      _NavItem(Icons.repeat_rounded, Icons.repeat_rounded, 'Recurring'),
+      const _NavItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
+      const _NavItem(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Transactions'),
+      const _NavItem(Icons.repeat_rounded, Icons.repeat_rounded, 'Recurring'),
       null, // centre FAB placeholder
-      _NavItem(Icons.savings_outlined, Icons.savings_rounded, 'Savings'),
-      _NavItem(Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded, 'Budget'),
-      _NavItem(Icons.account_balance_wallet_outlined,
+      const _NavItem(Icons.savings_outlined, Icons.savings_rounded, 'Savings'),
+      const _NavItem(Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded, 'Budget'),
+      const _NavItem(Icons.account_balance_wallet_outlined,
           Icons.account_balance_wallet_rounded, 'Accounts'),
     ];
 
@@ -577,9 +600,10 @@ class _BottomNav extends StatelessWidget {
 }
 
 class _NavItem {
+  const _NavItem(this.icon, this.activeIcon, this.label);
   final IconData icon;
   final IconData activeIcon;
   final String label;
-  const _NavItem(this.icon, this.activeIcon, this.label);
 }
+
 

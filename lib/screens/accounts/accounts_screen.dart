@@ -1,4 +1,4 @@
-﻿import '../../services/time_filter.dart';
+import '../../services/time_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../db/database.dart';
@@ -76,6 +76,10 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final balCtrl = TextEditingController(text: existing != null ? existing.balance.toStringAsFixed(2) : '');
     final last4Ctrl = TextEditingController(text: existing?.last4 ?? '');
     final limitCtrl = TextEditingController(text: existing?.creditLimit != null ? existing!.creditLimit!.toStringAsFixed(2) : '');
+    final institutionCtrl = TextEditingController(text: existing?.institutionName ?? '');
+    final identifierCtrl = TextEditingController(text: existing?.accountIdentifier ?? '');
+    final keywordsCtrl = TextEditingController(text: existing?.smsKeywords?.join(', ') ?? '');
+    final aliasCtrl = TextEditingController(text: existing?.accountAlias ?? '');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -97,6 +101,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     DropdownMenuItem(value: 'checking', child: Text('Debit / Checking')),
                     DropdownMenuItem(value: 'savings', child: Text('Savings')),
                     DropdownMenuItem(value: 'credit', child: Text('Credit Card')),
+                    DropdownMenuItem(value: 'loan', child: Text('Loan / Debt')),
                     DropdownMenuItem(value: 'cash', child: Text('Cash')),
                     DropdownMenuItem(value: 'investment', child: Text('Investment')),
                   ],
@@ -112,34 +117,41 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   controller: balCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: selectedType == 'credit' ? 'Current Balance (amount owed)' : 'Balance',
+                    labelText: (selectedType == 'credit' || selectedType == 'loan') ? 'Current Balance (amount owed)' : 'Balance',
                     prefixText: '\$',
                     border: const OutlineInputBorder(),
-                    helperText: selectedType == 'credit'
-                        ? 'Amount you currently owe on this card'
+                    helperText: (selectedType == 'credit' || selectedType == 'loan')
+                        ? 'Amount you currently owe on this ${selectedType == 'loan' ? 'loan' : 'card'}'
                         : 'Starting balance for this account',
                   ),
                 ),
-                if (selectedType == 'credit') ...[
+                if (selectedType == 'credit' || selectedType == 'loan') ...[
                   const SizedBox(height: 12),
                   TextField(
                     controller: last4Ctrl,
                     keyboardType: TextInputType.number,
                     maxLength: 4,
-                    decoration: const InputDecoration(labelText: 'Last 4 digits (optional)', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: selectedType == 'loan' ? 'Last 4 digits or ID (optional)' : 'Last 4 digits (optional)',
+                      border: const OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: limitCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Credit Limit (optional)', prefixText: '\$', border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      labelText: selectedType == 'loan' ? 'Original Loan Amount (optional)' : 'Credit Limit (optional)',
+                      prefixText: '\$',
+                      border: const OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int?>(
                     value: dueDateDay,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Payment Due Date (day of month)',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                       helperText: 'e.g. 15 = due on 15th of each month',
                     ),
                     items: [
@@ -155,6 +167,56 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     onChanged: (v) => setLocal(() => dueDateDay = v),
                   ),
                 ],
+                const SizedBox(height: 16),
+                // SMS Intelligence Fields
+                ExpansionTile(
+                  title: const Text('SMS Intelligence (Optional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Help auto-match SMS messages to this account', style: TextStyle(fontSize: 12)),
+                  initiallyExpanded: false,
+                  children: [
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: institutionCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Institution Name',
+                        hintText: 'e.g., Chase, Bank of America',
+                        border: OutlineInputBorder(),
+                        helperText: 'Name of your bank or financial institution',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: identifierCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Account Identifier',
+                        hintText: 'e.g., ****1234',
+                        border: OutlineInputBorder(),
+                        helperText: 'Last 4 digits or masked account number from SMS',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: keywordsCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'SMS Keywords',
+                        hintText: 'e.g., CHASE, JPMORGAN',
+                        border: OutlineInputBorder(),
+                        helperText: 'Comma-separated sender IDs from bank SMS',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: aliasCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Account Alias',
+                        hintText: 'e.g., My Main Card',
+                        border: OutlineInputBorder(),
+                        helperText: 'Friendly name for easy identification',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 Row(children: [
                   if (existing != null)
@@ -192,14 +254,25 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       final name = nameCtrl.text.trim();
                       final bal = double.tryParse(balCtrl.text) ?? 0;
                       if (name.isEmpty) return;
+                      
+                      // Parse SMS keywords
+                      final keywordsText = keywordsCtrl.text.trim();
+                      final keywords = keywordsText.isNotEmpty
+                          ? keywordsText.split(',').map((k) => k.trim()).where((k) => k.isNotEmpty).toList()
+                          : null;
+                      
                       final account = Account(
                         id: existing?.id,
                         name: name,
                         type: selectedType,
                         balance: bal,
                         last4: last4Ctrl.text.trim().isEmpty ? null : last4Ctrl.text.trim(),
-                        dueDateDay: selectedType == 'credit' ? dueDateDay : null,
-                        creditLimit: selectedType == 'credit' ? double.tryParse(limitCtrl.text) : null,
+                        dueDateDay: (selectedType == 'credit' || selectedType == 'loan') ? dueDateDay : null,
+                        creditLimit: (selectedType == 'credit' || selectedType == 'loan') ? double.tryParse(limitCtrl.text) : null,
+                        institutionName: institutionCtrl.text.trim().isEmpty ? null : institutionCtrl.text.trim(),
+                        accountIdentifier: identifierCtrl.text.trim().isEmpty ? null : identifierCtrl.text.trim(),
+                        smsKeywords: keywords,
+                        accountAlias: aliasCtrl.text.trim().isEmpty ? null : aliasCtrl.text.trim(),
                       );
                       if (existing == null) {
                         await AppDatabase.insertAccount(account);
@@ -259,7 +332,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               children: [
                 Text('Transfer Between Accounts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 4),
-                Text('Use this to pay a credit card or move money between accounts.', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                Text('Use this to pay a credit card or move money between accounts.', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int?>(
                   value: fromId,
@@ -283,7 +356,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                               if (a.type == 'credit')
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
                                   child: Text('owes ${_fmt.format(_balances[a.id] ?? 0)}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.error)),
                                 ),
                             ],
@@ -303,7 +376,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     value: useOutstanding,
                     contentPadding: EdgeInsets.zero,
                     title: Text('Pay full outstanding: ${_fmt.format(outstanding)}', style: TextStyle(fontSize: 13)),
-                    subtitle: Text('Amount will update automatically each time', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                    subtitle: Text('Amount will update automatically each time', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                     onChanged: (v) => setLocal(() {
                       useOutstanding = v ?? false;
                       if (useOutstanding) {
@@ -472,12 +545,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
   List<Color> _typeGradient(BuildContext context, String type) {
     final colorScheme = Theme.of(context).colorScheme;
     return switch (type) {
-      'checking' || 'debit' => [colorScheme.primary, colorScheme.primary.withOpacity(0.8)],
-      'savings' => [colorScheme.tertiary, colorScheme.tertiary.withOpacity(0.8)],
-      'credit' => [colorScheme.error, colorScheme.error.withOpacity(0.8)],
-      'cash' => [colorScheme.secondary, colorScheme.secondary.withOpacity(0.8)],
-      'investment' => [colorScheme.primary.withOpacity(0.7), colorScheme.primary.withOpacity(0.5)],
-      _ => [colorScheme.primary.withOpacity(0.6), colorScheme.primary.withOpacity(0.4)],
+      'checking' || 'debit' => [colorScheme.primary, colorScheme.primary.withValues(alpha: 0.8)],
+      'savings' => [colorScheme.tertiary, colorScheme.tertiary.withValues(alpha: 0.8)],
+      'credit' => [colorScheme.error, colorScheme.error.withValues(alpha: 0.8)],
+      'cash' => [colorScheme.secondary, colorScheme.secondary.withValues(alpha: 0.8)],
+      'investment' => [colorScheme.primary.withValues(alpha: 0.7), colorScheme.primary.withValues(alpha: 0.5)],
+      _ => [colorScheme.primary.withValues(alpha: 0.6), colorScheme.primary.withValues(alpha: 0.4)],
     };
   }
 
@@ -497,8 +570,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
       'savings' => colorScheme.tertiary,
       'credit' => colorScheme.error,
       'cash' => colorScheme.secondary,
-      'investment' => colorScheme.primary.withOpacity(0.7),
-      _ => colorScheme.primary.withOpacity(0.6),
+      'investment' => colorScheme.primary.withValues(alpha: 0.7),
+      _ => colorScheme.primary.withValues(alpha: 0.6),
     };
   }
 }
@@ -527,7 +600,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppTheme.cardShadow,
-        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,7 +612,7 @@ class _NetWorthSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -594,7 +667,7 @@ class _SummaryPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -659,7 +732,7 @@ class _AccountSection extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     letterSpacing: 0.5)),
           ),
           Container(
@@ -698,7 +771,7 @@ class _AccountSection extends StatelessWidget {
   }
 }
 
-// REMOVED: _AccountCarouselHeader — see transactions screen instead
+// REMOVED: _AccountCarouselHeader ? see transactions screen instead
 
 class _AccountItem extends StatelessWidget {
   final Account account;
@@ -738,12 +811,12 @@ class _AccountItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            // Icon circle � matches transaction/recurring/goals screen style
+            // Icon circle ? matches transaction/recurring/goals screen style
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 20),
@@ -763,12 +836,12 @@ class _AccountItem extends StatelessWidget {
                   Row(
                     children: [
                       if (account.last4 != null)
-                        Text('·· ${account.last4}',
-                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                        Text('?? ${account.last4}',
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                       if (dueSoon) ...[
                         if (account.last4 != null)
-                          Text('  �  ',
-                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
+                          Text('  ?  ',
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4))),
                         Icon(Icons.warning_amber_rounded, size: 12, color: Theme.of(context).extension<AppColorScheme>()!.error),
                         const SizedBox(width: 2),
                         Text(
@@ -811,3 +884,4 @@ class _AccountItem extends StatelessWidget {
     );
   }
 }
+

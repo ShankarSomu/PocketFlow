@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import '../../../../core/color_extensions.dart';
 import '../../../../core/formatters.dart';
 import '../../../../theme/category_colors.dart';
-import '../../../widgets/figma/figma_panel.dart';
+import '../../../widgets/ui/panel.dart';
 import '../../shared/shared.dart';
+import '../../transactions/transactions_screen.dart';
 
 /// Interactive donut chart showing spending by category
 class InteractiveDonut extends StatefulWidget {
-  final Map<String, double> categorySpend;
 
   const InteractiveDonut({
-    super.key,
-    required this.categorySpend,
+    required this.categorySpend, super.key,
   });
+  final Map<String, double> categorySpend;
 
   @override
   State<InteractiveDonut> createState() => _InteractiveDonutState();
@@ -73,14 +73,14 @@ class _InteractiveDonutState extends State<InteractiveDonut>
     final items = _buildItems();
     final total = items.fold(0.0, (s, e) => s + e.value);
 
-    return FigmaPanel(
+    return Panel(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text('Spend by Category',
+              const Text('Spend by Category',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700)),
@@ -131,8 +131,24 @@ class _InteractiveDonutState extends State<InteractiveDonut>
                           strokeColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                         ),
                         child: GestureDetector(
-                          onTapDown: (_) =>
-                              setState(() => _selectedIdx = null),
+                          onTapDown: (_) {
+                            if (_selectedIdx != null) {
+                              // Navigate to transactions with category filter
+                              final category = items[_selectedIdx!].key;
+                              if (category != 'Others') {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => TransactionsScreen(
+                                      initialCategory: category,
+                                      initialFilterType: 'expense',
+                                    ),
+                                  ),
+                                );
+                              }
+                            } else {
+                              setState(() => _selectedIdx = null);
+                            }
+                          },
                           child: Center(
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 200),
@@ -279,6 +295,14 @@ class _InteractiveDonutState extends State<InteractiveDonut>
 }
 
 class InteractiveDonutPainter extends CustomPainter {
+
+  InteractiveDonutPainter({
+    required this.items,
+    required this.colors,
+    required this.selectedIdx,
+    required this.progress,
+    required this.strokeColor,
+  });
   final List<MapEntry<String, double>> items;
   final List<Color> colors;
   final int? selectedIdx;
@@ -288,14 +312,6 @@ class InteractiveDonutPainter extends CustomPainter {
   static const double _strokeWidth = 20.0;
   static const double _expansion = 8.0;
   static const double _gap = 0.03;
-
-  InteractiveDonutPainter({
-    required this.items,
-    required this.colors,
-    required this.selectedIdx,
-    required this.progress,
-    required this.strokeColor,
-  });
 
   @override
   void paint(Canvas canvas, Size size) {

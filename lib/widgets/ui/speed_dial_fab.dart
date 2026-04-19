@@ -3,10 +3,6 @@ import '../../services/theme_service.dart';
 
 /// A single action for [SpeedDialFab].
 class SpeedDialAction {
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  final Color? color;
 
   const SpeedDialAction({
     required this.icon,
@@ -14,15 +10,19 @@ class SpeedDialAction {
     required this.onPressed,
     this.color,
   });
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final Color? color;
 }
 
 /// Expandable speed-dial FAB.
 /// Tap the `+` button to expand mini-FABs above it; tap any action or the
 /// main button again to collapse.
 class SpeedDialFab extends StatefulWidget {
-  final List<SpeedDialAction> actions;
 
-  const SpeedDialFab({super.key, required this.actions});
+  const SpeedDialFab({required this.actions, super.key});
+  final List<SpeedDialAction> actions;
 
   @override
   State<SpeedDialFab> createState() => _SpeedDialFabState();
@@ -113,7 +113,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.12),
+                              color: Colors.black.withValues(alpha: 0.12),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -164,7 +164,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 child: AnimatedRotation(
                   turns: _open ? 0.125 : 0.0,
                   duration: const Duration(milliseconds: 220),
-                  child: Icon(
+                  child: const Icon(
                     Icons.add,
                     size: 28,
                     color: Colors.white,
@@ -178,3 +178,4 @@ class _SpeedDialFabState extends State<SpeedDialFab>
     );
   }
 }
+

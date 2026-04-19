@@ -37,9 +37,6 @@ extension TimeFilterKindExt on TimeFilterKind {
 // ── Time Filter ───────────────────────────────────────────────────────────────
 
 class TimeFilter {
-  final TimeFilterKind kind;
-  final DateTime from;
-  final DateTime to;
 
   const TimeFilter._(this.kind, this.from, this.to);
 
@@ -52,8 +49,8 @@ class TimeFilter {
       case TimeFilterKind.thisMonth:
         return TimeFilter._(
           kind,
-          DateTime(now.year, now.month, 1),
-          DateTime(now.year, now.month + 1, 1).subtract(const Duration(seconds: 1)),
+          DateTime(now.year, now.month),
+          DateTime(now.year, now.month + 1).subtract(const Duration(seconds: 1)),
         );
 
       case TimeFilterKind.lastMonth:
@@ -61,23 +58,23 @@ class TimeFilter {
         final y = now.month == 1 ? now.year - 1 : now.year;
         return TimeFilter._(
           kind,
-          DateTime(y, m, 1),
-          DateTime(y, m + 1, 1).subtract(const Duration(seconds: 1)),
+          DateTime(y, m),
+          DateTime(y, m + 1).subtract(const Duration(seconds: 1)),
         );
 
       case TimeFilterKind.quarter:
         final qStart = ((now.month - 1) ~/ 3) * 3 + 1; // 1, 4, 7, 10
         return TimeFilter._(
           kind,
-          DateTime(now.year, qStart, 1),
-          DateTime(now.year, qStart + 3, 1).subtract(const Duration(seconds: 1)),
+          DateTime(now.year, qStart),
+          DateTime(now.year, qStart + 3).subtract(const Duration(seconds: 1)),
         );
 
       case TimeFilterKind.year:
         return TimeFilter._(
           kind,
-          DateTime(now.year, 1, 1),
-          DateTime(now.year + 1, 1, 1).subtract(const Duration(seconds: 1)),
+          DateTime(now.year),
+          DateTime(now.year + 1).subtract(const Duration(seconds: 1)),
         );
 
       case TimeFilterKind.rolling7:
@@ -104,36 +101,36 @@ class TimeFilter {
       case TimeFilterKind.allTime:
         return TimeFilter._(
           kind,
-          DateTime(2000, 1, 1),
+          DateTime(2000),
           todayEnd,
         );
 
       case TimeFilterKind.nextMonth:
         return TimeFilter._(
           kind,
-          DateTime(now.year, now.month + 1, 1),
-          DateTime(now.year, now.month + 2, 1).subtract(const Duration(seconds: 1)),
+          DateTime(now.year, now.month + 1),
+          DateTime(now.year, now.month + 2).subtract(const Duration(seconds: 1)),
         );
 
       case TimeFilterKind.next3Months:
         return TimeFilter._(
           kind,
-          DateTime(now.year, now.month + 1, 1),
-          DateTime(now.year, now.month + 4, 1).subtract(const Duration(seconds: 1)),
+          DateTime(now.year, now.month + 1),
+          DateTime(now.year, now.month + 4).subtract(const Duration(seconds: 1)),
         );
 
       case TimeFilterKind.next6Months:
         return TimeFilter._(
           kind,
-          DateTime(now.year, now.month + 1, 1),
-          DateTime(now.year, now.month + 7, 1).subtract(const Duration(seconds: 1)),
+          DateTime(now.year, now.month + 1),
+          DateTime(now.year, now.month + 7).subtract(const Duration(seconds: 1)),
         );
 
       case TimeFilterKind.custom:
         // Should be created via TimeFilter.custom(); fall back to allTime.
         return TimeFilter._(
           TimeFilterKind.allTime,
-          DateTime(2000, 1, 1),
+          DateTime(2000),
           todayEnd,
         );
     }
@@ -143,6 +140,9 @@ class TimeFilter {
   factory TimeFilter.custom(DateTime from, DateTime to) {
     return TimeFilter._(TimeFilterKind.custom, from, to);
   }
+  final TimeFilterKind kind;
+  final DateTime from;
+  final DateTime to;
 
   // ── Labels ──────────────────────────────────────────────────────────────────
 

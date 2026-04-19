@@ -1,61 +1,28 @@
 import 'package:flutter/material.dart';
+
 import '../../../../services/auth_service.dart';
 import '../../../../services/image_cache_service.dart';
-import '../../../../services/time_filter.dart';
+import '../../../../services/notification_manager.dart';
 import '../../../../services/refresh_notifier.dart';
-import '../../../widgets/figma/global_filter_button.dart';
-import '../../profile/profile_screen.dart';
-import '../../settings/settings_screen.dart';
-import '../../shared/shared.dart';
+import '../../../../services/time_filter.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../widgets/ui/global_filter_button.dart';
+import '../../profile/profile_screen.dart';
+import '../../shared/shared.dart';
 
 /// Home screen header with greeting, avatar, and controls
 class HomeHeader extends StatefulWidget {
-  final VoidCallback onNotificationsTap;
 
   const HomeHeader({
-    super.key,
-    required this.onNotificationsTap,
+    required this.onNotificationsTap, super.key,
   });
+  final VoidCallback onNotificationsTap;
 
   @override
   State<HomeHeader> createState() => _HomeHeaderState();
 }
 
-class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateMixin {
-  late AnimationController _rippleController;
-  late Animation<double> _rippleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    // Only animate if device doesn't prefer reduced motion
-    if (!_shouldReduceAnimations()) {
-      _rippleController = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 1500),
-      )..repeat();
-    } else {
-      _rippleController = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 1500),
-      );
-    }
-    _rippleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _rippleController, curve: Curves.easeOut),
-    );
-  }
-
-  bool _shouldReduceAnimations() {
-    return WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
-  }
-
-  @override
-  void dispose() {
-    _rippleController.dispose();
-    super.dispose();
-  }
-
+class _HomeHeaderState extends State<HomeHeader> {
   String get _greeting {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
@@ -71,63 +38,36 @@ class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateM
     final photoUrl = user?.photoUrl;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Avatar with ripple animation → taps to Profile
+        // Avatar → taps to Profile
         GestureDetector(
           onTap: () => _showProfilePanel(context),
-          child: AnimatedBuilder(
-            animation: _rippleAnimation,
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Ripple effect
-                  Container(
-                    width: 40 + (_rippleAnimation.value * 16),
-                    height: 40 + (_rippleAnimation.value * 16),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(
-                          (1 - _rippleAnimation.value) * 0.4,
-                        ),
-                        width: 2,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              child: photoUrl == null
+                  ? Icon(Icons.person_rounded, 
+                      color: Theme.of(context).colorScheme.primary, 
+                      size: 22)
+                  : ClipOval(
+                      child: CachedImage(
+                        imageUrl: photoUrl,
+                        width: 40,
+                        height: 40,
                       ),
                     ),
-                  ),
-                  // Avatar
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                      child: photoUrl == null
-                          ? Icon(Icons.person_rounded, 
-                              color: Theme.of(context).colorScheme.primary, 
-                              size: 22)
-                          : ClipOval(
-                              child: CachedImage(
-                                imageUrl: photoUrl,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              );
-            },
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -140,7 +80,7 @@ class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateM
               Text(
                 _greeting,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                 ),
@@ -177,7 +117,7 @@ class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateM
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.30),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.30),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -192,7 +132,7 @@ class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateM
                     appTimeFilter.current.shortLabel,
                     style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w700),
                   ),
-                  Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), size: 15),
+                  Icon(Icons.keyboard_arrow_down_rounded, color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7), size: 15),
                 ],
               ),
             ),
@@ -200,36 +140,81 @@ class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateM
         ),
         const SizedBox(width: 8),
         // Notifications
-        GestureDetector(
-          onTap: widget.onNotificationsTap,
-          child: Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              shape: BoxShape.circle,
-              boxShadow: AppTheme.cardShadow,
-            ),
-            child: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 20),
-          ),
+        ListenableBuilder(
+          listenable: NotificationManager.instance,
+          builder: (context, _) {
+            final unreadCount = NotificationManager.instance.unreadCount;
+            return GestureDetector(
+              onTap: widget.onNotificationsTap,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: AppTheme.cardShadow,
+                    ),
+                    child: Icon(
+                      unreadCount > 0 ? Icons.notifications_rounded : Icons.notifications_none_rounded,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      size: 20,
+                    ),
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Center(
+                          child: Text(
+                            unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
   }
 }
 
-void _showProfilePanel(BuildContext context) async {
+Future<void> _showProfilePanel(BuildContext context) async {
   await showGeneralDialog(
     context: context,
     barrierDismissible: true,
-    barrierLabel: "Profile",
-    barrierColor: Colors.black.withOpacity(0.5),
+    barrierLabel: 'Profile',
+    barrierColor: Colors.black.withValues(alpha: 0.5),
     transitionDuration: const Duration(milliseconds: 300),
     pageBuilder: (_, __, ___) {
-      return Align(
+      return const Align(
         alignment: Alignment.centerLeft,
         child: FractionallySizedBox(
           widthFactor: 0.75,
-          child: const ProfileScreen(),
+          child: ProfileScreen(),
         ),
       );
     },
@@ -263,3 +248,4 @@ void _showProfilePanel(BuildContext context) async {
   // Trigger refresh to update header with new auth state
   notifyDataChanged();
 }
+

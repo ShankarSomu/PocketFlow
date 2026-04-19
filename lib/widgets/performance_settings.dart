@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/image_cache_service.dart';
+
 import '../screens/settings/components/settings_widgets.dart';
+import '../services/image_cache_service.dart';
 
 class PerformanceSettings extends StatefulWidget {
   const PerformanceSettings({super.key});
@@ -130,7 +131,7 @@ class _PerformanceSettingsState extends State<PerformanceSettings> {
                     'Cache size: ${_cacheSizeMB.toStringAsFixed(2)} MB',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   TextButton(
@@ -144,7 +145,7 @@ class _PerformanceSettingsState extends State<PerformanceSettings> {
                 'Cached images load faster and use less data',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -157,10 +158,10 @@ class _PerformanceSettingsState extends State<PerformanceSettings> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -205,7 +206,7 @@ class _PerformanceSettingsState extends State<PerformanceSettings> {
             '• ',
             style: TextStyle(
               fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           Expanded(
@@ -213,7 +214,7 @@ class _PerformanceSettingsState extends State<PerformanceSettings> {
               text,
               style: TextStyle(
                 fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -222,3 +223,4 @@ class _PerformanceSettingsState extends State<PerformanceSettings> {
     );
   }
 }
+

@@ -4,6 +4,10 @@ import 'package:flutter/foundation.dart';
 
 /// Service to detect and monitor network connectivity
 class ConnectivityService extends ChangeNotifier {
+
+  ConnectivityService() {
+    _startMonitoring();
+  }
   bool _isOnline = true;
   DateTime? _lastChecked;
   Timer? _checkTimer;
@@ -11,10 +15,6 @@ class ConnectivityService extends ChangeNotifier {
   bool get isOnline => _isOnline;
   bool get isOffline => !_isOnline;
   DateTime? get lastChecked => _lastChecked;
-
-  ConnectivityService() {
-    _startMonitoring();
-  }
 
   /// Start periodic connectivity checks
   void _startMonitoring() {
@@ -94,9 +94,9 @@ class ConnectivityService extends ChangeNotifier {
 
 /// Exception thrown when operation requires online connectivity
 class OfflineException implements Exception {
-  final String message;
   
   OfflineException(this.message);
+  final String message;
 
   @override
   String toString() => 'OfflineException: $message';

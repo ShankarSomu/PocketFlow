@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TutorialOverlay extends StatefulWidget {
-  final VoidCallback onComplete;
 
-  const TutorialOverlay({super.key, required this.onComplete});
+  const TutorialOverlay({required this.onComplete, super.key});
+  final VoidCallback onComplete;
 
   static Future<bool> shouldShow() async {
     final prefs = await SharedPreferences.getInstance();
@@ -30,7 +30,6 @@ class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProv
       title: 'Welcome to PocketFlow!',
       description: 'Let\'s take a quick tour of the key features.',
       alignment: Alignment.center,
-      spotlightRect: null,
     ),
     TutorialStep(
       title: 'Your Financial Overview',
@@ -113,7 +112,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProv
     final size = MediaQuery.of(context).size;
 
     return Material(
-      color: Colors.black.withOpacity(0.85),
+      color: Colors.black.withValues(alpha: 0.85),
       child: Stack(
         children: [
           // Spotlight
@@ -189,7 +188,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProv
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -262,11 +261,6 @@ class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProv
 }
 
 class TutorialStep {
-  final String title;
-  final String description;
-  final Alignment alignment;
-  final Rect? spotlightRect;
-  final SpotlightPosition spotlightPosition;
 
   TutorialStep({
     required this.title,
@@ -275,6 +269,11 @@ class TutorialStep {
     this.spotlightRect,
     this.spotlightPosition = SpotlightPosition.custom,
   });
+  final String title;
+  final String description;
+  final Alignment alignment;
+  final Rect? spotlightRect;
+  final SpotlightPosition spotlightPosition;
 }
 
 enum SpotlightPosition {
@@ -285,15 +284,15 @@ enum SpotlightPosition {
 }
 
 class _SpotlightPainter extends CustomPainter {
-  final Rect rect;
-  final Animation<double> pulseAnimation;
 
   _SpotlightPainter({required this.rect, required this.pulseAnimation}) : super(repaint: pulseAnimation);
+  final Rect rect;
+  final Animation<double> pulseAnimation;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
+      ..color = Colors.white.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
 
@@ -309,7 +308,7 @@ class _SpotlightPainter extends CustomPainter {
     );
 
     final glowPaint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
 
     canvas.drawRRect(
@@ -321,3 +320,4 @@ class _SpotlightPainter extends CustomPainter {
   @override
   bool shouldRepaint(_SpotlightPainter oldDelegate) => true;
 }
+

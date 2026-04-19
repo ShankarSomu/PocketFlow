@@ -69,7 +69,7 @@ class DatabaseOptimizer {
     final db = await openDatabase(path, readOnly: true);
     try {
       final result = await db.rawQuery('SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()');
-      return result.first['size'] as int;
+      return result.first['size']! as int;
     } finally {
       await db.close();
     }
@@ -148,7 +148,7 @@ class SafeQueryBuilder {
 
   /// Execute query
   Future<List<Map<String, dynamic>>> execute(Database db) async {
-    return await db.rawQuery(sql, arguments);
+    return db.rawQuery(sql, arguments);
   }
 
   /// Execute single result query
@@ -255,10 +255,10 @@ class DatabaseConnectionPool {
 
 /// Query result cache
 class QueryCache {
-  final Map<String, ({List<Map<String, dynamic>> results, DateTime timestamp})> _cache = {};
-  final Duration maxAge;
 
   QueryCache({this.maxAge = const Duration(minutes: 5)});
+  final Map<String, ({List<Map<String, dynamic>> results, DateTime timestamp})> _cache = {};
+  final Duration maxAge;
 
   /// Get cached result
   List<Map<String, dynamic>>? get(String query, List<dynamic>? args) {

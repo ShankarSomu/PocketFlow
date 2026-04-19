@@ -3,11 +3,11 @@ import '../core/app_constants.dart';
 
 /// Form validation result
 class ValidationResult {
-  final bool isValid;
-  final String? errorMessage;
 
   const ValidationResult.valid() : isValid = true, errorMessage = null;
   const ValidationResult.invalid(this.errorMessage) : isValid = false;
+  final bool isValid;
+  final String? errorMessage;
 
   bool get isInvalid => !isValid;
 }
@@ -23,10 +23,10 @@ abstract class Validator {
 
 /// Required field validator
 class RequiredValidator extends Validator {
-  @override
-  final String errorMessage;
 
   const RequiredValidator({this.errorMessage = 'This field is required'});
+  @override
+  final String errorMessage;
 
   @override
   ValidationResult validate(String? value) {
@@ -39,10 +39,10 @@ class RequiredValidator extends Validator {
 
 /// Email validator
 class EmailValidator extends Validator {
-  @override
-  final String errorMessage;
 
   const EmailValidator({this.errorMessage = 'Please enter a valid email'});
+  @override
+  final String errorMessage;
 
   static final _emailRegex = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -62,13 +62,13 @@ class EmailValidator extends Validator {
 
 /// Min length validator
 class MinLengthValidator extends Validator {
-  final int minLength;
-  @override
-  final String errorMessage;
 
   MinLengthValidator(this.minLength, {String? errorMessage})
       : errorMessage = errorMessage ?? 
           'Must be at least $minLength characters';
+  final int minLength;
+  @override
+  final String errorMessage;
 
   @override
   ValidationResult validate(String? value) {
@@ -84,13 +84,13 @@ class MinLengthValidator extends Validator {
 
 /// Max length validator
 class MaxLengthValidator extends Validator {
-  final int maxLength;
-  @override
-  final String errorMessage;
 
   MaxLengthValidator(this.maxLength, {String? errorMessage})
       : errorMessage = errorMessage ?? 
           'Must be at most $maxLength characters';
+  final int maxLength;
+  @override
+  final String errorMessage;
 
   @override
   ValidationResult validate(String? value) {
@@ -106,13 +106,13 @@ class MaxLengthValidator extends Validator {
 
 /// Min value validator
 class MinValueValidator extends Validator {
-  final num minValue;
-  @override
-  final String errorMessage;
 
   MinValueValidator(this.minValue, {String? errorMessage})
       : errorMessage = errorMessage ?? 
           'Must be at least $minValue';
+  final num minValue;
+  @override
+  final String errorMessage;
 
   @override
   ValidationResult validate(String? value) {
@@ -129,13 +129,13 @@ class MinValueValidator extends Validator {
 
 /// Max value validator
 class MaxValueValidator extends Validator {
-  final num maxValue;
-  @override
-  final String errorMessage;
 
   MaxValueValidator(this.maxValue, {String? errorMessage})
       : errorMessage = errorMessage ?? 
           'Must be at most $maxValue';
+  final num maxValue;
+  @override
+  final String errorMessage;
 
   @override
   ValidationResult validate(String? value) {
@@ -152,11 +152,11 @@ class MaxValueValidator extends Validator {
 
 /// Pattern validator
 class PatternValidator extends Validator {
+
+  const PatternValidator(this.pattern, {required this.errorMessage});
   final RegExp pattern;
   @override
   final String errorMessage;
-
-  const PatternValidator(this.pattern, {required this.errorMessage});
 
   @override
   ValidationResult validate(String? value) {
@@ -172,9 +172,9 @@ class PatternValidator extends Validator {
 
 /// Composite validator - combines multiple validators
 class CompositeValidator extends Validator {
-  final List<Validator> validators;
 
   const CompositeValidator(this.validators);
+  final List<Validator> validators;
 
   @override
   String get errorMessage => validators.first.errorMessage;
@@ -193,21 +193,6 @@ class CompositeValidator extends Validator {
 
 /// Validated text field with real-time feedback
 class ValidatedTextField extends StatefulWidget {
-  final TextEditingController? controller;
-  final String? label;
-  final String? hint;
-  final IconData? prefixIcon;
-  final List<Validator> validators;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-  final int? maxLines;
-  final int? maxLength;
-  final bool enabled;
-  final void Function(String)? onChanged;
-  final void Function(String)? onSubmitted;
-  final FocusNode? focusNode;
-  final bool validateOnChange;
-  final bool showSuccessIndicator;
 
   const ValidatedTextField({
     super.key,
@@ -227,6 +212,21 @@ class ValidatedTextField extends StatefulWidget {
     this.validateOnChange = true,
     this.showSuccessIndicator = false,
   });
+  final TextEditingController? controller;
+  final String? label;
+  final String? hint;
+  final IconData? prefixIcon;
+  final List<Validator> validators;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final int? maxLines;
+  final int? maxLength;
+  final bool enabled;
+  final void Function(String)? onChanged;
+  final void Function(String)? onSubmitted;
+  final FocusNode? focusNode;
+  final bool validateOnChange;
+  final bool showSuccessIndicator;
 
   @override
   State<ValidatedTextField> createState() => _ValidatedTextFieldState();
@@ -324,16 +324,15 @@ class _ValidatedTextFieldState extends State<ValidatedTextField> {
 
 /// Form builder with validation
 class ValidatedForm extends StatefulWidget {
-  final Widget child;
-  final GlobalKey<FormState>? formKey;
-  final void Function()? onValidationChanged;
 
   const ValidatedForm({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.formKey,
     this.onValidationChanged,
   });
+  final Widget child;
+  final GlobalKey<FormState>? formKey;
+  final void Function()? onValidationChanged;
 
   @override
   State<ValidatedForm> createState() => _ValidatedFormState();

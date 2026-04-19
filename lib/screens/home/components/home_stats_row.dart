@@ -1,29 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../services/theme_service.dart';
-import '../../../../theme/app_color_scheme.dart';
+import '../../../services/theme_service.dart';
+import '../../../theme/app_color_scheme.dart';
 import '../../accounts/accounts_screen.dart';
 import '../../savings/savings_screen.dart';
 import '../../transactions/transactions_screen.dart';
 
 /// Stats row showing net balance, savings rate, income, and expenses
 class HomeStatsRow extends StatelessWidget {
+
+  const HomeStatsRow({
+    required this.totalBalance, required this.income, required this.expenses, required this.prevIncome, required this.prevExpenses, required this.savingsRate, super.key,
+  });
   final double totalBalance;
   final double income;
   final double expenses;
   final double prevIncome;
   final double prevExpenses;
   final double savingsRate;
-
-  const HomeStatsRow({
-    super.key,
-    required this.totalBalance,
-    required this.income,
-    required this.expenses,
-    required this.prevIncome,
-    required this.prevExpenses,
-    required this.savingsRate,
-  });
 
   String _pctChange(double current, double previous) {
     if (previous == 0) return current > 0 ? '+100%' : '—';
@@ -50,7 +44,7 @@ class HomeStatsRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: accent.withOpacity(0.25),
+              color: accent.withValues(alpha: 0.25),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -74,7 +68,7 @@ class HomeStatsRow extends StatelessWidget {
                     color: Colors.white24,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.trending_up, color: Colors.white.withOpacity(0.9), size: 14),
+                  child: Icon(Icons.trending_up, color: Colors.white.withValues(alpha: 0.9), size: 14),
                 ),
               ],
             ),
@@ -104,7 +98,7 @@ class HomeStatsRow extends StatelessWidget {
     final prevSavings = prevIncome <= 0
         ? 0.0
         : ((prevIncome - prevExpenses) / prevIncome).clamp(0.0, 1.0);
-    final savingsDiff = ((savingsRate - prevSavings) * 100);
+    final savingsDiff = (savingsRate - prevSavings) * 100;
     final savingsChg =
         '${savingsDiff >= 0 ? '+' : ''}${savingsDiff.toStringAsFixed(1)}pp';
     final netBalanceChg = totalBalance >= 0 ? 'Total assets' : 'Net negative';
@@ -144,7 +138,7 @@ class HomeStatsRow extends StatelessWidget {
                 savingsChg,
                 primaryColor,
                 gradient: LinearGradient(
-                  colors: [primaryColor.withOpacity(0.85), primaryDark.withOpacity(0.85)],
+                  colors: [primaryColor.withValues(alpha: 0.85), primaryDark.withValues(alpha: 0.85)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -167,7 +161,7 @@ class HomeStatsRow extends StatelessWidget {
                 incomeChg,
                 appColors.success,
                 gradient: LinearGradient(
-                  colors: [appColors.success, appColors.success.withOpacity(0.8)],
+                  colors: [appColors.success, appColors.success.withValues(alpha: 0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -188,7 +182,7 @@ class HomeStatsRow extends StatelessWidget {
                 expChg,
                 appColors.error,
                 gradient: LinearGradient(
-                  colors: [appColors.error, appColors.error.withOpacity(0.8)],
+                  colors: [appColors.error, appColors.error.withValues(alpha: 0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -206,3 +200,4 @@ class HomeStatsRow extends StatelessWidget {
     );
   }
 }
+

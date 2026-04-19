@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
 class DataManagementSection extends StatelessWidget {
-  final VoidCallback onLoadSampleData;
 
   const DataManagementSection({
-    super.key,
-    required this.onLoadSampleData,
+    required this.onLoadSampleData, super.key,
   });
+  final VoidCallback onLoadSampleData;
 
   @override
   Widget build(BuildContext context) {

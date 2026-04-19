@@ -3,12 +3,6 @@ import '../../../services/theme_service.dart';
 
 /// Chat message data model
 class ChatMessage {
-  final String text;
-  final bool isUser;
-  final bool isAi;
-  final bool needsConfirmation;
-  final String? pendingAction;
-  final String? pendingAction2;
   
   ChatMessage(
     this.text,
@@ -18,18 +12,24 @@ class ChatMessage {
     this.pendingAction,
     this.pendingAction2,
   });
+  final String text;
+  final bool isUser;
+  final bool isAi;
+  final bool needsConfirmation;
+  final String? pendingAction;
+  final String? pendingAction2;
 }
 
 /// Individual message bubble widget
 class MessageBubble extends StatelessWidget {
-  final ChatMessage msg;
-  final void Function(bool confirmed)? onConfirm;
   
   const MessageBubble(
     this.msg, {
     super.key,
     this.onConfirm,
   });
+  final ChatMessage msg;
+  final void Function(bool confirmed)? onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +48,7 @@ class MessageBubble extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.2),
+            color: theme.colorScheme.primary.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -77,7 +77,7 @@ class MessageBubble extends StatelessWidget {
           bottomRight: Radius.circular(20),
         ),
         border: msg.isAi 
-            ? Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 1)
+            ? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.15))
             : null,
       ),
       child: Column(
@@ -149,3 +149,4 @@ class MessageBubble extends StatelessWidget {
     );
   }
 }
+

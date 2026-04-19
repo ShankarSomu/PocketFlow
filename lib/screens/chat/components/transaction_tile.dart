@@ -4,14 +4,13 @@ import '../../../models/transaction.dart' as model;
 
 /// Transaction list tile for displaying recent transactions in chat
 class TransactionTile extends StatelessWidget {
-  final model.Transaction t;
-  final VoidCallback onLongPress;
   
   const TransactionTile(
     this.t, {
-    super.key,
-    required this.onLongPress,
+    required this.onLongPress, super.key,
   });
+  final model.Transaction t;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +38,7 @@ class TransactionTile extends StatelessWidget {
               t.note!,
               style: TextStyle(
                 fontSize: 11,
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             )
           : null,
@@ -54,3 +53,4 @@ class TransactionTile extends StatelessWidget {
     );
   }
 }
+

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../repositories/account_repository.dart';
 import '../models/account.dart';
+import '../repositories/account_repository.dart';
 
 /// ViewModel for Accounts Screen
 class AccountsViewModel extends ChangeNotifier {
-  final AccountRepository _accountRepo;
 
   AccountsViewModel({required AccountRepository accountRepo})
       : _accountRepo = accountRepo;
+  final AccountRepository _accountRepo;
 
   bool _loading = true;
   String? _error;

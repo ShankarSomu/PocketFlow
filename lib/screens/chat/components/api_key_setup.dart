@@ -6,14 +6,12 @@ import '../../../theme/app_theme.dart';
 
 /// API Key Setup modal for configuring AI providers
 class ApiKeySetup extends StatefulWidget {
-  final bool isChange;
-  final VoidCallback onSaved;
   
   const ApiKeySetup({
-    super.key,
-    required this.isChange,
-    required this.onSaved,
+    required this.isChange, required this.onSaved, super.key,
   });
+  final bool isChange;
+  final VoidCallback onSaved;
 
   @override
   State<ApiKeySetup> createState() => ApiKeySetupState();
@@ -68,10 +66,10 @@ class ApiKeySetupState extends State<ApiKeySetup> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            const Icon(Icons.auto_awesome, color: AppTheme.emerald),
-            const SizedBox(width: 8),
-            const Text('Setup AI Assistant',
+          const Row(children: [
+            Icon(Icons.auto_awesome, color: AppTheme.emerald),
+            SizedBox(width: 8),
+            Text('Setup AI Assistant',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ]),
           const SizedBox(height: 16),
@@ -120,7 +118,7 @@ class ApiKeySetupState extends State<ApiKeySetup> {
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: _selectedModel ?? _provider.defaultModel,
+            initialValue: _selectedModel ?? _provider.defaultModel,
             decoration: const InputDecoration(
                 isDense: true, border: OutlineInputBorder()),
             items: _provider.models.map((m) => DropdownMenuItem(
@@ -134,7 +132,7 @@ class ApiKeySetupState extends State<ApiKeySetup> {
                           fontSize: 13, fontWeight: FontWeight.w500)),
                   Text(m.description,
                       style: TextStyle(
-                          fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                          fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                 ],
               ),
             )).toList(),
@@ -212,16 +210,13 @@ class ApiKeySetupState extends State<ApiKeySetup> {
 
 /// Provider selection card widget
 class ProviderCard extends StatelessWidget {
+  
+  const ProviderCard({
+    required this.provider, required this.selected, required this.onTap, super.key,
+  });
   final AiProvider provider;
   final bool selected;
   final VoidCallback onTap;
-  
-  const ProviderCard({
-    super.key,
-    required this.provider,
-    required this.selected,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +227,7 @@ class ProviderCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
-              ? Theme.of(context).colorScheme.tertiary.withOpacity(0.1)
+              ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1)
               : Theme.of(context).colorScheme.surfaceContainerHighest,
           border: Border.all(
             color: selected ? Theme.of(context).colorScheme.tertiary : Theme.of(context).colorScheme.outlineVariant,
@@ -252,14 +247,15 @@ class ProviderCard extends StatelessWidget {
               Text(provider.label,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: selected ? Theme.of(context).colorScheme.tertiary : Theme.of(context).colorScheme.onSurface.withOpacity(0.87))),
+                      color: selected ? Theme.of(context).colorScheme.tertiary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87))),
             ]),
             const SizedBox(height: 4),
             Text(provider.description,
-                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
           ],
         ),
       ),
     );
   }
 }
+

@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pocket_flow/db/database.dart';
-import 'package:pocket_flow/models/export_models.dart';
-import 'package:pocket_flow/models/transaction.dart';
 import 'package:pocket_flow/models/account.dart';
 import 'package:pocket_flow/models/budget.dart';
-import 'package:pocket_flow/models/savings_goal.dart';
+import 'package:pocket_flow/models/export_models.dart';
 import 'package:pocket_flow/models/recurring_transaction.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:pocket_flow/models/savings_goal.dart';
+import 'package:pocket_flow/models/transaction.dart';
 
 /// Service for exporting data in JSON format
 class JsonExportService {
@@ -141,7 +142,7 @@ class JsonExportService {
     
     // Get budgets for last 12 months
     for (int i = 0; i < 12; i++) {
-      final date = DateTime(now.year, now.month - i, 1);
+      final date = DateTime(now.year, now.month - i);
       final budgets = await AppDatabase.getBudgets(date.month, date.year);
       allBudgets.addAll(budgets);
     }
@@ -271,13 +272,6 @@ class JsonExportService {
 
 /// Preview information for export
 class ExportPreview {
-  final int totalTransactions;
-  final int totalAccounts;
-  final int totalBudgets;
-  final int totalSavingsGoals;
-  final int totalRecurringTransactions;
-  final int estimatedFileSize;
-  final String dateRange;
 
   const ExportPreview({
     required this.totalTransactions,
@@ -288,6 +282,13 @@ class ExportPreview {
     required this.estimatedFileSize,
     required this.dateRange,
   });
+  final int totalTransactions;
+  final int totalAccounts;
+  final int totalBudgets;
+  final int totalSavingsGoals;
+  final int totalRecurringTransactions;
+  final int estimatedFileSize;
+  final String dateRange;
 
   int get totalItems =>
       totalTransactions +

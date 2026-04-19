@@ -43,22 +43,21 @@ enum ButtonSize {
 
 /// Primary action button
 class PrimaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final ButtonSize size;
-  final bool isLoading;
-  final bool isFullWidth;
 
   const PrimaryButton({
-    super.key,
-    required this.label,
+    required this.label, super.key,
     this.onPressed,
     this.icon,
     this.size = ButtonSize.large,
     this.isLoading = false,
     this.isFullWidth = false,
   });
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final ButtonSize size;
+  final bool isLoading;
+  final bool isFullWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -101,22 +100,21 @@ class PrimaryButton extends StatelessWidget {
 
 /// Secondary action button
 class SecondaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final ButtonSize size;
-  final bool isLoading;
-  final bool isFullWidth;
 
   const SecondaryButton({
-    super.key,
-    required this.label,
+    required this.label, super.key,
     this.onPressed,
     this.icon,
     this.size = ButtonSize.large,
     this.isLoading = false,
     this.isFullWidth = false,
   });
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final ButtonSize size;
+  final bool isLoading;
+  final bool isFullWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -159,20 +157,19 @@ class SecondaryButton extends StatelessWidget {
 
 /// Text button for tertiary actions
 class TertiaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final ButtonSize size;
-  final bool isFullWidth;
 
   const TertiaryButton({
-    super.key,
-    required this.label,
+    required this.label, super.key,
     this.onPressed,
     this.icon,
     this.size = ButtonSize.medium,
     this.isFullWidth = false,
   });
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final ButtonSize size;
+  final bool isFullWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -203,17 +200,9 @@ class TertiaryButton extends StatelessWidget {
 
 /// Destructive action button (red)
 class DestructiveButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final ButtonSize size;
-  final bool isLoading;
-  final bool isFullWidth;
-  final bool outlined;
 
   const DestructiveButton({
-    super.key,
-    required this.label,
+    required this.label, super.key,
     this.onPressed,
     this.icon,
     this.size = ButtonSize.large,
@@ -221,6 +210,13 @@ class DestructiveButton extends StatelessWidget {
     this.isFullWidth = false,
     this.outlined = false,
   });
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final ButtonSize size;
+  final bool isLoading;
+  final bool isFullWidth;
+  final bool outlined;
 
   @override
   Widget build(BuildContext context) {
@@ -285,22 +281,21 @@ class DestructiveButton extends StatelessWidget {
 
 /// Icon button with standard size
 class StandardIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final String? tooltip;
-  final Color? color;
-  final double size;
-  final double? iconSize;
 
   const StandardIconButton({
-    super.key,
-    required this.icon,
+    required this.icon, super.key,
     this.onPressed,
     this.tooltip,
     this.color,
     this.size = 48.0,
     this.iconSize,
   });
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String? tooltip;
+  final Color? color;
+  final double size;
+  final double? iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -316,27 +311,26 @@ class StandardIconButton extends StatelessWidget {
     );
 
     return tooltip != null
-        ? Tooltip(message: tooltip!, child: button)
+        ? Tooltip(message: tooltip, child: button)
         : button;
   }
 }
 
 /// Floating action button with standard styling
 class StandardFAB extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final String? label;
-  final String? tooltip;
-  final bool extended;
 
   const StandardFAB({
-    super.key,
-    required this.icon,
+    required this.icon, super.key,
     this.onPressed,
     this.label,
     this.tooltip,
     this.extended = false,
   });
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String? label;
+  final String? tooltip;
+  final bool extended;
 
   @override
   Widget build(BuildContext context) {
@@ -359,18 +353,17 @@ class StandardFAB extends StatelessWidget {
 
 /// Button group for multiple actions
 class ButtonGroup extends StatelessWidget {
-  final List<Widget> buttons;
-  final Axis direction;
-  final double spacing;
-  final MainAxisAlignment alignment;
 
   const ButtonGroup({
-    super.key,
-    required this.buttons,
+    required this.buttons, super.key,
     this.direction = Axis.horizontal,
     this.spacing = LayoutConstants.paddingS,
     this.alignment = MainAxisAlignment.start,
   });
+  final List<Widget> buttons;
+  final Axis direction;
+  final double spacing;
+  final MainAxisAlignment alignment;
 
   @override
   Widget build(BuildContext context) {

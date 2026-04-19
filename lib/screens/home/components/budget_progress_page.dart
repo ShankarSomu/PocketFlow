@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../models/budget.dart';
 import '../../../../theme/app_color_scheme.dart';
-import '../../../widgets/figma/figma_panel.dart';
+import '../../../widgets/ui/panel.dart';
 import '../../shared/shared.dart';
 
 /// Budget progress tracker showing spending vs limits
 class BudgetProgressPage extends StatelessWidget {
-  final List<Budget> budgets;
-  final Map<String, double> categorySpend;
 
   const BudgetProgressPage({
-    super.key,
-    required this.budgets,
-    required this.categorySpend,
+    required this.budgets, required this.categorySpend, super.key,
   });
+  final List<Budget> budgets;
+  final Map<String, double> categorySpend;
 
   Color _barColor(BuildContext context, double pct) {
     final appColors = Theme.of(context).extension<AppColorScheme>()!;
@@ -36,7 +34,7 @@ class BudgetProgressPage extends StatelessWidget {
 
     final hasOver = items.any((e) => e.spent > e.budget.limit);
 
-    return FigmaPanel(
+    return Panel(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,7 +52,7 @@ class BudgetProgressPage extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).extension<AppColorScheme>()!.error.withOpacity(0.15),
+                    color: Theme.of(context).extension<AppColorScheme>()!.error.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text('Over Budget!',
@@ -71,11 +69,11 @@ class BudgetProgressPage extends StatelessWidget {
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.bar_chart_rounded, size: 40,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
                   const SizedBox(height: 8),
                   Text('No budgets set',
                       style:
-                          TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 12)),
+                          TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12)),
                 ]),
               ),
             )
@@ -99,7 +97,7 @@ class BudgetProgressPage extends StatelessWidget {
                         children: [
                           if (isOver)
                             Padding(
-                              padding: EdgeInsets.only(right: 3),
+                              padding: const EdgeInsets.only(right: 3),
                               child: Icon(Icons.warning_amber_rounded,
                                   size: 11, color: Theme.of(context).extension<AppColorScheme>()!.error),
                             ),
@@ -174,7 +172,7 @@ class BudgetProgressPage extends StatelessWidget {
                             fontSize: 9,
                             color: isOver
                                 ? Theme.of(context).colorScheme.error
-                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                       ),
                     ],
                   );
@@ -186,3 +184,4 @@ class BudgetProgressPage extends StatelessWidget {
     );
   }
 }
+

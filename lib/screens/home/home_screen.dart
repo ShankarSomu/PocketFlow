@@ -1,19 +1,19 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../models/budget.dart';
 import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
-import '../../services/theme_service.dart';
 import '../../services/time_filter.dart';
 import '../../theme/app_color_scheme.dart';
-import '../../theme/app_theme.dart';
 import '../../widgets/error_state_widget.dart';
 import '../../widgets/feature_hint.dart';
-import 'components/home_components.dart';
+import '../notifications_screen.dart';
 import '../shared/shared.dart';
+import 'components/home_components.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<int, double> _accountBalances = {};
   Map<String, double> _categorySpend = {};
   List<Budget> _budgets = [];
-  bool _showBalance = true;
+  final bool _showBalance = true;
   final ScrollController _scrollController = ScrollController();
   int _budgetAnimKey = 0;
 
@@ -128,10 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showNotifications() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Notifications are coming soon � stay tuned!'),
-        behavior: SnackBarBehavior.floating,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const NotificationsScreen(),
       ),
     );
   }
@@ -155,14 +154,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
                 : _error != null
                     ? ErrorStateWidget(
-                        message: _error!,
+                        message: _error,
                         onRetry: _load,
                       )
                     : Column(
                 children: [
                   // -- Fixed header --
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
                     child: HomeHeader(onNotificationsTap: _showNotifications),
                   ),
                   const SizedBox(height: 8),
@@ -175,9 +174,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.fromLTRB(14, 0, 14, 80),
                         children: [
                           _buildCarousel(fmt),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           _buildSecondCarousel(),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           _buildRecentTransactions(fmt),
                         ],
                       ),
@@ -217,26 +216,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSpendingChart() {
     final spots = [
-      FlSpot(0, 3200),
-      FlSpot(1, 3800),
-      FlSpot(2, 4100),
-      FlSpot(3, 3500),
-      FlSpot(4, 3900),
-      FlSpot(5, 4231),
+      const FlSpot(0, 3200),
+      const FlSpot(1, 3800),
+      const FlSpot(2, 4100),
+      const FlSpot(3, 3500),
+      const FlSpot(4, 3900),
+      const FlSpot(5, 4231),
     ];
 
-    return FigmaPanel(
+    return Panel(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-              Text('Spending Trend', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+              const Text('Spending Trend', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           SizedBox(
             height: 110,
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(show: false),
+                gridData: const FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
@@ -245,13 +244,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       getTitlesWidget: (value, meta) {
                         const labels = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
                         if (value.toInt() < 0 || value.toInt() >= labels.length) return const SizedBox.shrink();
-                        return Text(labels[value.toInt()], style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 11));
+                        return Text(labels[value.toInt()], style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 11));
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: const AxisTitles(),
+                  rightTitles: const AxisTitles(),
+                  topTitles: const AxisTitles(),
                 ),
                 lineBarsData: [
                   LineChartBarData(
@@ -270,12 +269,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Theme.of(context).extension<AppColorScheme>()!.graphPositiveStart.withOpacity(0.28),
-                          Theme.of(context).extension<AppColorScheme>()!.graphPositiveStart.withOpacity(0.0),
+                          Theme.of(context).extension<AppColorScheme>()!.graphPositiveStart.withValues(alpha: 0.28),
+                          Theme.of(context).extension<AppColorScheme>()!.graphPositiveStart.withValues(alpha: 0.0),
                         ],
                       ),
                     ),
-                    dotData: FlDotData(show: false),
+                    dotData: const FlDotData(show: false),
                   ),
                 ],
               ),

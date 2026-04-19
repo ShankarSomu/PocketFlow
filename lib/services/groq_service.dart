@@ -22,16 +22,16 @@ extension AiProviderExt on AiProvider {
 
   List<AiModel> get models => this == AiProvider.groq
       ? [
-          AiModel('llama-3.3-70b-versatile', 'Llama 3.3 70B', 'Best quality, recommended'),
-          AiModel('llama-3.1-8b-instant', 'Llama 3.1 8B', 'Fastest, lower quality'),
-          AiModel('mixtral-8x7b-32768', 'Mixtral 8x7B', 'Good balance'),
-          AiModel('gemma2-9b-it', 'Gemma 2 9B', 'Google model via Groq'),
+          const AiModel('llama-3.3-70b-versatile', 'Llama 3.3 70B', 'Best quality, recommended'),
+          const AiModel('llama-3.1-8b-instant', 'Llama 3.1 8B', 'Fastest, lower quality'),
+          const AiModel('mixtral-8x7b-32768', 'Mixtral 8x7B', 'Good balance'),
+          const AiModel('gemma2-9b-it', 'Gemma 2 9B', 'Google model via Groq'),
         ]
       : [
-          AiModel('gemini-1.5-flash', 'Gemini 1.5 Flash', 'Fast, free tier — recommended'),
-          AiModel('gemini-1.5-flash-8b', 'Gemini 1.5 Flash 8B', 'Fastest, most free'),
-          AiModel('gemini-1.5-pro', 'Gemini 1.5 Pro', 'Best quality, limited free'),
-          AiModel('gemini-2.0-flash', 'Gemini 2.0 Flash', 'Latest, experimental'),
+          const AiModel('gemini-1.5-flash', 'Gemini 1.5 Flash', 'Fast, free tier — recommended'),
+          const AiModel('gemini-1.5-flash-8b', 'Gemini 1.5 Flash 8B', 'Fastest, most free'),
+          const AiModel('gemini-1.5-pro', 'Gemini 1.5 Pro', 'Best quality, limited free'),
+          const AiModel('gemini-2.0-flash', 'Gemini 2.0 Flash', 'Latest, experimental'),
         ];
 
   String get defaultModel => this == AiProvider.groq
@@ -40,10 +40,10 @@ extension AiProviderExt on AiProvider {
 }
 
 class AiModel {
+  const AiModel(this.id, this.name, this.description);
   final String id;
   final String name;
   final String description;
-  const AiModel(this.id, this.name, this.description);
 }
 
 // ── Unified AI Service ────────────────────────────────────────────────────────
@@ -421,11 +421,11 @@ $context
 // ── Response model ────────────────────────────────────────────────────────────
 
 class AiResponse {
+
+  const AiResponse({required this.reply, this.action, this.action2});
   final String reply;
   final String? action;
   final String? action2;
-
-  const AiResponse({required this.reply, this.action, this.action2});
   bool get hasAction => action != null && action!.isNotEmpty;
   bool get hasAction2 => action2 != null && action2!.isNotEmpty;
 }

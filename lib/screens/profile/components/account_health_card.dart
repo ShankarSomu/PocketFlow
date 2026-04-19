@@ -3,18 +3,14 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class AccountHealthCard extends StatelessWidget {
+
+  const AccountHealthCard({
+    required this.savingsRate, required this.budgetCompliance, required this.goalsOnTrack, required this.totalGoals, super.key,
+  });
   final double savingsRate;
   final double budgetCompliance;
   final int goalsOnTrack;
   final int totalGoals;
-
-  const AccountHealthCard({
-    super.key,
-    required this.savingsRate,
-    required this.budgetCompliance,
-    required this.goalsOnTrack,
-    required this.totalGoals,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -97,20 +93,15 @@ class AccountHealthCard extends StatelessWidget {
 }
 
 class HealthMetric extends StatelessWidget {
+
+  const HealthMetric({
+    required this.label, required this.value, required this.icon, required this.color, required this.status, super.key,
+  });
   final String label;
   final String value;
   final IconData icon;
   final Color color;
   final String status;
-
-  const HealthMetric({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.status,
-  });
 
   @override
   Widget build(BuildContext context) {

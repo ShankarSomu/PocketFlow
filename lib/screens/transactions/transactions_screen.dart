@@ -1,12 +1,14 @@
-﻿import '../../services/time_filter.dart';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+
 import '../../db/database.dart';
-import '../../models/transaction.dart' as model;
 import '../../models/account.dart';
+import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
+import '../../services/time_filter.dart';
 import '../../widgets/category_picker.dart';
 import '../../widgets/empty_states.dart';
 import '../../widgets/error_state_widget.dart';
@@ -14,9 +16,15 @@ import '../shared/shared.dart';
 import 'components/transactions_components.dart';
 
 class TransactionsScreen extends StatefulWidget {
+  const TransactionsScreen({
+    super.key,
+    this.initialFilterType,
+    this.initialAccountId,
+    this.initialCategory,
+  });
   final String? initialFilterType;
   final int? initialAccountId;
-  const TransactionsScreen({super.key, this.initialFilterType, this.initialAccountId});
+  final String? initialCategory;
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -25,20 +33,27 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen> {
   bool _loading = true;
   String? _error;
-  bool _searchVisible = false;
+  final bool _searchVisible = false;
   List<model.Transaction> _transactions = [];
   List<Account> _accounts = [];
   Map<int, double> _accountBalances = {};
   int _carouselIdx = 0; // 0 = All, 1..N = individual account
-  String _searchQuery = '';
+  final String _searchQuery = '';
   String? _filterType;
+  String? _filterCategory;
   int? _filterAccountId;
+  
+  // Intelligence stats
+  int _pendingActionsCount = 0;
+  int _transfersCount = 0;
+  int _patternsCount = 0;
 
   @override
   void initState() {
     super.initState();
     _filterType = widget.initialFilterType;
     _filterAccountId = widget.initialAccountId;
+    _filterCategory = widget.initialCategory;
     _load();
     appRefresh.addListener(_load);
     appTimeFilter.addListener(_load);
@@ -65,11 +80,61 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       for (final a in accounts) {
         balances[a.id!] = await AppDatabase.accountBalance(a.id!, a);
       }
+      
+      // Fetch intelligence stats
+      int pendingCount = 0;
+      int transferCount = 0;
+      int patternCount = 0;
+      
+      try {
+        final db = await AppDatabase.db();
+        
+        // Check if tables exist and get counts
+        try {
+          final pendingResult = await db.rawQuery(
+            'SELECT COUNT(*) as count FROM pending_actions WHERE status = ?',
+            ['pending'],
+          );
+          pendingCount = pendingResult.first['count'] as int? ?? 0;
+        } catch (e) {
+          // Table might not exist yet
+          pendingCount = 0;
+        }
+        
+        try {
+          final transferResult = await db.rawQuery(
+            'SELECT COUNT(*) as count FROM transfer_pairs WHERE status = ?',
+            ['pending'],
+          );
+          transferCount = transferResult.first['count'] as int? ?? 0;
+        } catch (e) {
+          transferCount = 0;
+        }
+        
+        try {
+          final patternResult = await db.rawQuery(
+            'SELECT COUNT(*) as count FROM recurring_patterns WHERE status = ?',
+            ['pending'],
+          );
+          patternCount = patternResult.first['count'] as int? ?? 0;
+        } catch (e) {
+          patternCount = 0;
+        }
+      } catch (e) {
+        // Database error - set all to 0
+        pendingCount = 0;
+        transferCount = 0;
+        patternCount = 0;
+      }
+      
       if (!mounted) return;
       setState(() {
         _transactions = transactions;
         _accounts = accounts;
         _accountBalances = balances;
+        _pendingActionsCount = pendingCount;
+        _transfersCount = transferCount;
+        _patternsCount = patternCount;
         _loading = false;
       });
     } catch (e) {
@@ -93,6 +158,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (_filterType != null) {
       filtered = filtered.where((t) => t.type == _filterType).toList();
     }
+    if (_filterCategory != null) {
+      filtered = filtered.where((t) => t.category.toLowerCase() == _filterCategory!.toLowerCase()).toList();
+    }
     if (_filterAccountId != null) {
       filtered = filtered.where((t) => t.accountId == _filterAccountId).toList();
     }
@@ -110,38 +178,38 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+              const Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
               const SizedBox(height: 20),
-              Text('Type', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Type', style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 children: [
                   FilterChip(
-                    label: Text('All'),
+                    label: const Text('All'),
                     selected: _filterType == null,
                     onSelected: (v) => setLocal(() => _filterType = null),
                   ),
                   FilterChip(
-                    label: Text('Income'),
+                    label: const Text('Income'),
                     selected: _filterType == 'income',
                     onSelected: (v) => setLocal(() => _filterType = v ? 'income' : null),
                   ),
                   FilterChip(
-                    label: Text('Expense'),
+                    label: const Text('Expense'),
                     selected: _filterType == 'expense',
                     onSelected: (v) => setLocal(() => _filterType = v ? 'expense' : null),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Account', style: TextStyle(fontWeight: FontWeight.w500)),
+              const Text('Account', style: TextStyle(fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               DropdownButtonFormField<int?>(
-                value: _filterAccountId,
+                initialValue: _filterAccountId,
                 decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('All accounts')),
+                  const DropdownMenuItem(child: Text('All accounts')),
                   ..._accounts.map((a) => DropdownMenuItem(value: a.id, child: Text(a.name))),
                 ],
                 onChanged: (v) => setLocal(() => _filterAccountId = v),
@@ -157,7 +225,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           _filterAccountId = null;
                         });
                       },
-                      child: Text('Clear All'),
+                      child: const Text('Clear All'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -167,7 +235,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         setState(() {});
                         Navigator.pop(ctx);
                       },
-                      child: Text('Apply'),
+                      child: const Text('Apply'),
                     ),
                   ),
                 ],
@@ -217,7 +285,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Saved: ${file.path}'),
-          duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -255,7 +322,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
                 : _error != null
                     ? ErrorStateWidget(
-                        message: _error!,
+                        message: _error,
                         onRetry: _load,
                       )
                     : Column(
@@ -273,10 +340,20 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         accounts: _accounts,
                         balances: _accountBalances,
                         carouselIdx: _carouselIdx,
+                        hasIntelligence: true, // Always show intelligence card
+                        pendingActionsCount: _pendingActionsCount,
+                        transfersCount: _transfersCount,
+                        patternsCount: _patternsCount,
                         onIndexChanged: (i) {
                           setState(() {
                             _carouselIdx = i;
-                            _filterAccountId = i == 0 ? null : _accounts[i - 1].id;
+                            // Intelligence card is at index accounts.length + 1
+                            if (i == _accounts.length + 1) {
+                              // Don't filter when on intelligence card
+                              _filterAccountId = null;
+                            } else {
+                              _filterAccountId = i == 0 ? null : _accounts[i - 1].id;
+                            }
                           });
                         },
                         fmt: fmt,
@@ -291,9 +368,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         children: [
                           Chip(
                             label: Text(_filterType == 'income' ? '? Income' : '? Expense',
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                             onDeleted: () => setState(() => _filterType = null),
-                            deleteIcon: Icon(Icons.close, size: 14),
+                            deleteIcon: const Icon(Icons.close, size: 14),
                             backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                             side: BorderSide.none,
                             padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -311,7 +388,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                               itemCount: groupKeys.length,
                               addAutomaticKeepAlives: false,
-                              addRepaintBoundaries: true,
                               cacheExtent: 500,
                               itemBuilder: (context, i) {
                                 final dateLabel = groupKeys[i];
@@ -378,7 +454,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Add Transaction',
+                const Text('Add Transaction',
                     style: TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
@@ -424,21 +500,22 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   onTap: () async {
                     final picked = await showCategoryPicker(context,
                         current: catCtrl.text);
-                    if (picked != null)
+                    if (picked != null) {
                       setLocal(() => catCtrl.text = picked);
+                    }
                   },
                 ),
                 const SizedBox(height: 12),
                 if (_accounts.isNotEmpty)
                   DropdownButtonFormField<int?>(
-                    value: accountId,
+                    initialValue: accountId,
                     decoration: const InputDecoration(
                       labelText: 'Account',
                       border: OutlineInputBorder(),
                     ),
                     items: [
                       const DropdownMenuItem(
-                          value: null, child: Text('No account')),
+                          child: Text('No account')),
                       ..._accounts.map((a) => DropdownMenuItem(
                           value: a.id, child: Text(a.name))),
                     ],
@@ -463,8 +540,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         child: child!,
                       ),
                     );
-                    if (picked != null)
+                    if (picked != null) {
                       setLocal(() => selectedDate = picked);
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -476,11 +554,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     child: Row(
                       children: [
                         Icon(Icons.calendar_today,
-                            size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                            size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('MMM d, yyyy').format(selectedDate),
-                          style: TextStyle(fontSize: 15),
+                          style: const TextStyle(fontSize: 15),
                         ),
                       ],
                     ),
@@ -500,7 +578,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: Text('Cancel'),
+                      child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
@@ -509,7 +587,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         final category = catCtrl.text.trim();
                         if (amount == null ||
                             amount <= 0 ||
-                            category.isEmpty) return;
+                            category.isEmpty) {
+                          return;
+                        }
                         await AppDatabase.insertTransaction(
                           model.Transaction(
                             type: type,
@@ -525,7 +605,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         notifyDataChanged();
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
-                      child: Text('Add'),
+                      child: const Text('Add'),
                     ),
                   ],
                 ),
@@ -554,7 +634,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Edit ${transaction.type[0].toUpperCase()}${transaction.type.substring(1)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Edit ${transaction.type[0].toUpperCase()}${transaction.type.substring(1)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 IconButton(
                   icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                   onPressed: () async {
@@ -616,7 +696,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       transaction.smsSource!,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         fontFamily: 'monospace',
                       ),
                     ),
@@ -626,7 +706,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ],
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
               const SizedBox(width: 8),
               FilledButton(
                 onPressed: () async {
@@ -645,7 +725,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   notifyDataChanged();
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
-                child: Text('Save'),
+                child: const Text('Save'),
               ),
             ]),
           ],
@@ -654,3 +734,4 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 }
+

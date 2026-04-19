@@ -4,16 +4,15 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class AccountsQuickView extends StatelessWidget {
+
+  const AccountsQuickView({required this.accounts, required this.fmt, super.key});
   final List<Map<String, dynamic>> accounts;
   final NumberFormat fmt;
-
-  const AccountsQuickView({super.key, required this.accounts, required this.fmt});
 
   @override
   Widget build(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
-      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../models/transaction.dart' as model;
+
 import '../../../../models/account.dart';
+import '../../../../models/transaction.dart' as model;
 import 'transaction_card.dart';
 
 /// Date section - date group header + list of transaction cards in a white card
 class TransactionDateSection extends StatelessWidget {
+
+  const TransactionDateSection({
+    required this.dateLabel, required this.transactions, required this.accounts, required this.fmt, required this.onTap, super.key,
+  });
   final String dateLabel;
   final List<model.Transaction> transactions;
   final List<Account> accounts;
   final NumberFormat fmt;
   final void Function(model.Transaction) onTap;
-
-  const TransactionDateSection({
-    super.key,
-    required this.dateLabel,
-    required this.transactions,
-    required this.accounts,
-    required this.fmt,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +29,7 @@ class TransactionDateSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               letterSpacing: 0.2,
             ),
           ),
@@ -62,3 +58,4 @@ class TransactionDateSection extends StatelessWidget {
     );
   }
 }
+

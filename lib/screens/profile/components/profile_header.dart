@@ -3,12 +3,11 @@ import '../../../services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 
 class ProfileHeader extends StatelessWidget {
-  final VoidCallback onTap;
   
   const ProfileHeader({
-    super.key,
-    required this.onTap,
+    required this.onTap, super.key,
   });
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -75,12 +74,12 @@ class ProfileHeader extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.verified, size: 14, color: AppTheme.emerald),
-                            const SizedBox(width: 4),
-                            const Text(
+                            SizedBox(width: 4),
+                            Text(
                               'Premium Member',
                               style: TextStyle(
                                 fontSize: 11,

@@ -1,14 +1,16 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/transaction.dart' as model;
-import '../models/budget.dart';
-import '../models/savings_goal.dart';
+import 'package:pocket_flow/services/app_logger.dart';
+import 'package:sqflite/sqflite.dart';
+
+import '../core/database_optimizer.dart';
 import '../models/account.dart';
-import '../models/recurring_transaction.dart';
+import '../models/budget.dart';
 import '../models/category.dart';
 import '../models/deletable_entity.dart';
-import 'package:pocket_flow/services/app_logger.dart';
-import '../core/database_optimizer.dart';
+import '../models/recurring_transaction.dart';
+import '../models/savings_goal.dart';
+import '../models/transaction.dart' as model;
+import '../services/notification_service.dart';
 
 // Wrap DB init to log errors
 
@@ -16,14 +18,14 @@ import '../core/database_optimizer.dart';
 class AppDatabase {
   static Database? _db;
 
-  static Future<Database> get db async {
+  static Future<Database> db() async {
     _db ??= await _init();
     return _db!;
   }
 
   static Future<Database> _init() async {
     final path = join(await getDatabasesPath(), 'pocket_flow.db');
-    return openDatabase(path, version: 10,
+    return openDatabase(path, version: 12,
       onCreate: (db, _) => _createAll(db),
       onUpgrade: (db, oldVersion, _) async {
         if (oldVersion < 2) {
@@ -104,28 +106,207 @@ class AppDatabase {
           // Add SMS source tracking for transactions
           await db.execute('ALTER TABLE transactions ADD COLUMN sms_source TEXT');
         }
+        if (oldVersion < 11) {
+          // Add hybrid transaction mapping fields
+          // Account enhancements
+          await db.execute('ALTER TABLE accounts ADD COLUMN institution_name TEXT');
+          await db.execute('ALTER TABLE accounts ADD COLUMN account_identifier TEXT');
+          await db.execute('ALTER TABLE accounts ADD COLUMN sms_keywords TEXT');
+          await db.execute('ALTER TABLE accounts ADD COLUMN account_alias TEXT');
+          
+          // Transaction enhancements
+          await db.execute('ALTER TABLE transactions ADD COLUMN source_type TEXT NOT NULL DEFAULT "manual"');
+          await db.execute('ALTER TABLE transactions ADD COLUMN merchant TEXT');
+          await db.execute('ALTER TABLE transactions ADD COLUMN confidence_score REAL');
+          await db.execute('ALTER TABLE transactions ADD COLUMN needs_review INTEGER DEFAULT 0');
+          
+          // Create indexes for fast matching
+          await db.execute('CREATE INDEX idx_accounts_institution ON accounts(institution_name)');
+          await db.execute('CREATE INDEX idx_accounts_identifier ON accounts(account_identifier)');
+          await db.execute('CREATE INDEX idx_transactions_needs_review ON transactions(needs_review)');
+          await db.execute('CREATE INDEX idx_transactions_source_type ON transactions(source_type)');
+          await db.execute('CREATE INDEX idx_transactions_merchant ON transactions(merchant)');
+          
+          // Backfill existing data
+          await db.execute('UPDATE transactions SET source_type = "manual" WHERE source_type IS NULL');
+          
+          // Generate account identifiers from last4 for existing accounts
+          await db.execute('UPDATE accounts SET account_identifier = "****" || last4 WHERE last4 IS NOT NULL AND account_identifier IS NULL');
+        }
+        if (oldVersion < 12) {
+          // SMS Intelligence Engine tables
+          
+          // Account Candidates
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS account_candidates(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              institution_name TEXT,
+              account_identifier TEXT,
+              sms_keywords TEXT,
+              suggested_type TEXT NOT NULL DEFAULT 'checking',
+              confidence_score REAL NOT NULL DEFAULT 0.5,
+              transaction_count INTEGER NOT NULL DEFAULT 1,
+              first_seen_date TEXT NOT NULL,
+              last_seen_date TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'pending',
+              merged_into_account_id INTEGER REFERENCES accounts(id),
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )''');
+          await db.execute('CREATE INDEX idx_account_candidates_status ON account_candidates(status)');
+          await db.execute('CREATE INDEX idx_account_candidates_institution ON account_candidates(institution_name)');
+          
+          // Pending Actions
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS pending_actions(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              action_type TEXT NOT NULL,
+              priority TEXT NOT NULL DEFAULT 'medium',
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              transaction_id INTEGER REFERENCES transactions(id),
+              account_candidate_id INTEGER REFERENCES account_candidates(id),
+              sms_source TEXT,
+              metadata TEXT,
+              confidence REAL NOT NULL DEFAULT 0.0,
+              status TEXT NOT NULL DEFAULT 'pending',
+              resolved_at TEXT,
+              resolution_action TEXT,
+              title TEXT NOT NULL,
+              description TEXT NOT NULL
+            )''');
+          await db.execute('CREATE INDEX idx_pending_actions_status ON pending_actions(status)');
+          await db.execute('CREATE INDEX idx_pending_actions_priority ON pending_actions(priority)');
+          await db.execute('CREATE INDEX idx_pending_actions_type ON pending_actions(action_type)');
+          
+          // Recurring Patterns
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS recurring_patterns(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              merchant TEXT,
+              category TEXT NOT NULL,
+              type TEXT NOT NULL,
+              average_amount REAL NOT NULL,
+              amount_variance REAL NOT NULL,
+              frequency TEXT NOT NULL,
+              interval_days INTEGER NOT NULL,
+              occurrence_count INTEGER NOT NULL,
+              confidence_score REAL NOT NULL,
+              first_occurrence TEXT NOT NULL,
+              last_occurrence TEXT NOT NULL,
+              next_expected_date TEXT,
+              transaction_ids TEXT NOT NULL,
+              account_id INTEGER REFERENCES accounts(id),
+              status TEXT NOT NULL DEFAULT 'candidate',
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )''');
+          await db.execute('CREATE INDEX idx_recurring_patterns_merchant ON recurring_patterns(merchant)');
+          await db.execute('CREATE INDEX idx_recurring_patterns_status ON recurring_patterns(status)');
+          await db.execute('CREATE INDEX idx_recurring_patterns_next_date ON recurring_patterns(next_expected_date)');
+          
+          // SMS Templates (Learning System)
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS sms_templates(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              institution_name TEXT NOT NULL,
+              sender_patterns TEXT NOT NULL,
+              message_pattern TEXT NOT NULL,
+              amount_pattern TEXT,
+              merchant_pattern TEXT,
+              account_id_pattern TEXT,
+              balance_pattern TEXT,
+              transaction_type TEXT NOT NULL,
+              match_count INTEGER NOT NULL DEFAULT 0,
+              user_confirmations INTEGER NOT NULL DEFAULT 0,
+              user_rejections INTEGER NOT NULL DEFAULT 0,
+              accuracy REAL NOT NULL DEFAULT 0.5,
+              is_user_created INTEGER DEFAULT 0,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              last_used TEXT
+            )''');
+          await db.execute('CREATE INDEX idx_sms_templates_institution ON sms_templates(institution_name)');
+          await db.execute('CREATE INDEX idx_sms_templates_accuracy ON sms_templates(accuracy)');
+          
+          // Transfer Pairs
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS transfer_pairs(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              debit_transaction_id INTEGER NOT NULL REFERENCES transactions(id),
+              credit_transaction_id INTEGER NOT NULL REFERENCES transactions(id),
+              amount REAL NOT NULL,
+              timestamp TEXT NOT NULL,
+              source_account_id INTEGER NOT NULL REFERENCES accounts(id),
+              destination_account_id INTEGER NOT NULL REFERENCES accounts(id),
+              confidence_score REAL NOT NULL,
+              detection_method TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'detected',
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )''');
+          await db.execute('CREATE INDEX idx_transfer_pairs_status ON transfer_pairs(status)');
+          await db.execute('CREATE INDEX idx_transfer_pairs_debit ON transfer_pairs(debit_transaction_id)');
+          await db.execute('CREATE INDEX idx_transfer_pairs_credit ON transfer_pairs(credit_transaction_id)');
+          
+          // Merchant Mappings (Learning System)
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS merchant_mappings(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              extracted_name TEXT NOT NULL,
+              correct_name TEXT NOT NULL,
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              UNIQUE(extracted_name, correct_name)
+            )''');
+          await db.execute('CREATE INDEX idx_merchant_mappings_extracted ON merchant_mappings(extracted_name)');
+          
+          // Add new transaction fields for SMS intelligence
+          await db.execute('ALTER TABLE transactions ADD COLUMN sms_id TEXT');
+          await db.execute('ALTER TABLE transactions ADD COLUMN extracted_identifier TEXT');
+          await db.execute('ALTER TABLE transactions ADD COLUMN extracted_institution TEXT');
+          await db.execute('ALTER TABLE transactions ADD COLUMN linked_transaction_id INTEGER REFERENCES transactions(id)');
+          await db.execute('ALTER TABLE transactions ADD COLUMN transfer_reference TEXT');
+          await db.execute('ALTER TABLE transactions ADD COLUMN recurring_group_id INTEGER REFERENCES recurring_patterns(id)');
+          await db.execute('ALTER TABLE transactions ADD COLUMN is_recurring_candidate INTEGER DEFAULT 0');
+          
+          // Add new account fields for SMS intelligence
+          await db.execute('ALTER TABLE accounts ADD COLUMN source TEXT NOT NULL DEFAULT "manual"');
+          await db.execute('ALTER TABLE accounts ADD COLUMN confidence_score_account REAL');
+          await db.execute('ALTER TABLE accounts ADD COLUMN requires_confirmation INTEGER DEFAULT 0');
+          await db.execute('ALTER TABLE accounts ADD COLUMN created_from_sms_date TEXT');
+          
+          // Create additional indexes
+          await db.execute('CREATE INDEX idx_transactions_sms_id ON transactions(sms_id)');
+          await db.execute('CREATE INDEX idx_transactions_linked ON transactions(linked_transaction_id)');
+          await db.execute('CREATE INDEX idx_transactions_recurring_group ON transactions(recurring_group_id)');
+          await db.execute('CREATE INDEX idx_accounts_source ON accounts(source)');
+        }
       },
       onOpen: (db) async {
-        // For existing databases that might have empty categories table or missing subcategories
-        final count = await db.rawQuery('SELECT COUNT(*) as count FROM categories');
-        final subCount = await db.rawQuery('SELECT COUNT(*) as count FROM categories WHERE parent_id IS NOT NULL');
-        
-        if (count.isNotEmpty && subCount.isNotEmpty) {
-          final categoryCount = (count.first['count'] as num?)?.toInt() ?? 0;
-          final subcategoryCount = (subCount.first['count'] as num?)?.toInt() ?? 0;
-          
-          // Reseed if no categories at all, or if we have categories but no subcategories
-          if (categoryCount == 0 || (categoryCount > 0 && subcategoryCount == 0)) {
-            // Clear existing categories before reseeding
-            await db.delete('categories');
-            await _seedDefaultCategories(db);
-          }
-        }
-        
-        // Create performance indexes
-        await DatabaseOptimizer.createIndexes(db);
+        // Run maintenance in background to avoid blocking splash screen
+        _runAsyncMaintenance(db);
       },
     );
+  }
+
+  static Future<void> _runAsyncMaintenance(Database db) async {
+    try {
+      // For existing databases that might have empty categories table or missing subcategories
+      final count = await db.rawQuery('SELECT COUNT(*) as count FROM categories');
+      final subCount = await db.rawQuery('SELECT COUNT(*) as count FROM categories WHERE parent_id IS NOT NULL');
+      
+      if (count.isNotEmpty && subCount.isNotEmpty) {
+        final categoryCount = (count.first['count'] as num?)?.toInt() ?? 0;
+        final subcategoryCount = (subCount.first['count'] as num?)?.toInt() ?? 0;
+        
+        // Reseed if no categories at all, or if we have categories but no subcategories
+        if (categoryCount == 0 || (categoryCount > 0 && subcategoryCount == 0)) {
+          // Clear existing categories before reseeding
+          await db.delete('categories');
+          await _seedDefaultCategories(db);
+        }
+      }
+      
+      // Create performance indexes
+      await DatabaseOptimizer.createIndexes(db);
+    } catch (e) {
+      AppLogger.log(LogLevel.error, LogCategory.database, 'Maintenance Error', detail: e.toString());
+    }
   }
 
   static Future<void> _createAll(Database db) async {
@@ -138,6 +319,14 @@ class AppDatabase {
         last4 TEXT,
         due_date_day INTEGER,
         credit_limit REAL,
+        institution_name TEXT,
+        account_identifier TEXT,
+        sms_keywords TEXT,
+        account_alias TEXT,
+        source TEXT NOT NULL DEFAULT 'manual',
+        confidence_score_account REAL,
+        requires_confirmation INTEGER DEFAULT 0,
+        created_from_sms_date TEXT,
         deleted_at INTEGER
       )''');
     await db.execute('''
@@ -151,6 +340,17 @@ class AppDatabase {
         account_id INTEGER REFERENCES accounts(id),
         recurring_id INTEGER REFERENCES recurring_transactions(id),
         sms_source TEXT,
+        sms_id TEXT,
+        source_type TEXT NOT NULL DEFAULT 'manual',
+        merchant TEXT,
+        confidence_score REAL,
+        needs_review INTEGER DEFAULT 0,
+        extracted_identifier TEXT,
+        extracted_institution TEXT,
+        linked_transaction_id INTEGER REFERENCES transactions(id),
+        transfer_reference TEXT,
+        recurring_group_id INTEGER REFERENCES recurring_patterns(id),
+        is_recurring_candidate INTEGER DEFAULT 0,
         deleted_at INTEGER
       )''');
     await db.execute('''
@@ -198,6 +398,100 @@ class AppDatabase {
         deleted_at INTEGER
       )''');
     
+    // SMS Intelligence Engine tables
+    await db.execute('''
+      CREATE TABLE account_candidates(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        institution_name TEXT,
+        account_identifier TEXT,
+        sms_keywords TEXT,
+        suggested_type TEXT NOT NULL DEFAULT 'checking',
+        confidence_score REAL NOT NULL DEFAULT 0.5,
+        transaction_count INTEGER NOT NULL DEFAULT 1,
+        first_seen_date TEXT NOT NULL,
+        last_seen_date TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        merged_into_account_id INTEGER REFERENCES accounts(id),
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )''');
+    await db.execute('''
+      CREATE TABLE pending_actions(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        action_type TEXT NOT NULL,
+        priority TEXT NOT NULL DEFAULT 'medium',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        transaction_id INTEGER REFERENCES transactions(id),
+        account_candidate_id INTEGER REFERENCES account_candidates(id),
+        sms_source TEXT,
+        metadata TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        resolved_at TEXT,
+        resolution_action TEXT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL
+      )''');
+    await db.execute('''
+      CREATE TABLE recurring_patterns(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        merchant TEXT,
+        category TEXT NOT NULL,
+        type TEXT NOT NULL,
+        average_amount REAL NOT NULL,
+        amount_variance REAL NOT NULL,
+        frequency TEXT NOT NULL,
+        interval_days INTEGER NOT NULL,
+        occurrence_count INTEGER NOT NULL,
+        confidence_score REAL NOT NULL,
+        first_occurrence TEXT NOT NULL,
+        last_occurrence TEXT NOT NULL,
+        next_expected_date TEXT,
+        transaction_ids TEXT NOT NULL,
+        account_id INTEGER REFERENCES accounts(id),
+        status TEXT NOT NULL DEFAULT 'candidate',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )''');
+    await db.execute('''
+      CREATE TABLE sms_templates(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        institution_name TEXT NOT NULL,
+        sender_patterns TEXT NOT NULL,
+        message_pattern TEXT NOT NULL,
+        amount_pattern TEXT,
+        merchant_pattern TEXT,
+        account_id_pattern TEXT,
+        balance_pattern TEXT,
+        transaction_type TEXT NOT NULL,
+        match_count INTEGER NOT NULL DEFAULT 0,
+        user_confirmations INTEGER NOT NULL DEFAULT 0,
+        user_rejections INTEGER NOT NULL DEFAULT 0,
+        accuracy REAL NOT NULL DEFAULT 0.5,
+        is_user_created INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_used TEXT
+      )''');
+    await db.execute('''
+      CREATE TABLE transfer_pairs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        debit_transaction_id INTEGER NOT NULL REFERENCES transactions(id),
+        credit_transaction_id INTEGER NOT NULL REFERENCES transactions(id),
+        amount REAL NOT NULL,
+        timestamp TEXT NOT NULL,
+        source_account_id INTEGER NOT NULL REFERENCES accounts(id),
+        destination_account_id INTEGER NOT NULL REFERENCES accounts(id),
+        confidence_score REAL NOT NULL,
+        detection_method TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'detected',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )''');
+    await db.execute('''
+      CREATE TABLE merchant_mappings(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        extracted_name TEXT NOT NULL,
+        correct_name TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(extracted_name, correct_name)
+      )''');
+    
     // Seed default categories
     await _seedDefaultCategories(db);
   }
@@ -230,19 +524,19 @@ class AppDatabase {
   // ── Categories ────────────────────────────────────────────────────────────
 
   static Future<List<Category>> getCategories() async {
-    final rows = await (await db).query('categories',
+    final rows = await (await db()).query('categories',
         orderBy: 'parent_id ASC, name ASC');
     return rows.map(Category.fromMap).toList();
   }
 
   static Future<List<Category>> getTopLevelCategories() async {
-    final rows = await (await db).query('categories',
+    final rows = await (await db()).query('categories',
         where: 'parent_id IS NULL', orderBy: 'name ASC');
     return rows.map(Category.fromMap).toList();
   }
 
   static Future<List<Category>> getSubcategories(int parentId) async {
-    final rows = await (await db).query('categories',
+    final rows = await (await db()).query('categories',
         where: 'parent_id = ?',
         whereArgs: [parentId],
         orderBy: 'name ASC');
@@ -250,14 +544,14 @@ class AppDatabase {
   }
 
   static Future<int> insertCategory(Category c) async =>
-      (await db).insert('categories', c.toMap()..remove('id'));
+      (await db()).insert('categories', c.toMap()..remove('id'));
 
   static Future<void> updateCategory(Category c) async =>
-      (await db).update('categories', c.toMap(),
+      (await db()).update('categories', c.toMap(),
           where: 'id = ?', whereArgs: [c.id]);
 
   static Future<void> deleteCategory(int id) async {
-    final d = await db;
+    final d = await db();
     await d.delete('categories', where: 'parent_id = ?', whereArgs: [id]);
     await d.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
@@ -265,21 +559,21 @@ class AppDatabase {
   // ── Accounts ────────────────────────────────────────────────────────────────
 
   static Future<int> insertAccount(Account a) async =>
-      (await db).insert('accounts', a.toMap()..remove('id'));
+      (await db()).insert('accounts', a.toMap()..remove('id'));
 
   static Future<List<Account>> getAccounts() async {
-    final rows = await (await db).query('accounts',
+    final rows = await (await db()).query('accounts',
         where: 'deleted_at IS NULL',
         orderBy: 'name ASC');
     return rows.map(Account.fromMap).toList();
   }
 
   static Future<void> updateAccount(Account a) async =>
-      (await db).update('accounts', a.toMap(), where: 'id=?', whereArgs: [a.id]);
+      (await db()).update('accounts', a.toMap(), where: 'id=?', whereArgs: [a.id]);
 
   /// Soft delete account (marks as deleted, doesn't remove)
   static Future<void> deleteAccount(int id) async {
-    final d = await db;
+    final d = await db();
     await d.update('accounts',
         {'deleted_at': SoftDeleteHelper.now()},
         where: 'id=?', whereArgs: [id]);
@@ -288,7 +582,7 @@ class AppDatabase {
 
   /// Restore soft-deleted account
   static Future<void> restoreAccount(int id) async {
-    await (await db).update('accounts',
+    await (await db()).update('accounts',
         {'deleted_at': null},
         where: 'id=?', whereArgs: [id]);
     AppLogger.db('restoreAccount', detail: 'id=$id');
@@ -297,7 +591,7 @@ class AppDatabase {
   /// Permanently delete account (cannot be undone)
   /// Also nullifies account_id on all transactions
   static Future<void> permanentlyDeleteAccount(int id) async {
-    final d = await db;
+    final d = await db();
     await d.update('transactions', {'account_id': null},
         where: 'account_id=?', whereArgs: [id]);
     await d.delete('accounts', where: 'id=?', whereArgs: [id]);
@@ -313,7 +607,7 @@ class AppDatabase {
     String? note,
     DateTime? date,
   }) async {
-    final d = await db;
+    final d = await db();
     final now = date ?? DateTime.now();
     final memo = note ?? 'transfer';
     await d.transaction((txn) async {
@@ -339,7 +633,7 @@ class AppDatabase {
   /// Running balance = opening balance + income − expenses for that account.
   /// Credit cards: opening balance is amount already owed; expenses add to it.
   static Future<double> accountBalance(int accountId, Account account) async {
-    final d = await db;
+    final d = await db();
     final income = await d.rawQuery(
       "SELECT SUM(amount) as t FROM transactions WHERE deleted_at IS NULL AND account_id=? AND type='income'",
       [accountId],
@@ -357,20 +651,42 @@ class AppDatabase {
   // ── Transactions ─────────────────────────────────────────────────────────────
 
   static Future<int> insertTransaction(model.Transaction t) async {
-    final d = await db;
+    final d = await db();
     final id = await d.insert('transactions', t.toMap()..remove('id'));
     AppLogger.db('insertTransaction', detail: '${t.type} \$${t.amount} ${t.category}');
+    
+    // Trigger notifications
+    final transactionWithId = model.Transaction(
+      id: id,
+      type: t.type,
+      amount: t.amount,
+      category: t.category,
+      note: t.note,
+      date: t.date,
+      accountId: t.accountId,
+      recurringId: t.recurringId,
+      smsSource: t.smsSource,
+    );
+    
+    // Show transaction notification
+    NotificationService.notifyTransaction(transactionWithId);
+    
+    // Check budget warnings for expenses
+    if (t.type == 'expense') {
+      NotificationService.checkBudgetWarnings(t.category, t.date);
+    }
+    
     return id;
   }
 
   static Future<void> updateTransaction(model.Transaction t) async {
-    await (await db).update('transactions', t.toMap(), where: 'id=?', whereArgs: [t.id]);
+    await (await db()).update('transactions', t.toMap(), where: 'id=?', whereArgs: [t.id]);
     AppLogger.db('updateTransaction', detail: 'id=${t.id} ${t.type} \$${t.amount}');
   }
 
   /// Soft delete transaction
   static Future<void> deleteTransaction(int id) async {
-    await (await db).update('transactions',
+    await (await db()).update('transactions',
         {'deleted_at': SoftDeleteHelper.now()},
         where: 'id=?', whereArgs: [id]);
     AppLogger.db('softDeleteTransaction', detail: 'id=$id');
@@ -378,7 +694,7 @@ class AppDatabase {
 
   /// Restore soft-deleted transaction
   static Future<void> restoreTransaction(int id) async {
-    await (await db).update('transactions',
+    await (await db()).update('transactions',
         {'deleted_at': null},
         where: 'id=?', whereArgs: [id]);
     AppLogger.db('restoreTransaction', detail: 'id=$id');
@@ -386,7 +702,7 @@ class AppDatabase {
 
   /// Permanently delete transaction (cannot be undone)
   static Future<void> permanentlyDeleteTransaction(int id) async {
-    await (await db).delete('transactions', where: 'id=?', whereArgs: [id]);
+    await (await db()).delete('transactions', where: 'id=?', whereArgs: [id]);
     AppLogger.db('permanentlyDeleteTransaction', detail: 'id=$id');
   }
 
@@ -397,7 +713,7 @@ class AppDatabase {
     String? keyword,
     int? accountId,
   }) async {
-    final d = await db;
+    final d = await db();
     final where = <String>['deleted_at IS NULL'];
     final args = <dynamic>[];
     if (type != null) { where.add('type = ?'); args.add(type); }
@@ -418,9 +734,9 @@ class AppDatabase {
   }
 
   static Future<double> monthlyTotal(String type, int month, int year) async {
-    final d = await db;
-    final start = DateTime(year, month, 1).toIso8601String();
-    final end = DateTime(year, month + 1, 1).toIso8601String();
+    final d = await db();
+    final start = DateTime(year, month).toIso8601String();
+    final end = DateTime(year, month + 1).toIso8601String();
     final result = await d.rawQuery(
       "SELECT SUM(amount) as total FROM transactions WHERE deleted_at IS NULL AND type=? AND date>=? AND date<? AND category != 'transfer'",
       [type, start, end],
@@ -429,24 +745,24 @@ class AppDatabase {
   }
 
   static Future<Map<String, double>> monthlyExpenseByCategory(int month, int year) async {
-    final d = await db;
-    final start = DateTime(year, month, 1).toIso8601String();
-    final end = DateTime(year, month + 1, 1).toIso8601String();
+    final d = await db();
+    final start = DateTime(year, month).toIso8601String();
+    final end = DateTime(year, month + 1).toIso8601String();
     final rows = await d.rawQuery(
-      "SELECT LOWER(category) as category, SUM(amount) as total FROM transactions "
+      'SELECT LOWER(category) as category, SUM(amount) as total FROM transactions '
       "WHERE deleted_at IS NULL AND type='expense' AND category != 'transfer' AND date>=? AND date<? GROUP BY LOWER(category)",
       [start, end],
     );
     return {
       for (final r in rows)
         if (r['category'] != null)
-          r['category'] as String: (r['total'] as num?)?.toDouble() ?? 0
+          r['category']! as String: (r['total'] as num?)?.toDouble() ?? 0
     };
   }
 
   /// Returns the sum of [type] transactions in a custom date range.
   static Future<double> rangeTotal(String type, DateTime from, DateTime to) async {
-    final d = await db;
+    final d = await db();
     final result = await d.rawQuery(
       "SELECT SUM(amount) as total FROM transactions WHERE deleted_at IS NULL AND type=? AND date>=? AND date<=? AND category != 'transfer'",
       [type, from.toIso8601String(), to.toIso8601String()],
@@ -456,27 +772,27 @@ class AppDatabase {
 
   /// Returns a map of category -> total for expenses in a custom date range.
   static Future<Map<String, double>> rangeExpenseByCategory(DateTime from, DateTime to) async {
-    final d = await db;
+    final d = await db();
     final rows = await d.rawQuery(
-      "SELECT LOWER(category) as category, SUM(amount) as total FROM transactions "
+      'SELECT LOWER(category) as category, SUM(amount) as total FROM transactions '
       "WHERE deleted_at IS NULL AND type='expense' AND category != 'transfer' AND date>=? AND date<=? GROUP BY LOWER(category)",
       [from.toIso8601String(), to.toIso8601String()],
     );
     return {
       for (final r in rows)
         if (r['category'] != null)
-          r['category'] as String: (r['total'] as num?)?.toDouble() ?? 0
+          r['category']! as String: (r['total'] as num?)?.toDouble() ?? 0
     };
   }
 
   // ── Budgets ──────────────────────────────────────────────────────────────────
 
   static Future<void> upsertBudget(Budget b) async =>
-      (await db).insert('budgets', b.toMap()..remove('id'),
+      (await db()).insert('budgets', b.toMap()..remove('id'),
           conflictAlgorithm: ConflictAlgorithm.replace);
 
   static Future<List<Budget>> getBudgets(int month, int year) async {
-    final rows = await (await db).query('budgets',
+    final rows = await (await db()).query('budgets',
         where: 'deleted_at IS NULL AND month=? AND year=?',
         whereArgs: [month, year]);
     return rows.map(Budget.fromMap).toList();
@@ -485,24 +801,24 @@ class AppDatabase {
   // ── Savings ──────────────────────────────────────────────────────────────────
 
   static Future<int> insertGoal(SavingsGoal g) async =>
-      (await db).insert('savings_goals', g.toMap()..remove('id'));
+      (await db()).insert('savings_goals', g.toMap()..remove('id'));
 
   static Future<List<SavingsGoal>> getGoals() async {
-    final rows = await (await db).query('savings_goals',
+    final rows = await (await db()).query('savings_goals',
         where: 'deleted_at IS NULL',
         orderBy: 'priority ASC, name ASC');
     return rows.map(SavingsGoal.fromMap).toList();
   }
 
   static Future<void> updateGoal(SavingsGoal g) async =>
-      (await db).update('savings_goals', g.toMap(), where: 'id=?', whereArgs: [g.id]);
+      (await db()).update('savings_goals', g.toMap(), where: 'id=?', whereArgs: [g.id]);
 
   static Future<void> updateGoalSaved(int id, double saved) async =>
-      (await db).update('savings_goals', {'saved': saved}, where: 'id=?', whereArgs: [id]);
+      (await db()).update('savings_goals', {'saved': saved}, where: 'id=?', whereArgs: [id]);
 
   /// Soft delete savings goal
   static Future<void> deleteGoal(int id) async {
-    await (await db).update('savings_goals',
+    await (await db()).update('savings_goals',
         {'deleted_at': SoftDeleteHelper.now()},
         where: 'id=?', whereArgs: [id]);
     AppLogger.db('softDeleteGoal', detail: 'id=$id');
@@ -510,7 +826,7 @@ class AppDatabase {
 
   /// Restore soft-deleted goal
   static Future<void> restoreGoal(int id) async {
-    await (await db).update('savings_goals',
+    await (await db()).update('savings_goals',
         {'deleted_at': null},
         where: 'id=?', whereArgs: [id]);
     AppLogger.db('restoreGoal', detail: 'id=$id');
@@ -518,29 +834,29 @@ class AppDatabase {
 
   /// Permanently delete goal (cannot be undone)
   static Future<void> permanentlyDeleteGoal(int id) async {
-    await (await db).delete('savings_goals', where: 'id=?', whereArgs: [id]);
+    await (await db()).delete('savings_goals', where: 'id=?', whereArgs: [id]);
     AppLogger.db('permanentlyDeleteGoal', detail: 'id=$id');
   }
 
   // ── Recurring Transactions ───────────────────────────────────────────────────
 
   static Future<int> insertRecurring(RecurringTransaction r) async =>
-      (await db).insert('recurring_transactions', r.toMap()..remove('id'));
+      (await db()).insert('recurring_transactions', r.toMap()..remove('id'));
 
   static Future<List<RecurringTransaction>> getRecurring() async {
-    final rows = await (await db).query('recurring_transactions',
+    final rows = await (await db()).query('recurring_transactions',
         where: 'deleted_at IS NULL',
         orderBy: 'next_due_date ASC');
     return rows.map(RecurringTransaction.fromMap).toList();
   }
 
   static Future<void> updateRecurring(RecurringTransaction r) async =>
-      (await db).update('recurring_transactions', r.toMap(),
+      (await db()).update('recurring_transactions', r.toMap(),
           where: 'id=?', whereArgs: [r.id]);
 
   /// Soft delete recurring transaction
   static Future<void> deleteRecurring(int id) async {
-    await (await db).update('recurring_transactions',
+    await (await db()).update('recurring_transactions',
         {'deleted_at': SoftDeleteHelper.now()},
         where: 'id=?', whereArgs: [id]);
     AppLogger.db('softDeleteRecurring', detail: 'id=$id');
@@ -548,7 +864,7 @@ class AppDatabase {
 
   /// Restore soft-deleted recurring transaction
   static Future<void> restoreRecurring(int id) async {
-    await (await db).update('recurring_transactions',
+    await (await db()).update('recurring_transactions',
         {'deleted_at': null},
         where: 'id=?', whereArgs: [id]);
     AppLogger.db('restoreRecurring', detail: 'id=$id');
@@ -556,7 +872,7 @@ class AppDatabase {
 
   /// Permanently delete recurring transaction (cannot be undone)
   static Future<void> permanentlyDeleteRecurring(int id) async {
-    await (await db).delete('recurring_transactions', where: 'id=?', whereArgs: [id]);
+    await (await db()).delete('recurring_transactions', where: 'id=?', whereArgs: [id]);
     AppLogger.db('permanentlyDeleteRecurring', detail: 'id=$id');
   }
 
@@ -564,7 +880,7 @@ class AppDatabase {
 
   /// Get statistics about deleted items
   static Future<DeletedItemsStats> getDeletedItemsStats() async {
-    final d = await db;
+    final d = await db();
     
     final txnCount = await d.rawQuery(
       'SELECT COUNT(*) as count FROM transactions WHERE deleted_at IS NOT NULL'
@@ -593,7 +909,7 @@ class AppDatabase {
 
   /// Get all deleted transactions
   static Future<List<model.Transaction>> getDeletedTransactions() async {
-    final rows = await (await db).query('transactions',
+    final rows = await (await db()).query('transactions',
         where: 'deleted_at IS NOT NULL',
         orderBy: 'deleted_at DESC');
     return rows.map(model.Transaction.fromMap).toList();
@@ -601,7 +917,7 @@ class AppDatabase {
 
   /// Get all deleted accounts
   static Future<List<Account>> getDeletedAccounts() async {
-    final rows = await (await db).query('accounts',
+    final rows = await (await db()).query('accounts',
         where: 'deleted_at IS NOT NULL',
         orderBy: 'deleted_at DESC');
     return rows.map(Account.fromMap).toList();
@@ -609,7 +925,7 @@ class AppDatabase {
 
   /// Get all deleted goals
   static Future<List<SavingsGoal>> getDeletedGoals() async {
-    final rows = await (await db).query('savings_goals',
+    final rows = await (await db()).query('savings_goals',
         where: 'deleted_at IS NOT NULL',
         orderBy: 'deleted_at DESC');
     return rows.map(SavingsGoal.fromMap).toList();
@@ -617,7 +933,7 @@ class AppDatabase {
 
   /// Get all deleted recurring transactions
   static Future<List<RecurringTransaction>> getDeletedRecurring() async {
-    final rows = await (await db).query('recurring_transactions',
+    final rows = await (await db()).query('recurring_transactions',
         where: 'deleted_at IS NOT NULL',
         orderBy: 'deleted_at DESC');
     return rows.map(RecurringTransaction.fromMap).toList();
@@ -625,7 +941,7 @@ class AppDatabase {
 
   /// Purge old deleted items (default: older than 30 days)
   static Future<int> purgeOldDeletedItems({int retentionDays = 30}) async {
-    final d = await db;
+    final d = await db();
     final cutoff = DateTime.now()
         .subtract(Duration(days: retentionDays))
         .millisecondsSinceEpoch;
@@ -656,7 +972,7 @@ class AppDatabase {
 
   static Future<void> deleteAllData() async {
     AppLogger.userAction('deleteAllData', detail: 'All data wiped');
-    final d = await db;
+    final d = await db();
     await d.transaction((txn) async {
       await txn.delete('recurring_transactions');
       await txn.delete('transactions');
@@ -681,3 +997,4 @@ class AppDatabase {
     return lines.join('\n');
   }
 }
+

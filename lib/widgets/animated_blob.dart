@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 
 class AnimatedBlob extends StatefulWidget {
-  final Color color;
-  final double size;
-  final Duration duration;
-  final Alignment alignment;
 
   const AnimatedBlob({
-    super.key,
-    required this.color,
+    required this.color, super.key,
     this.size = 800,
     this.duration = const Duration(seconds: 8),
     this.alignment = Alignment.topLeft,
   });
+  final Color color;
+  final double size;
+  final Duration duration;
+  final Alignment alignment;
 
   @override
   State<AnimatedBlob> createState() => _AnimatedBlobState();

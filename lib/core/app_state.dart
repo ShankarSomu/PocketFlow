@@ -109,18 +109,10 @@ class ErrorState extends ChangeNotifier {
 
 /// Application error with context and retry support
 class AppError {
-  final String message;
-  final String? technicalDetails;
-  final ErrorType type;
-  final DateTime timestamp;
-  final StackTrace? stackTrace;
-  final bool isRetryable;
-  final String? actionableMessage;
 
   AppError({
     required this.message,
-    this.technicalDetails,
-    required this.type,
+    required this.type, this.technicalDetails,
     DateTime? timestamp,
     this.stackTrace,
     this.isRetryable = true,
@@ -128,7 +120,7 @@ class AppError {
   }) : timestamp = timestamp ?? DateTime.now();
 
   /// Create error from exception
-  factory AppError.fromException(dynamic exception, [StackTrace? stackTrace]) {
+  factory AppError.fromException(exception, [StackTrace? stackTrace]) {
     if (exception is AppError) return exception;
 
     String message = exception.toString();
@@ -204,6 +196,13 @@ class AppError {
         isRetryable: false,
         actionableMessage: 'Please grant the required permissions in settings.',
       );
+  final String message;
+  final String? technicalDetails;
+  final ErrorType type;
+  final DateTime timestamp;
+  final StackTrace? stackTrace;
+  final bool isRetryable;
+  final String? actionableMessage;
 
   /// Get user-friendly error message
   String get userMessage => actionableMessage ?? message;
@@ -224,13 +223,13 @@ enum ErrorType {
 
 /// Global app state combining loading and error states
 class AppState extends ChangeNotifier {
-  final LoadingState loadingState = LoadingState();
-  final ErrorState errorState = ErrorState();
 
   AppState() {
     loadingState.addListener(notifyListeners);
     errorState.addListener(notifyListeners);
   }
+  final LoadingState loadingState = LoadingState();
+  final ErrorState errorState = ErrorState();
 
   @override
   void dispose() {

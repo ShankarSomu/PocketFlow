@@ -1,39 +1,47 @@
 import 'package:flutter/material.dart';
 
 class SettingsActionButton extends StatelessWidget {
+
+  const SettingsActionButton({
+    required this.label, required this.icon, required this.onTap, super.key,
+    this.isDestructive = false,
+  });
   final String label;
   final IconData icon;
   final VoidCallback onTap;
-
-  const SettingsActionButton({
-    super.key,
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
+  final bool isDestructive;
 
   @override
   Widget build(BuildContext context) {
+    final color = isDestructive 
+        ? Theme.of(context).colorScheme.error 
+        : Theme.of(context).colorScheme.primary;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: isDestructive 
+              ? Theme.of(context).colorScheme.error.withValues(alpha: 0.08)
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+              color: isDestructive 
+                  ? Theme.of(context).colorScheme.error.withValues(alpha: 0.3)
+                  : Theme.of(context).colorScheme.outlineVariant),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+            Icon(icon, size: 16, color: color),
             const SizedBox(width: 8),
             Text(label,
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8))),
+                    color: isDestructive ? color : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8))),
           ],
         ),
       ),
@@ -42,23 +50,16 @@ class SettingsActionButton extends StatelessWidget {
 }
 
 class DropdownRow<T> extends StatelessWidget {
+
+  const DropdownRow({
+    required this.icon, required this.iconColor, required this.title, required this.subtitle, required this.value, required this.items, required this.onChanged, super.key,
+  });
   final IconData icon;
   final Color iconColor;
   final String title, subtitle;
   final T value;
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?> onChanged;
-
-  const DropdownRow({
-    super.key,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +88,7 @@ class DropdownRow<T> extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurface)),
                 Text(subtitle,
                     style: TextStyle(
-                        fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                        fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
               ],
             ),
           ),
@@ -99,10 +100,10 @@ class DropdownRow<T> extends StatelessWidget {
             underline: const SizedBox(),
             style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w600),
             icon: Icon(Icons.expand_more_rounded,
-                size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
           ),
         ],
       ),
@@ -111,20 +112,14 @@ class DropdownRow<T> extends StatelessWidget {
 }
 
 class ActionRow extends StatelessWidget {
+  
+  const ActionRow({
+    required this.icon, required this.iconColor, required this.title, required this.subtitle, required this.trailingLabel, required this.onTap, super.key,
+  });
   final IconData icon;
   final Color iconColor;
   final String title, subtitle, trailingLabel;
   final VoidCallback onTap;
-  
-  const ActionRow({
-    super.key,
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.trailingLabel,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +134,7 @@ class ActionRow extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, size: 18, color: iconColor),
@@ -153,14 +148,14 @@ class ActionRow extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   Text(subtitle,
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
                 ],
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(trailingLabel,
@@ -175,19 +170,14 @@ class ActionRow extends StatelessWidget {
 }
 
 class ToggleRow extends StatelessWidget {
+
+  const ToggleRow({
+    required this.icon, required this.title, required this.subtitle, required this.value, required this.onChanged, super.key,
+  });
   final IconData icon;
   final String title, subtitle;
   final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const ToggleRow({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +196,7 @@ class ToggleRow extends StatelessWidget {
             ),
             child: Icon(icon,
                 size: 17,
-                color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -220,14 +210,14 @@ class ToggleRow extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurface)),
                 Text(subtitle,
                     style: TextStyle(
-                        fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                        fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
               ],
             ),
           ),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Theme.of(context).colorScheme.primary,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
@@ -235,3 +225,4 @@ class ToggleRow extends StatelessWidget {
     );
   }
 }
+

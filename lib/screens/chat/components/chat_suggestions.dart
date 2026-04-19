@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Suggestion chips widget for empty state and above input
 class ChatSuggestions extends StatelessWidget {
-  final Function(String)? onSuggestionTap;
-  final List<String> suggestions;
   
   const ChatSuggestions({
     super.key,
@@ -17,6 +15,8 @@ class ChatSuggestions extends StatelessWidget {
       'Show recent transactions',
     ],
   });
+  final Function(String)? onSuggestionTap;
+  final List<String> suggestions;
 
   @override
   Widget build(BuildContext context) {

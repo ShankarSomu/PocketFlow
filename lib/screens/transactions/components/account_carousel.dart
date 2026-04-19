@@ -3,26 +3,35 @@ import 'package:intl/intl.dart';
 import '../../../../models/account.dart';
 import '../../../../services/theme_service.dart';
 import '../../../../theme/app_theme.dart';
+import '../../intelligence/intelligence_screens.dart';
 import 'transaction_helpers.dart';
 
 /// Account carousel for transactions screen with swipeable account cards
 class TransactionAccountCarousel extends StatelessWidget {
-  final List<Account> accounts;
-  final Map<int, double> balances;
-  final int carouselIdx; // 0 = All, 1..N = individual
-  final ValueChanged<int> onIndexChanged;
-  final NumberFormat fmt;
 
   const TransactionAccountCarousel({
-    super.key,
     required this.accounts,
     required this.balances,
     required this.carouselIdx,
     required this.onIndexChanged,
     required this.fmt,
+    this.hasIntelligence = false,
+    this.pendingActionsCount = 0,
+    this.transfersCount = 0,
+    this.patternsCount = 0,
+    super.key,
   });
+  final List<Account> accounts;
+  final Map<int, double> balances;
+  final int carouselIdx; // 0 = All, 1..N = individual accounts, last = intelligence (if hasIntelligence)
+  final ValueChanged<int> onIndexChanged;
+  final NumberFormat fmt;
+  final bool hasIntelligence;
+  final int pendingActionsCount;
+  final int transfersCount;
+  final int patternsCount;
 
-  int get _total => accounts.length + 1; // +1 for "All" card
+  int get _total => accounts.length + 1 + (hasIntelligence ? 1 : 0); // +1 for "All" card, +1 for intelligence if present
 
   void _prev() => onIndexChanged((carouselIdx - 1 + _total) % _total);
   void _next() => onIndexChanged((carouselIdx + 1) % _total);
@@ -37,6 +46,7 @@ class TransactionAccountCarousel extends StatelessWidget {
     }
 
     Widget cardContent;
+    final int intelligenceIdx = accounts.length + 1; // Intelligence card is after all account cards
 
     if (carouselIdx == 0) {
       // All accounts card
@@ -51,7 +61,7 @@ class TransactionAccountCarousel extends StatelessWidget {
                   color: Theme.of(context)
                       .colorScheme
                       .onPrimary
-                      .withOpacity(0.15),
+                      .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.account_balance_wallet_rounded,
@@ -72,7 +82,7 @@ class TransactionAccountCarousel extends StatelessWidget {
                   color: Theme.of(context)
                       .colorScheme
                       .onPrimary
-                      .withOpacity(0.12),
+                      .withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('${accounts.length} accounts',
@@ -80,9 +90,37 @@ class TransactionAccountCarousel extends StatelessWidget {
                         color: Theme.of(context)
                             .colorScheme
                             .onPrimary
-                            .withOpacity(0.7),
+                            .withValues(alpha: 0.7),
                         fontSize: 11)),
               ),
+              if (hasIntelligence) ...[
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: 'View Intelligence',
+                  child: GestureDetector(
+                    onTap: () {
+                      // Navigate to intelligence card in carousel
+                      onIndexChanged(accounts.length + 1);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: (pendingActionsCount + transfersCount + patternsCount) > 0
+                            ? Colors.orange.shade100
+                            : Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.auto_graph_rounded,
+                        color: (pendingActionsCount + transfersCount + patternsCount) > 0
+                            ? Colors.orange.shade700
+                            : Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 10),
@@ -91,7 +129,7 @@ class TransactionAccountCarousel extends StatelessWidget {
                   color: Theme.of(context)
                       .colorScheme
                       .onPrimary
-                      .withOpacity(0.7),
+                      .withValues(alpha: 0.7),
                   fontSize: 12)),
           const SizedBox(height: 4),
           Text(fmt.format(totalBalance),
@@ -100,6 +138,137 @@ class TransactionAccountCarousel extends StatelessWidget {
                   fontSize: 28,
                   fontWeight: FontWeight.w300,
                   letterSpacing: -0.5)),
+        ],
+      );
+    } else if (hasIntelligence && carouselIdx == intelligenceIdx) {
+      // Intelligence card
+      final totalItems = pendingActionsCount + transfersCount + patternsCount;
+      cardContent = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onPrimary
+                      .withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.auto_graph_rounded,
+                    color: Theme.of(context).colorScheme.onPrimary, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Intelligence',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700)),
+                    Text(
+                      'SMS Pattern Detection',
+                      style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withValues(alpha: 0.7),
+                          fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: totalItems > 0 
+                      ? Colors.orange.shade100
+                      : Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  totalItems > 0 ? '$totalItems items' : 'No items',
+                  style: TextStyle(
+                      color: totalItems > 0 
+                          ? Colors.orange.shade700
+                          : Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _IntelligenceStatItem(
+                  icon: Icons.pending_actions_rounded,
+                  label: 'Pending',
+                  count: pendingActionsCount,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _IntelligenceStatItem(
+                  icon: Icons.swap_horiz_rounded,
+                  label: 'Transfers',
+                  count: transfersCount,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _IntelligenceStatItem(
+                  icon: Icons.repeat_rounded,
+                  label: 'Patterns',
+                  count: patternsCount,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const IntelligenceDashboardScreen(),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'View Details',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       );
     } else {
@@ -116,7 +285,7 @@ class TransactionAccountCarousel extends StatelessWidget {
                   color: Theme.of(context)
                       .colorScheme
                       .onPrimary
-                      .withOpacity(0.15),
+                      .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(accountIcon(account.type),
@@ -144,7 +313,7 @@ class TransactionAccountCarousel extends StatelessWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .onPrimary
-                              .withOpacity(0.7),
+                              .withValues(alpha: 0.7),
                           fontSize: 11),
                     ),
                   ],
@@ -159,7 +328,7 @@ class TransactionAccountCarousel extends StatelessWidget {
                 color: Theme.of(context)
                     .colorScheme
                     .onPrimary
-                    .withOpacity(0.7),
+                    .withValues(alpha: 0.7),
                 fontSize: 12),
           ),
           const SizedBox(height: 4),
@@ -185,8 +354,7 @@ class TransactionAccountCarousel extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: AppTheme.cardShadow,
             border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              width: 1,
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             ),
           ),
           child: cardContent,
@@ -209,7 +377,7 @@ class TransactionAccountCarousel extends StatelessWidget {
                             : Theme.of(context)
                                 .colorScheme
                                 .onPrimary
-                                .withOpacity(0.38),
+                                .withValues(alpha: 0.38),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     )),
@@ -232,14 +400,12 @@ class TransactionAccountCarousel extends StatelessWidget {
 }
 
 class CarouselArrow extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
 
   const CarouselArrow({
-    super.key,
-    required this.icon,
-    required this.onTap,
+    required this.icon, required this.onTap, super.key,
   });
+  final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -249,13 +415,62 @@ class CarouselArrow extends StatelessWidget {
         width: 36,
         height: 56,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.18),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon,
-            color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
+            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9),
             size: 28),
       ),
     );
   }
 }
+
+class _IntelligenceStatItem extends StatelessWidget {
+  const _IntelligenceStatItem({
+    required this.icon,
+    required this.label,
+    required this.count,
+  });
+
+  final IconData icon;
+  final String label;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9),
+            size: 18,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

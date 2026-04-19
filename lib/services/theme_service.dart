@@ -7,10 +7,10 @@ enum AppAccentColor { emerald, blue, purple, orange, rose, slate }
 enum AppThemeMode { system, light, dark }
 
 class ThemeService extends ChangeNotifier {
-  static final ThemeService instance = ThemeService._();
   ThemeService._();
+  static final ThemeService instance = ThemeService._();
 
-  AppAccentColor _accent = AppAccentColor.blue;
+  AppAccentColor _accent = AppAccentColor.emerald;
   AppThemeMode _mode = AppThemeMode.light;
   double _contrast = 1.0; // 0.7 – 1.3
   int _textSizeIndex = 1; // 0=small, 1=normal, 2=large
@@ -88,8 +88,8 @@ class ThemeService extends ChangeNotifier {
 
   /// A dynamic shadow using the primary color — replaces AppTheme.blueShadow.
   List<BoxShadow> get primaryShadow => [
-    BoxShadow(color: primaryColor.withOpacity(0.40), blurRadius: 20, offset: const Offset(0, 6)),
-    BoxShadow(color: primaryColor.withOpacity(0.15), blurRadius: 6, offset: const Offset(0, 2)),
+    BoxShadow(color: primaryColor.withValues(alpha: 0.40), blurRadius: 20, offset: const Offset(0, 6)),
+    BoxShadow(color: primaryColor.withValues(alpha: 0.15), blurRadius: 6, offset: const Offset(0, 2)),
   ];
 
   /// A darker shade of the primary color (for gradients/shadows).
@@ -118,7 +118,7 @@ class ThemeService extends ChangeNotifier {
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    final accentIdx = prefs.getInt('theme_accent') ?? 1; // default: blue
+    final accentIdx = prefs.getInt('theme_accent') ?? 0; // default: emerald
     final modeIdx = prefs.getInt('theme_mode') ?? 1; // default: light
     final contrast = prefs.getDouble('theme_contrast') ?? 1.0;
     final textSize = prefs.getInt('theme_text_size') ?? 1; // default: normal
@@ -172,11 +172,10 @@ class ThemeService extends ChangeNotifier {
     final seed = primaryColor;
     final scheme = ColorScheme.fromSeed(
       seedColor: seed,
-      brightness: Brightness.light,
     ).copyWith(
       primary: seed,
       onPrimary: Colors.white,
-      secondary: seed.withOpacity(0.7),
+      secondary: seed.withValues(alpha: 0.7),
       surface: const Color(0xFFFAFAFA),
       surfaceContainer: const Color(0xFFF5F5F5),
       surfaceContainerHighest: const Color(0xFFEEEEEE),
@@ -193,10 +192,10 @@ class ThemeService extends ChangeNotifier {
       cardTheme: CardThemeData(
         color: const Color(0xFFFAFAFA),
         elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: const Color(0xFFE0E0E0).withOpacity(0.5)),
+          side: BorderSide(color: const Color(0xFFE0E0E0).withValues(alpha: 0.5)),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -222,7 +221,7 @@ class ThemeService extends ChangeNotifier {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: seed,
-          side: BorderSide(color: seed.withOpacity(0.4)),
+          side: BorderSide(color: seed.withValues(alpha: 0.4)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -257,7 +256,7 @@ class ThemeService extends ChangeNotifier {
         thumbColor: WidgetStateProperty.resolveWith((s) =>
             s.contains(WidgetState.selected) ? seed : null),
         trackColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? seed.withOpacity(0.4) : null),
+            s.contains(WidgetState.selected) ? seed.withValues(alpha: 0.4) : null),
       ),
       dividerTheme: const DividerThemeData(color: Color(0xFFE0E0E0), thickness: 1, space: 1),
       extensions: const <ThemeExtension<dynamic>>[
@@ -290,10 +289,10 @@ class ThemeService extends ChangeNotifier {
       cardTheme: CardThemeData(
         color: const Color(0xFF1C1C1E),
         elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.3),
+        shadowColor: Colors.black.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: const Color(0xFF3A3A3C).withOpacity(0.3)),
+          side: BorderSide(color: const Color(0xFF3A3A3C).withValues(alpha: 0.3)),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -319,7 +318,7 @@ class ThemeService extends ChangeNotifier {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: seed,
-          side: BorderSide(color: seed.withOpacity(0.4)),
+          side: BorderSide(color: seed.withValues(alpha: 0.4)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -354,7 +353,7 @@ class ThemeService extends ChangeNotifier {
         thumbColor: WidgetStateProperty.resolveWith((s) =>
             s.contains(WidgetState.selected) ? seed : null),
         trackColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? seed.withOpacity(0.4) : null),
+            s.contains(WidgetState.selected) ? seed.withValues(alpha: 0.4) : null),
       ),
       dividerTheme: const DividerThemeData(color: Color(0xFF3A3A3C), thickness: 1, space: 1),
       extensions: const <ThemeExtension<dynamic>>[
@@ -363,3 +362,4 @@ class ThemeService extends ChangeNotifier {
     );
   }
 }
+

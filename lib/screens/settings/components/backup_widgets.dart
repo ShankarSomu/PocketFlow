@@ -3,18 +3,14 @@ import '../../../../services/auth_service.dart';
 import '../../../../services/theme_service.dart';
 
 class BackupStatusCard extends StatelessWidget {
+
+  const BackupStatusCard({
+    required this.folder, required this.lastBackup, required this.isSignedIn, required this.userEmail, super.key,
+  });
   final DriveFolder? folder;
   final String? lastBackup;
   final bool isSignedIn;
   final String? userEmail;
-
-  const BackupStatusCard({
-    super.key,
-    required this.folder,
-    required this.lastBackup,
-    required this.isSignedIn,
-    required this.userEmail,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +35,7 @@ class BackupStatusCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.cloud_sync_rounded,
@@ -57,10 +53,10 @@ class BackupStatusCard extends StatelessWidget {
                         fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(statusLabel,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7), fontSize: 12)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7), fontSize: 12)),
                 const SizedBox(height: 2),
                 Text(detail,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 11)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6), fontSize: 11)),
               ],
             ),
           ),
@@ -68,13 +64,13 @@ class BackupStatusCard extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.15),
+              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               badge,
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7),
                   fontSize: 12,
                   fontWeight: FontWeight.w600),
             ),
@@ -86,14 +82,12 @@ class BackupStatusCard extends StatelessWidget {
 }
 
 class BackupNowButton extends StatelessWidget {
-  final bool backing;
-  final VoidCallback onTap;
   
   const BackupNowButton({
-    super.key,
-    required this.backing,
-    required this.onTap,
+    required this.backing, required this.onTap, super.key,
   });
+  final bool backing;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -119,13 +113,13 @@ class BackupNowButton extends StatelessWidget {
                   height: 16,
                   child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
               const SizedBox(width: 10),
               Text('Backing up...',
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5))),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
             ] else ...[
               Icon(Icons.backup_rounded,
                   color: theme.colorScheme.onPrimary, size: 18),
@@ -144,19 +138,15 @@ class BackupNowButton extends StatelessWidget {
 }
 
 class BackupSettingRow extends StatelessWidget {
+
+  const BackupSettingRow({
+    required this.icon, required this.title, required this.subtitle, required this.onTap, super.key,
+    this.subtitleColor,
+  });
   final IconData icon;
   final String title, subtitle;
   final Color? subtitleColor;
   final VoidCallback onTap;
-
-  const BackupSettingRow({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.subtitleColor,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -188,15 +178,16 @@ class BackupSettingRow extends StatelessWidget {
                   Text(subtitle,
                       style: TextStyle(
                           fontSize: 12,
-                          color: subtitleColor ?? Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                          color: subtitleColor ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
                 ],
               ),
             ),
             Icon(Icons.chevron_right_rounded,
-                size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
           ],
         ),
       ),
     );
   }
 }
+

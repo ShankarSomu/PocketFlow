@@ -79,16 +79,14 @@ mixin OptimizedStateMixin<T extends StatefulWidget> on State<T> {
 
 /// Performance monitoring widget
 class PerformanceMonitor extends StatefulWidget {
+
+  const PerformanceMonitor({
+    required this.child, required this.widgetName, super.key,
+    this.onBuildTimeRecorded,
+  });
   final Widget child;
   final String widgetName;
   final void Function(Duration buildTime)? onBuildTimeRecorded;
-
-  const PerformanceMonitor({
-    super.key,
-    required this.child,
-    required this.widgetName,
-    this.onBuildTimeRecorded,
-  });
 
   @override
   State<PerformanceMonitor> createState() => _PerformanceMonitorState();
@@ -116,16 +114,14 @@ class _PerformanceMonitorState extends State<PerformanceMonitor> {
 
 /// Selectively rebuild only when specific values change
 class SelectiveBuilder<T> extends StatefulWidget {
+
+  const SelectiveBuilder({
+    required this.value, required this.builder, super.key,
+    this.shouldRebuild,
+  });
   final T value;
   final Widget Function(BuildContext context, T value) builder;
   final bool Function(T previous, T current)? shouldRebuild;
-
-  const SelectiveBuilder({
-    super.key,
-    required this.value,
-    required this.builder,
-    this.shouldRebuild,
-  });
 
   @override
   State<SelectiveBuilder<T>> createState() => _SelectiveBuilderState<T>();
@@ -156,14 +152,13 @@ class _SelectiveBuilderState<T> extends State<SelectiveBuilder<T>> {
 
 /// Lazy widget - only builds when visible
 class LazyWidget extends StatefulWidget {
-  final Widget Function(BuildContext context) builder;
-  final Widget? placeholder;
 
   const LazyWidget({
-    super.key,
-    required this.builder,
+    required this.builder, super.key,
     this.placeholder,
   });
+  final Widget Function(BuildContext context) builder;
+  final Widget? placeholder;
 
   @override
   State<LazyWidget> createState() => _LazyWidgetState();
@@ -196,7 +191,7 @@ class WidgetKeys {
   WidgetKeys._();
 
   /// Create value key from any object
-  static Key value(dynamic value) => ValueKey(value);
+  static Key value(value) => ValueKey(value);
 
   /// Create unique key
   static Key unique() => UniqueKey();

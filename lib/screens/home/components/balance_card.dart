@@ -4,18 +4,14 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class BalanceCard extends StatefulWidget {
+
+  const BalanceCard({
+    required this.totalBalance, required this.cashAvailable, required this.monthlyChange, required this.fmt, super.key,
+  });
   final double totalBalance;
   final double cashAvailable;
   final double monthlyChange;
   final NumberFormat fmt;
-
-  const BalanceCard({
-    super.key,
-    required this.totalBalance,
-    required this.cashAvailable,
-    required this.monthlyChange,
-    required this.fmt,
-  });
 
   @override
   State<BalanceCard> createState() => BalanceCardState();

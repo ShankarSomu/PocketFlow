@@ -1,16 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 /// Singleton service for caching images with memory and disk persistence
 class ImageCacheService {
-  static final ImageCacheService _instance = ImageCacheService._internal();
   factory ImageCacheService() => _instance;
   ImageCacheService._internal();
+  static final ImageCacheService _instance = ImageCacheService._internal();
 
   final Map<String, Uint8List> _memoryCache = {};
   static const int _maxMemoryCacheSize = 50; // Max images in memory
@@ -147,17 +148,9 @@ class ImageCacheService {
 
 /// Cached network image widget with loading and error states
 class CachedImage extends StatefulWidget {
-  final String? imageUrl;
-  final double? width;
-  final double? height;
-  final BoxFit fit;
-  final Widget? placeholder;
-  final Widget? errorWidget;
-  final BorderRadius? borderRadius;
 
   const CachedImage({
-    super.key,
-    required this.imageUrl,
+    required this.imageUrl, super.key,
     this.width,
     this.height,
     this.fit = BoxFit.cover,
@@ -165,6 +158,13 @@ class CachedImage extends StatefulWidget {
     this.errorWidget,
     this.borderRadius,
   });
+  final String? imageUrl;
+  final double? width;
+  final double? height;
+  final BoxFit fit;
+  final Widget? placeholder;
+  final Widget? errorWidget;
+  final BorderRadius? borderRadius;
 
   @override
   State<CachedImage> createState() => _CachedImageState();
@@ -234,7 +234,7 @@ class _CachedImageState extends State<CachedImage> {
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
               ),
             ),
           );
@@ -245,7 +245,7 @@ class _CachedImageState extends State<CachedImage> {
             child: Icon(
               Icons.person,
               size: (widget.width ?? 40) * 0.5,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             ),
           );
     } else {
@@ -272,3 +272,4 @@ class _CachedImageState extends State<CachedImage> {
     );
   }
 }
+

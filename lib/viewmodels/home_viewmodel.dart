@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../repositories/account_repository.dart';
-import '../repositories/transaction_repository.dart';
-import '../models/account.dart';
-import '../models/time_range.dart';
 import '../core/app_state.dart';
 import '../core/retry_helper.dart';
+import '../models/account.dart';
+import '../models/time_range.dart';
+import '../repositories/account_repository.dart';
+import '../repositories/transaction_repository.dart';
 import '../services/app_logger.dart';
 
 /// ViewModel for Home Screen
 /// Separates business logic from UI with enhanced error handling and retry
 class HomeViewModel extends ChangeNotifier with RetryMixin {
-  final TransactionRepository _transactionRepo;
-  final AccountRepository _accountRepo;
 
   HomeViewModel({
     required TransactionRepository transactionRepo,
     required AccountRepository accountRepo,
   })  : _transactionRepo = transactionRepo,
         _accountRepo = accountRepo;
+  final TransactionRepository _transactionRepo;
+  final AccountRepository _accountRepo;
 
   bool _loading = true;
   AppError? _error;
@@ -59,8 +59,6 @@ class HomeViewModel extends ChangeNotifier with RetryMixin {
   Future<void> loadData(TimeRange filter) async {
     await withRetry(
       operation: () => _loadDataImpl(filter),
-      maxAttempts: 3,
-      initialDelay: const Duration(seconds: 1),
       onRetry: (attempt, error) {
         AppLogger.log(
           LogLevel.warning,

@@ -2,22 +2,20 @@ import 'package:flutter/material.dart';
 
 /// Pull-to-refresh wrapper for any scrollable widget
 class PullToRefreshWrapper extends StatelessWidget {
+
+  const PullToRefreshWrapper({
+    required this.child, required this.onRefresh, super.key,
+    this.color,
+    this.backgroundColor,
+    this.displacement = 40.0,
+    this.edgeOffset = 0.0,
+  });
   final Widget child;
   final Future<void> Function() onRefresh;
   final Color? color;
   final Color? backgroundColor;
   final double displacement;
   final double edgeOffset;
-
-  const PullToRefreshWrapper({
-    super.key,
-    required this.child,
-    required this.onRefresh,
-    this.color,
-    this.backgroundColor,
-    this.displacement = 40.0,
-    this.edgeOffset = 0.0,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,16 +32,14 @@ class PullToRefreshWrapper extends StatelessWidget {
 
 /// Custom refresh indicator with haptic feedback
 class CustomRefreshIndicator extends StatelessWidget {
+
+  const CustomRefreshIndicator({
+    required this.child, required this.onRefresh, super.key,
+    this.refreshMessage,
+  });
   final Widget child;
   final Future<void> Function() onRefresh;
   final String? refreshMessage;
-
-  const CustomRefreshIndicator({
-    super.key,
-    required this.child,
-    required this.onRefresh,
-    this.refreshMessage,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -75,16 +71,15 @@ class CustomRefreshIndicator extends StatelessWidget {
 
 /// Sliver refresh indicator for CustomScrollView
 class SliverRefreshControl extends StatelessWidget {
-  final Future<void> Function() onRefresh;
-  final double refreshTriggerPullDistance;
-  final double refreshIndicatorExtent;
 
   const SliverRefreshControl({
-    super.key,
-    required this.onRefresh,
+    required this.onRefresh, super.key,
     this.refreshTriggerPullDistance = 100.0,
     this.refreshIndicatorExtent = 60.0,
   });
+  final Future<void> Function() onRefresh;
+  final double refreshTriggerPullDistance;
+  final double refreshIndicatorExtent;
 
   @override
   Widget build(BuildContext context) {
@@ -103,17 +98,15 @@ class SliverRefreshControl extends StatelessWidget {
 
 /// Pull to refresh with custom builder
 class CustomPullToRefresh extends StatefulWidget {
+
+  const CustomPullToRefresh({
+    required this.child, required this.onRefresh, super.key,
+    this.builder,
+  });
   final Widget child;
   final Future<void> Function() onRefresh;
   final Widget Function(BuildContext context, RefreshIndicatorMode mode)?
       builder;
-
-  const CustomPullToRefresh({
-    super.key,
-    required this.child,
-    required this.onRefresh,
-    this.builder,
-  });
 
   @override
   State<CustomPullToRefresh> createState() => _CustomPullToRefreshState();

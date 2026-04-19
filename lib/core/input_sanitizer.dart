@@ -1,7 +1,6 @@
 /// Input sanitization to prevent injection attacks and clean user input
 library;
 
-import 'sanitization_rules.dart';
 
 /// Base class for sanitizing different types of input
 abstract class Sanitizer<T> {
@@ -14,11 +13,6 @@ abstract class Sanitizer<T> {
 
 /// Sanitizes text input by removing dangerous patterns and trimming
 class TextSanitizer implements Sanitizer<String> {
-  final int? maxLength;
-  final bool trimWhitespace;
-  final bool removeHtml;
-  final bool preventSqlInjection;
-  final bool preventXss;
   
   const TextSanitizer({
     this.maxLength,
@@ -27,6 +21,11 @@ class TextSanitizer implements Sanitizer<String> {
     this.preventSqlInjection = true,
     this.preventXss = true,
   });
+  final int? maxLength;
+  final bool trimWhitespace;
+  final bool removeHtml;
+  final bool preventSqlInjection;
+  final bool preventXss;
   
   @override
   String sanitize(String value) {
@@ -72,7 +71,7 @@ class TextSanitizer implements Sanitizer<String> {
   
   String _stripHtml(String input) {
     return input
-        .replaceAll(RegExp(r'<[^>]*>'), '') // Remove HTML tags
+        .replaceAll(RegExp('<[^>]*>'), '') // Remove HTML tags
         .replaceAll('&lt;', '<')
         .replaceAll('&gt;', '>')
         .replaceAll('&amp;', '&')
@@ -81,7 +80,7 @@ class TextSanitizer implements Sanitizer<String> {
   }
   
   bool _containsHtml(String input) {
-    return RegExp(r'<[^>]*>').hasMatch(input);
+    return RegExp('<[^>]*>').hasMatch(input);
   }
   
   String _preventSqlInjection(String input) {
@@ -103,7 +102,7 @@ class TextSanitizer implements Sanitizer<String> {
       RegExp(r'\bDELETE\b', caseSensitive: false),
       RegExp(r'\bDROP\b', caseSensitive: false),
       RegExp(r'\bUNION\b', caseSensitive: false),
-      RegExp(r';--'),
+      RegExp(';--'),
       RegExp(r'/\*.*\*/'),
     ];
     return sqlPatterns.any((pattern) => pattern.hasMatch(input));
@@ -121,8 +120,8 @@ class TextSanitizer implements Sanitizer<String> {
   
   bool _containsXssPatterns(String input) {
     final xssPatterns = [
-      RegExp(r'<script', caseSensitive: false),
-      RegExp(r'javascript:', caseSensitive: false),
+      RegExp('<script', caseSensitive: false),
+      RegExp('javascript:', caseSensitive: false),
       RegExp(r'onerror\s*=', caseSensitive: false),
       RegExp(r'onload\s*=', caseSensitive: false),
       RegExp(r'onclick\s*=', caseSensitive: false),
@@ -133,10 +132,6 @@ class TextSanitizer implements Sanitizer<String> {
 
 /// Sanitizes numeric input to ensure valid numbers
 class NumberSanitizer implements Sanitizer<String> {
-  final double? min;
-  final double? max;
-  final int? decimalPlaces;
-  final bool allowNegative;
   
   const NumberSanitizer({
     this.min,
@@ -144,6 +139,10 @@ class NumberSanitizer implements Sanitizer<String> {
     this.decimalPlaces,
     this.allowNegative = true,
   });
+  final double? min;
+  final double? max;
+  final int? decimalPlaces;
+  final bool allowNegative;
   
   @override
   String sanitize(String value) {
@@ -165,7 +164,7 @@ class NumberSanitizer implements Sanitizer<String> {
     // Ensure only one decimal point
     final parts = cleaned.split('.');
     if (parts.length > 2) {
-      cleaned = '${parts[0]}.${parts.sublist(1).join('')}';
+      cleaned = '${parts[0]}.${parts.sublist(1).join()}';
     }
     
     // Parse and validate range
@@ -195,18 +194,18 @@ class NumberSanitizer implements Sanitizer<String> {
 
 /// Sanitizes currency amount input
 class AmountSanitizer implements Sanitizer<String> {
-  final double? maxAmount;
-  final bool allowNegative;
   
   const AmountSanitizer({
     this.maxAmount,
     this.allowNegative = false,
   });
+  final double? maxAmount;
+  final bool allowNegative;
   
   @override
   String sanitize(String value) {
     // Remove currency symbols and whitespace
-    var cleaned = value
+    final cleaned = value
         .replaceAll(RegExp(r'[$₹€£¥₹]'), '')
         .replaceAll(',', '')
         .replaceAll(' ', '')
@@ -252,18 +251,14 @@ class DateSanitizer implements Sanitizer<String> {
 
 /// Sanitizes category names
 class CategorySanitizer implements Sanitizer<String> {
-  static const maxLength = 50;
   
   const CategorySanitizer();
+  static const maxLength = 50;
   
   @override
   String sanitize(String value) {
-    final textSanitizer = TextSanitizer(
+    const textSanitizer = TextSanitizer(
       maxLength: maxLength,
-      trimWhitespace: true,
-      removeHtml: true,
-      preventSqlInjection: true,
-      preventXss: true,
     );
     
     var cleaned = textSanitizer.sanitize(value);

@@ -1,8 +1,8 @@
 import '../db/database.dart';
 import '../models/recurring_transaction.dart';
 import '../models/transaction.dart' as model;
-import 'refresh_notifier.dart';
 import 'app_logger.dart';
+import 'refresh_notifier.dart';
 
 class RecurringScheduler {
   static Future<int> processDue() async {
@@ -89,7 +89,7 @@ class RecurringScheduler {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final todayStr = today.toIso8601String();
-    final d = await AppDatabase.db;
+    final d = await AppDatabase.db();
 
     // Delete future transactions for this recurring entry
     if (updated.type == 'transfer') {

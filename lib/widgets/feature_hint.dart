@@ -2,20 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FeatureHint extends StatefulWidget {
+
+  const FeatureHint({
+    required this.featureKey, required this.message, required this.child, super.key,
+    this.alignment = Alignment.topCenter,
+    this.delay = const Duration(milliseconds: 800),
+  });
   final String featureKey;
   final String message;
   final Widget child;
   final Alignment alignment;
   final Duration delay;
-
-  const FeatureHint({
-    super.key,
-    required this.featureKey,
-    required this.message,
-    required this.child,
-    this.alignment = Alignment.topCenter,
-    this.delay = const Duration(milliseconds: 800),
-  });
 
   @override
   State<FeatureHint> createState() => _FeatureHintState();
@@ -103,7 +100,7 @@ class _FeatureHintState extends State<FeatureHint> with SingleTickerProviderStat
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
@@ -159,3 +156,4 @@ class FeatureHints {
     await prefs.remove('hint_$aiChat');
   }
 }
+

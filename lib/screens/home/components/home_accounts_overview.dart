@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../models/account.dart';
-import '../../../../theme/category_colors.dart';
-import '../../../widgets/figma/figma_panel.dart';
+import '../../../widgets/ui/panel.dart';
 import '../../shared/shared.dart';
 
 /// Accounts overview widget showing all accounts with balances
 class HomeAccountsOverview extends StatelessWidget {
-  final List<Account> accounts;
-  final Map<int, double> accountBalances;
 
   const HomeAccountsOverview({
-    super.key,
-    required this.accounts,
-    required this.accountBalances,
+    required this.accounts, required this.accountBalances, super.key,
   });
+  final List<Account> accounts;
+  final Map<int, double> accountBalances;
 
   static IconData _accountTypeIcon(String type) => switch (type) {
         'checking' => Icons.account_balance_rounded,
@@ -39,7 +36,7 @@ class HomeAccountsOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
 
-    return FigmaPanel(
+    return Panel(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +56,7 @@ class HomeAccountsOverview extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.5))))
+                                .withValues(alpha: 0.5))))
                 : ListView.separated(
                     physics: const ClampingScrollPhysics(),
                     itemCount: accounts.length,
@@ -68,7 +65,7 @@ class HomeAccountsOverview extends StatelessWidget {
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withOpacity(0.08)),
+                            .withValues(alpha: 0.08)),
                     itemBuilder: (_, i) {
                       final account = accounts[i];
                       final bal = accountBalances[account.id] ?? 0.0;
@@ -84,7 +81,7 @@ class HomeAccountsOverview extends StatelessWidget {
                               width: 38,
                               height: 38,
                               decoration: BoxDecoration(
-                                color: color.withOpacity(0.12),
+                                color: color.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(icon, color: color, size: 18),
@@ -108,7 +105,7 @@ class HomeAccountsOverview extends StatelessWidget {
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface
-                                              .withOpacity(0.6))),
+                                              .withValues(alpha: 0.6))),
                                 ],
                               ),
                             ),
@@ -130,3 +127,4 @@ class HomeAccountsOverview extends StatelessWidget {
     );
   }
 }
+

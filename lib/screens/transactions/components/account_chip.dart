@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import '../../../../services/theme_service.dart';
 
 class AccountChip extends StatelessWidget {
+
+  const AccountChip({
+    required this.label, required this.selected, required this.onTap, super.key,
+    this.light = false,
+  });
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final bool light;
-
-  const AccountChip({
-    super.key,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    this.light = false,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +26,7 @@ class AccountChip extends StatelessWidget {
                   ? Theme.of(context).colorScheme.onPrimary
                   : Theme.of(context).colorScheme.primary)
               : (light
-                  ? Theme.of(context).colorScheme.onPrimary.withOpacity(0.18)
+                  ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.18)
                   : Theme.of(context).colorScheme.surface),
           borderRadius: BorderRadius.circular(20),
           boxShadow: light ? null : ThemeService.instance.primaryShadow,
@@ -53,14 +50,15 @@ class AccountChip extends StatelessWidget {
                     ? Theme.of(context)
                         .colorScheme
                         .onPrimary
-                        .withOpacity(0.7)
+                        .withValues(alpha: 0.7)
                     : Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.7)),
+                        .withValues(alpha: 0.7)),
           ),
         ),
       ),
     );
   }
 }
+

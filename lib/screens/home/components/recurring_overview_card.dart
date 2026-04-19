@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import '../../../models/recurring_transaction.dart';
 
 class RecurringOverviewCard extends StatelessWidget {
+  const RecurringOverviewCard(
+      {required this.recurring, required this.fmt, super.key});
   final List<RecurringTransaction> recurring;
   final NumberFormat fmt;
-  const RecurringOverviewCard(
-      {super.key, required this.recurring, required this.fmt});
 
   @override
   Widget build(BuildContext context) {

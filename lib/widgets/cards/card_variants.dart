@@ -4,17 +4,9 @@ import '../../theme/app_theme.dart';
 /// Standard card with consistent styling across the app
 /// Provides a unified look for card-based UI elements
 class StandardCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsets? padding;
-  final Color? backgroundColor;
-  final double? elevation;
-  final BorderRadius? borderRadius;
-  final VoidCallback? onTap;
-  final List<BoxShadow>? boxShadow;
 
   const StandardCard({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.padding,
     this.backgroundColor,
     this.elevation,
@@ -22,6 +14,13 @@ class StandardCard extends StatelessWidget {
     this.onTap,
     this.boxShadow,
   });
+  final Widget child;
+  final EdgeInsets? padding;
+  final Color? backgroundColor;
+  final double? elevation;
+  final BorderRadius? borderRadius;
+  final VoidCallback? onTap;
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
@@ -51,22 +50,21 @@ class StandardCard extends StatelessWidget {
 
 /// Elevated card with custom shadow
 class ElevatedCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsets? padding;
-  final Color? backgroundColor;
-  final BorderRadius? borderRadius;
-  final VoidCallback? onTap;
-  final double elevation;
 
   const ElevatedCard({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.padding,
     this.backgroundColor,
     this.borderRadius,
     this.onTap,
     this.elevation = 8,
   });
+  final Widget child;
+  final EdgeInsets? padding;
+  final Color? backgroundColor;
+  final BorderRadius? borderRadius;
+  final VoidCallback? onTap;
+  final double elevation;
 
   @override
   Widget build(BuildContext context) {
@@ -100,48 +98,13 @@ class ElevatedCard extends StatelessWidget {
 
 /// Gradient card with decorative background
 class GradientCard extends StatelessWidget {
-  final Widget child;
-  final Gradient gradient;
-  final EdgeInsets? padding;
-  final BorderRadius? borderRadius;
-  final VoidCallback? onTap;
 
   const GradientCard({
-    super.key,
-    required this.child,
-    required this.gradient,
+    required this.child, required this.gradient, super.key,
     this.padding,
     this.borderRadius,
     this.onTap,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    final container = Container(
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-        child: Padding(
-          padding: padding ?? const EdgeInsets.all(16),
-          child: child,
-        ),
-      ),
-    );
-
-    if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-        child: container,
-      );
-    }
-
-    return container;
-  }
 
   /// Create gradient card with AppTheme emerald gradient
   factory GradientCard.emerald({
@@ -196,21 +159,46 @@ class GradientCard extends StatelessWidget {
       child: child,
     );
   }
+  final Widget child;
+  final Gradient gradient;
+  final EdgeInsets? padding;
+  final BorderRadius? borderRadius;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final container = Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(16),
+          child: child,
+        ),
+      ),
+    );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        child: container,
+      );
+    }
+
+    return container;
+  }
 }
 
 /// Outlined card with border
 class OutlinedCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsets? padding;
-  final Color? backgroundColor;
-  final Color? borderColor;
-  final double borderWidth;
-  final BorderRadius? borderRadius;
-  final VoidCallback? onTap;
 
   const OutlinedCard({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.padding,
     this.backgroundColor,
     this.borderColor,
@@ -218,6 +206,13 @@ class OutlinedCard extends StatelessWidget {
     this.borderRadius,
     this.onTap,
   });
+  final Widget child;
+  final EdgeInsets? padding;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final double borderWidth;
+  final BorderRadius? borderRadius;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -254,16 +249,15 @@ class OutlinedCard extends StatelessWidget {
 
 /// Compact card with minimal padding
 class CompactCard extends StatelessWidget {
-  final Widget child;
-  final Color? backgroundColor;
-  final VoidCallback? onTap;
 
   const CompactCard({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.backgroundColor,
     this.onTap,
   });
+  final Widget child;
+  final Color? backgroundColor;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -278,50 +272,14 @@ class CompactCard extends StatelessWidget {
 
 /// Info card with icon for status messages
 class InfoCard extends StatelessWidget {
-  final String message;
-  final IconData icon;
-  final Color? backgroundColor;
-  final Color? iconColor;
-  final Color? textColor;
-  final EdgeInsets? padding;
 
   const InfoCard({
-    super.key,
-    required this.message,
-    required this.icon,
+    required this.message, required this.icon, super.key,
     this.backgroundColor,
     this.iconColor,
     this.textColor,
     this.padding,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return StandardCard(
-      backgroundColor: backgroundColor ?? colorScheme.primaryContainer,
-      padding: padding ?? const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: iconColor ?? colorScheme.primary,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: textColor ?? colorScheme.onPrimaryContainer,
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Info card variant
   factory InfoCard.info({
@@ -377,6 +335,40 @@ class InfoCard extends StatelessWidget {
       iconColor: Theme.of(context).colorScheme.tertiary,
       textColor: Theme.of(context).colorScheme.onTertiaryContainer,
       padding: padding,
+    );
+  }
+  final String message;
+  final IconData icon;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final Color? textColor;
+  final EdgeInsets? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return StandardCard(
+      backgroundColor: backgroundColor ?? colorScheme.primaryContainer,
+      padding: padding ?? const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: iconColor ?? colorScheme.primary,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: textColor ?? colorScheme.onPrimaryContainer,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

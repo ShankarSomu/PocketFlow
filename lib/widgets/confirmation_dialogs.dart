@@ -31,13 +31,22 @@ Future<ConfirmationResult> showConfirmationDialog({
     ),
   );
 
-  return result == true
+  return result ?? false
       ? ConfirmationResult.confirmed
       : ConfirmationResult.cancelled;
 }
 
 /// Confirmation dialog widget
 class ConfirmationDialog extends StatelessWidget {
+
+  const ConfirmationDialog({
+    required this.title, required this.message, super.key,
+    this.confirmText = 'Confirm',
+    this.cancelText = 'Cancel',
+    this.isDestructive = false,
+    this.icon,
+    this.iconColor,
+  });
   final String title;
   final String message;
   final String confirmText;
@@ -45,17 +54,6 @@ class ConfirmationDialog extends StatelessWidget {
   final bool isDestructive;
   final IconData? icon;
   final Color? iconColor;
-
-  const ConfirmationDialog({
-    super.key,
-    required this.title,
-    required this.message,
-    this.confirmText = 'Confirm',
-    this.cancelText = 'Cancel',
-    this.isDestructive = false,
-    this.icon,
-    this.iconColor,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +102,6 @@ Future<bool> showDeleteConfirmation({
     title: 'Delete $itemName?',
     message: message ?? 'This action cannot be undone.',
     confirmText: 'Delete',
-    cancelText: 'Cancel',
     isDestructive: true,
     icon: Icons.delete_outline,
   );
@@ -138,7 +135,6 @@ Future<bool> showLogoutConfirmation({
     title: 'Logout?',
     message: 'Are you sure you want to logout?',
     confirmText: 'Logout',
-    cancelText: 'Cancel',
     icon: Icons.logout,
   );
 
@@ -147,6 +143,16 @@ Future<bool> showLogoutConfirmation({
 
 /// Custom action confirmation with description
 class DetailedConfirmationDialog extends StatelessWidget {
+
+  const DetailedConfirmationDialog({
+    required this.title, required this.message, super.key,
+    this.description,
+    this.confirmText = 'Confirm',
+    this.cancelText = 'Cancel',
+    this.isDestructive = false,
+    this.icon,
+    this.content,
+  });
   final String title;
   final String message;
   final String? description;
@@ -155,18 +161,6 @@ class DetailedConfirmationDialog extends StatelessWidget {
   final bool isDestructive;
   final IconData? icon;
   final Widget? content;
-
-  const DetailedConfirmationDialog({
-    super.key,
-    required this.title,
-    required this.message,
-    this.description,
-    this.confirmText = 'Confirm',
-    this.cancelText = 'Cancel',
-    this.isDestructive = false,
-    this.icon,
-    this.content,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +192,7 @@ class DetailedConfirmationDialog extends StatelessWidget {
               Text(
                 description!,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -302,3 +296,4 @@ Future<bool> showConfirmationBottomSheet({
 
   return result ?? false;
 }
+

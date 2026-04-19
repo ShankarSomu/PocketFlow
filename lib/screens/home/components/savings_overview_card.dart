@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import '../../../models/savings_goal.dart';
 
 class SavingsOverviewCard extends StatelessWidget {
+  const SavingsOverviewCard(
+      {required this.goals, required this.fmt, super.key});
   final List<SavingsGoal> goals;
   final NumberFormat fmt;
-  const SavingsOverviewCard(
-      {super.key, required this.goals, required this.fmt});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class SavingsOverviewCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3), 
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3), 
                             width: 0.5
                           ),
                         ),
@@ -51,8 +51,8 @@ class SavingsOverviewCard extends StatelessWidget {
                             value: g.progress,
                             color: Theme.of(context).colorScheme.primary,
                             backgroundColor: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.08)
-                              : Colors.black.withOpacity(0.05),
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.05),
                             minHeight: 7,
                           ),
                         ),
@@ -72,3 +72,4 @@ class SavingsOverviewCard extends StatelessWidget {
     );
   }
 }
+

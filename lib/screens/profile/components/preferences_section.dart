@@ -4,6 +4,10 @@ import '../../../services/app_logger.dart';
 import '../../../theme/app_theme.dart';
 
 class PreferencesSection extends StatelessWidget {
+
+  const PreferencesSection({
+    required this.logLevel, required this.defaultExpenseAccount, required this.defaultIncomeAccount, required this.accounts, required this.onLogLevelChanged, required this.onExpenseAccountChanged, required this.onIncomeAccountChanged, super.key,
+  });
   final LogLevel logLevel;
   final int? defaultExpenseAccount;
   final int? defaultIncomeAccount;
@@ -11,17 +15,6 @@ class PreferencesSection extends StatelessWidget {
   final Function(LogLevel) onLogLevelChanged;
   final Function(int?) onExpenseAccountChanged;
   final Function(int?) onIncomeAccountChanged;
-
-  const PreferencesSection({
-    super.key,
-    required this.logLevel,
-    required this.defaultExpenseAccount,
-    required this.defaultIncomeAccount,
-    required this.accounts,
-    required this.onLogLevelChanged,
-    required this.onExpenseAccountChanged,
-    required this.onIncomeAccountChanged,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +28,7 @@ class PreferencesSection extends StatelessWidget {
           child: Column(
             children: [
               Row(children: [
-                Icon(Icons.analytics_outlined, size: 20, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                Icon(Icons.analytics_outlined, size: 20, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text('Logging Level', style: TextStyle(fontSize: 13)),
@@ -69,7 +62,7 @@ class PreferencesSection extends StatelessWidget {
                   isDense: true,
                   underline: const SizedBox(),
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('None')),
+                    const DropdownMenuItem(child: Text('None')),
                     ...accounts.map((a) => DropdownMenuItem(
                       value: a.id,
                       child: Text(a.name, style: const TextStyle(fontSize: 13)),
@@ -90,7 +83,7 @@ class PreferencesSection extends StatelessWidget {
                   isDense: true,
                   underline: const SizedBox(),
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('None')),
+                    const DropdownMenuItem(child: Text('None')),
                     ...accounts.map((a) => DropdownMenuItem(
                       value: a.id,
                       child: Text(a.name, style: const TextStyle(fontSize: 13)),
@@ -107,3 +100,4 @@ class PreferencesSection extends StatelessWidget {
     );
   }
 }
+

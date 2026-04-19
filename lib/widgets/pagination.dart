@@ -3,19 +3,19 @@ import '../core/app_constants.dart';
 
 /// Pagination state and logic for lists
 class PaginationController<T> extends ChangeNotifier {
-  final Future<List<T>> Function(int offset, int limit) loadPage;
-  final int pageSize;
-
-  List<T> _items = [];
-  bool _loading = false;
-  bool _hasMore = true;
-  String? _error;
-  int _currentPage = 0;
 
   PaginationController({
     required this.loadPage,
     this.pageSize = DatabaseConstants.defaultPageSize,
   });
+  final Future<List<T>> Function(int offset, int limit) loadPage;
+  final int pageSize;
+
+  final List<T> _items = [];
+  bool _loading = false;
+  bool _hasMore = true;
+  String? _error;
+  int _currentPage = 0;
 
   List<T> get items => List.unmodifiable(_items);
   bool get loading => _loading;
@@ -107,6 +107,18 @@ class PaginationController<T> extends ChangeNotifier {
 
 /// Lazy loading list view with pagination
 class PaginatedListView<T> extends StatefulWidget {
+
+  const PaginatedListView({
+    required this.controller, required this.itemBuilder, super.key,
+    this.separator,
+    this.loadingWidget,
+    this.emptyWidget,
+    this.errorWidget,
+    this.padding,
+    this.scrollController,
+    this.shrinkWrap = false,
+    this.physics,
+  });
   final PaginationController<T> controller;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
   final Widget? separator;
@@ -117,20 +129,6 @@ class PaginatedListView<T> extends StatefulWidget {
   final ScrollController? scrollController;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
-
-  const PaginatedListView({
-    super.key,
-    required this.controller,
-    required this.itemBuilder,
-    this.separator,
-    this.loadingWidget,
-    this.emptyWidget,
-    this.errorWidget,
-    this.padding,
-    this.scrollController,
-    this.shrinkWrap = false,
-    this.physics,
-  });
 
   @override
   State<PaginatedListView<T>> createState() => _PaginatedListViewState<T>();
@@ -239,16 +237,14 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
 /// Sliver version for CustomScrollView
 class SliverPaginatedList<T> extends StatefulWidget {
+
+  const SliverPaginatedList({
+    required this.controller, required this.itemBuilder, super.key,
+    this.loadingWidget,
+  });
   final PaginationController<T> controller;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
   final Widget? loadingWidget;
-
-  const SliverPaginatedList({
-    super.key,
-    required this.controller,
-    required this.itemBuilder,
-    this.loadingWidget,
-  });
 
   @override
   State<SliverPaginatedList<T>> createState() => _SliverPaginatedListState<T>();
@@ -306,6 +302,16 @@ class _SliverPaginatedListState<T> extends State<SliverPaginatedList<T>> {
 
 /// Grid version with pagination
 class PaginatedGridView<T> extends StatefulWidget {
+
+  const PaginatedGridView({
+    required this.controller, required this.itemBuilder, super.key,
+    this.crossAxisCount = 2,
+    this.childAspectRatio = 1.0,
+    this.crossAxisSpacing = 8.0,
+    this.mainAxisSpacing = 8.0,
+    this.padding,
+    this.scrollController,
+  });
   final PaginationController<T> controller;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
   final int crossAxisCount;
@@ -314,18 +320,6 @@ class PaginatedGridView<T> extends StatefulWidget {
   final double mainAxisSpacing;
   final EdgeInsets? padding;
   final ScrollController? scrollController;
-
-  const PaginatedGridView({
-    super.key,
-    required this.controller,
-    required this.itemBuilder,
-    this.crossAxisCount = 2,
-    this.childAspectRatio = 1.0,
-    this.crossAxisSpacing = 8.0,
-    this.mainAxisSpacing = 8.0,
-    this.padding,
-    this.scrollController,
-  });
 
   @override
   State<PaginatedGridView<T>> createState() => _PaginatedGridViewState<T>();

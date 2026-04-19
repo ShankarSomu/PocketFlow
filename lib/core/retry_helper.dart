@@ -54,7 +54,7 @@ class RetryHelper {
   }
 
   /// Default retry logic - retry network and timeout errors
-  static bool _shouldRetryByDefault(dynamic error) {
+  static bool _shouldRetryByDefault(error) {
     final errorString = error.toString().toLowerCase();
     
     // Retry network errors
@@ -101,18 +101,18 @@ mixin RetryMixin {
 
 /// Widget helper for retry operations
 class RetryOperation {
-  final Future<void> Function() operation;
-  final int maxAttempts;
-  final Duration delay;
-  
-  int _attempt = 0;
-  bool _isRetrying = false;
 
   RetryOperation({
     required this.operation,
     this.maxAttempts = 3,
     this.delay = const Duration(seconds: 2),
   });
+  final Future<void> Function() operation;
+  final int maxAttempts;
+  final Duration delay;
+  
+  int _attempt = 0;
+  bool _isRetrying = false;
 
   int get attempt => _attempt;
   bool get isRetrying => _isRetrying;

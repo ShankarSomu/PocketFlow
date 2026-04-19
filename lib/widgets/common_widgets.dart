@@ -2,22 +2,21 @@ import 'package:flutter/material.dart';
 
 /// A reusable section header with optional action button
 class SectionHeader extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final String? actionText;
-  final VoidCallback? onActionTap;
-  final IconData? actionIcon;
-  final EdgeInsets padding;
 
   const SectionHeader({
-    super.key,
-    required this.title,
+    required this.title, super.key,
     this.subtitle,
     this.actionText,
     this.onActionTap,
     this.actionIcon,
     this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   });
+  final String title;
+  final String? subtitle;
+  final String? actionText;
+  final VoidCallback? onActionTap;
+  final IconData? actionIcon;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +41,7 @@ class SectionHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -68,20 +67,18 @@ class SectionHeader extends StatelessWidget {
 
 /// Empty state widget for empty lists
 class EmptyState extends StatelessWidget {
+
+  const EmptyState({
+    required this.icon, required this.title, super.key,
+    this.subtitle,
+    this.actionText,
+    this.onActionTap,
+  });
   final IconData icon;
   final String title;
   final String? subtitle;
   final String? actionText;
   final VoidCallback? onActionTap;
-
-  const EmptyState({
-    super.key,
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.actionText,
-    this.onActionTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +93,7 @@ class EmptyState extends StatelessWidget {
             Icon(
               icon,
               size: 64,
-              color: theme.colorScheme.onSurface.withOpacity(0.3),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -111,7 +108,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 subtitle!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -133,9 +130,9 @@ class EmptyState extends StatelessWidget {
 
 /// Loading indicator
 class LoadingIndicator extends StatelessWidget {
-  final String? message;
 
   const LoadingIndicator({super.key, this.message});
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +148,7 @@ class LoadingIndicator extends StatelessWidget {
             Text(
               message!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
             ),
           ],
@@ -160,3 +157,4 @@ class LoadingIndicator extends StatelessWidget {
     );
   }
 }
+

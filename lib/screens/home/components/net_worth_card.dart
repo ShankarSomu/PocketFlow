@@ -4,14 +4,10 @@ import '../../../core/color_extensions.dart';
 import '../../../theme/app_theme.dart';
 
 class NetWorthCard extends StatelessWidget {
+  const NetWorthCard(
+      {required this.netWorth, required this.assets, required this.debt, required this.fmt, super.key});
   final double netWorth, assets, debt;
   final NumberFormat fmt;
-  const NetWorthCard(
-      {super.key,
-      required this.netWorth,
-      required this.assets,
-      required this.debt,
-      required this.fmt});
 
   @override
   Widget build(BuildContext context) {

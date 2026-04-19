@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../repositories/savings_repository.dart';
-import '../repositories/account_repository.dart';
-import '../models/savings_goal.dart';
 import '../models/account.dart';
+import '../models/savings_goal.dart';
+import '../repositories/account_repository.dart';
+import '../repositories/savings_repository.dart';
 
 /// ViewModel for Savings Screen
 class SavingsViewModel extends ChangeNotifier {
-  final SavingsRepository _savingsRepo;
-  final AccountRepository _accountRepo;
 
   SavingsViewModel({
     required SavingsRepository savingsRepo,
     required AccountRepository accountRepo,
   })  : _savingsRepo = savingsRepo,
         _accountRepo = accountRepo;
+  final SavingsRepository _savingsRepo;
+  final AccountRepository _accountRepo;
 
   bool _loading = true;
   String? _error;

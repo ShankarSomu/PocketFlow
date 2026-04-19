@@ -1,8 +1,11 @@
 import 'dart:convert';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../db/database.dart';
 import 'app_logger.dart';
 
@@ -150,6 +153,45 @@ class AuthService {
     final client = await _getClient();
     if (client == null) throw Exception('Not signed in');
 
+    // Check WiFi-only preference with connectivity_plus
+    final prefs = await SharedPreferences.getInstance();
+    final wifiOnly = prefs.getBool('backup_wifi_only') ?? true;
+    
+    if (wifiOnly) {
+      try {
+        final connectivityResult = await Connectivity().checkConnectivity();
+        
+        // Log the connection type
+        AppLogger.backup('Connection type', detail: connectivityResult.toString());
+        
+        // Block if on mobile/cellular data
+        if (connectivityResult.contains(ConnectivityResult.mobile)) {
+          client.close();
+          AppLogger.backup('backup blocked', detail: 'On mobile data, WiFi-only enabled');
+          throw Exception('WiFi-only backup is enabled. You are on mobile data. Please connect to WiFi.');
+        }
+        
+        // Also block if no WiFi connection is detected
+        if (!connectivityResult.contains(ConnectivityResult.wifi)) {
+          client.close();
+          AppLogger.backup('backup blocked', detail: 'Not on WiFi, WiFi-only enabled');
+          throw Exception('WiFi-only backup is enabled. Please connect to WiFi to create a backup.');
+        }
+        
+        // WiFi confirmed
+        AppLogger.backup('WiFi confirmed', detail: 'Proceeding with backup');
+        
+      } catch (e) {
+        client.close();
+        if (e.toString().contains('WiFi-only')) {
+          rethrow;
+        }
+        // If we can't determine connection type, block for safety
+        AppLogger.backup('backup blocked', detail: 'Connection check failed: ${e.toString()}');
+        throw Exception('WiFi-only backup is enabled. Cannot verify WiFi connection. Please connect to WiFi.');
+      }
+    }
+
     final folder = await getSelectedFolder();
     if (folder == null) throw Exception('No backup folder selected');
 
@@ -182,7 +224,6 @@ class AuthService {
       await driveApi.files.create(file, uploadMedia: media);
     }
 
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefLastBackup, DateTime.now().toIso8601String());
     AppLogger.backup('backup completed', detail: 'folder: ${folder.name}');
     client.close();
@@ -322,7 +363,7 @@ class AuthService {
 
   static Future<void> _importJson(String json) async {
     final data = jsonDecode(json) as Map<String, dynamic>;
-    final d = await AppDatabase.db;
+    final d = await AppDatabase.db();
 
     await d.transaction((txn) async {
       await txn.delete('recurring_transactions');
@@ -351,16 +392,16 @@ class AuthService {
 // ── Models ────────────────────────────────────────────────────────────────────
 
 class DriveFolder {
+  const DriveFolder({required this.id, required this.name, required this.path});
   final String id;
   final String name;
   final String path;
-  const DriveFolder({required this.id, required this.name, required this.path});
 }
 
 class _AuthClient extends http.BaseClient {
+  _AuthClient(this._token);
   final String _token;
   final _inner = http.Client();
-  _AuthClient(this._token);
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {

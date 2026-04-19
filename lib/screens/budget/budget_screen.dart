@@ -1,18 +1,18 @@
-import '../../services/time_filter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+
+import '../../core/haptic_feedback.dart';
 import '../../db/database.dart';
 import '../../models/budget.dart';
 import '../../services/refresh_notifier.dart';
+import '../../services/theme_service.dart';
+import '../../services/time_filter.dart';
+import '../../theme/app_color_scheme.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/category_picker.dart';
 import '../../widgets/empty_states.dart';
-import '../../core/haptic_feedback.dart';
 import '../../widgets/error_state_widget.dart';
-import '../../theme/app_theme.dart';
-import '../../theme/app_color_scheme.dart';
 import '../shared/shared.dart';
-import '../../services/theme_service.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -112,7 +112,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
               enabled: !isExisting,
               decoration: InputDecoration(
                 labelText: 'Category',
-                suffixIcon: !isExisting ? Icon(Icons.arrow_drop_down) : null,
+                suffixIcon: !isExisting ? const Icon(Icons.arrow_drop_down) : null,
               ),
               onTap: !isExisting
                   ? () async {
@@ -127,15 +127,15 @@ class _BudgetScreenState extends State<BudgetScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(labelText: 'Monthly Limit', prefixText: '\$', border: OutlineInputBorder()),
             ),
-            if (isExisting && existing!.id == null)
+            if (isExisting && existing.id == null)
               Padding(
-                padding: EdgeInsets.only(top: 12),
-                child: Text('This category has spending but no limit yet.', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                padding: const EdgeInsets.only(top: 12),
+                child: Text('This category has spending but no limit yet.', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
               ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () async {
               final category = catCtrl.text.trim().toLowerCase();
@@ -143,7 +143,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
               if (category.isEmpty) return;
               final filter = appTimeFilter.current;
               await AppDatabase.upsertBudget(Budget(
-                id: isExisting ? existing?.id : null,
+                id: isExisting ? existing.id : null,
                 category: category,
                 limit: limit,
                 month: filter.budgetMonth,
@@ -153,7 +153,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
               if (ctx.mounted) Navigator.pop(ctx);
               _load();
             },
-            child: Text('Save'),
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -170,7 +170,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     final totalLimit = _budgets.fold(0.0, (sum, b) => sum + b.limit);
     final totalSpent = _spentByCategory.values.fold(0.0, (sum, v) => sum + v);
     final overCount = _budgets.where((b) => b.limit > 0 && (_spentByCategory[b.category] ?? 0) > b.limit).length;
-    final progress = totalLimit <= 0 ? 0.0 : (totalSpent / totalLimit).clamp(0.0, 1.0) as double;
+    final progress = totalLimit <= 0 ? 0.0 : (totalSpent / totalLimit).clamp(0.0, 1.0);
     final onBudget = _budgets.where((b) => b.limit > 0 && (_spentByCategory[b.category] ?? 0) <= b.limit).toList();
     final overBudget = _budgets.where((b) => b.limit > 0 && (_spentByCategory[b.category] ?? 0) > b.limit).toList();
     final untracked = _budgets.where((b) => b.limit <= 0).toList();
@@ -184,7 +184,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
                 : _error != null
                     ? ErrorStateWidget(
-                        message: _error!,
+                        message: _error,
                         onRetry: _load,
                       )
                     : Column(
@@ -240,7 +240,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                 ],
                                 if (untracked.isNotEmpty) ...[
                                   const SizedBox(height: 18),
-                                  Text('Untracked', style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+                                  Text('Untracked', style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
                                   ...untracked.map((b) => _BudgetItem(
                                         budget: b,
                                         spent: _spentByCategory[b.category] ?? 0,
@@ -284,12 +284,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
 // -----------------------------------------------------------------------------
 
 class _BudgetSummaryCard extends StatelessWidget {
-  final double totalSpent;
-  final double totalLimit;
-  final double progress;
-  final int overCount;
-  final double income;
-  final NumberFormat fmt;
 
   const _BudgetSummaryCard({
     required this.totalSpent,
@@ -299,6 +293,12 @@ class _BudgetSummaryCard extends StatelessWidget {
     required this.income,
     required this.fmt,
   });
+  final double totalSpent;
+  final double totalLimit;
+  final double progress;
+  final int overCount;
+  final double income;
+  final NumberFormat fmt;
 
   @override
   Widget build(BuildContext context) {
@@ -311,7 +311,7 @@ class _BudgetSummaryCard extends StatelessWidget {
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppTheme.cardShadow,
-        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,12 +324,12 @@ class _BudgetSummaryCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).extension<AppColorScheme>()!.error.withOpacity(0.15),
+                    color: Theme.of(context).extension<AppColorScheme>()!.error.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text('$overCount over',
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.error.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.w600)),
+                          color: Theme.of(context).colorScheme.error.withValues(alpha: 0.8), fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
             ],
           ),
@@ -344,7 +344,7 @@ class _BudgetSummaryCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('/ ${fmt.format(totalLimit)}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8), fontSize: 13)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8), fontSize: 13)),
               ),
             ],
           ),
@@ -353,7 +353,7 @@ class _BudgetSummaryCard extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2), width: 1),
+              border: Border.all(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -361,8 +361,8 @@ class _BudgetSummaryCard extends StatelessWidget {
                 value: progress,
                 minHeight: 8,
                 backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.white.withOpacity(0.15)
-                  : Colors.black.withOpacity(0.1),
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   progress >= 1.0 ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.tertiary,
                 ),
@@ -398,18 +398,18 @@ class _BudgetSummaryCard extends StatelessWidget {
 }
 
 class _SummaryPill extends StatelessWidget {
+  const _SummaryPill({required this.label, required this.amount, required this.icon, required this.color});
   final String label;
   final String amount;
   final IconData icon;
   final Color color;
-  const _SummaryPill({required this.label, required this.amount, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
+        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -417,7 +417,7 @@ class _SummaryPill extends StatelessWidget {
           Container(
             width: 26,
             height: 26,
-            decoration: BoxDecoration(color: color.withOpacity(0.2), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 13),
           ),
           const SizedBox(width: 8),
@@ -442,12 +442,6 @@ class _SummaryPill extends StatelessWidget {
 
 /// Section ? label header + white card of _BudgetItem rows.
 class _BudgetSection extends StatelessWidget {
-  final String label;
-  final List<Budget> items;
-  final Map<String, double> spentByCategory;
-  final String Function(String) emojiFor;
-  final NumberFormat fmt;
-  final void Function(Budget) onTap;
 
   const _BudgetSection({
     required this.label,
@@ -457,6 +451,12 @@ class _BudgetSection extends StatelessWidget {
     required this.fmt,
     required this.onTap,
   });
+  final String label;
+  final List<Budget> items;
+  final Map<String, double> spentByCategory;
+  final String Function(String) emojiFor;
+  final NumberFormat fmt;
+  final void Function(Budget) onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -470,7 +470,7 @@ class _BudgetSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               letterSpacing: 0.2,
             ),
           ),
@@ -504,12 +504,6 @@ class _BudgetSection extends StatelessWidget {
 
 /// Single budget row: icon circle | category | spent/limit + inline progress bar.
 class _BudgetItem extends StatelessWidget {
-  final Budget budget;
-  final double spent;
-  final String emoji;
-  final NumberFormat fmt;
-  final bool showDivider;
-  final VoidCallback onTap;
 
   const _BudgetItem({
     required this.budget,
@@ -519,20 +513,26 @@ class _BudgetItem extends StatelessWidget {
     required this.showDivider,
     required this.onTap,
   });
+  final Budget budget;
+  final double spent;
+  final String emoji;
+  final NumberFormat fmt;
+  final bool showDivider;
+  final VoidCallback onTap;
 
   static Color _colorForCategory(BuildContext context, String category) {
     final colorScheme = Theme.of(context).colorScheme;
     final c = category.toLowerCase();
     if (c.contains('food') || c.contains('restaurant') || c.contains('dining')) return colorScheme.secondary;
     if (c.contains('transport') || c.contains('car')) return colorScheme.primary;
-    if (c.contains('shopping')) return colorScheme.primary.withOpacity(0.7);
+    if (c.contains('shopping')) return colorScheme.primary.withValues(alpha: 0.7);
     if (c.contains('entertainment')) return colorScheme.error;
     if (c.contains('health') || c.contains('medical')) return colorScheme.tertiary;
     if (c.contains('home') || c.contains('rent')) return colorScheme.secondary;
-    if (c.contains('education') || c.contains('school')) return colorScheme.primary.withOpacity(0.6);
+    if (c.contains('education') || c.contains('school')) return colorScheme.primary.withValues(alpha: 0.6);
     if (c.contains('travel') || c.contains('flight')) return colorScheme.primary;
     if (c.contains('utilities') || c.contains('electric')) return colorScheme.secondary;
-    if (c.contains('insurance')) return colorScheme.onSurface.withOpacity(0.6);
+    if (c.contains('insurance')) return colorScheme.onSurface.withValues(alpha: 0.6);
     if (c.contains('phone') || c.contains('mobile')) return colorScheme.tertiary;
     return colorScheme.primary;
   }
@@ -540,41 +540,54 @@ class _BudgetItem extends StatelessWidget {
   static IconData _iconForCategory(String category) {
     final c = category.toLowerCase();
     if (c.contains('food') || c.contains('restaurant') || c.contains('dining') ||
-        c.contains('lunch') || c.contains('dinner') || c.contains('grocery') || c.contains('groceries'))
+        c.contains('lunch') || c.contains('dinner') || c.contains('grocery') || c.contains('groceries')) {
       return Icons.restaurant_rounded;
+    }
     if (c.contains('transport') || c.contains('car') || c.contains('uber') ||
-        c.contains('gas') || c.contains('fuel'))
+        c.contains('gas') || c.contains('fuel')) {
       return Icons.directions_car_rounded;
-    if (c.contains('shopping') || c.contains('amazon') || c.contains('retail') || c.contains('clothes'))
+    }
+    if (c.contains('shopping') || c.contains('amazon') || c.contains('retail') || c.contains('clothes')) {
       return Icons.shopping_bag_rounded;
+    }
     if (c.contains('entertainment') || c.contains('netflix') || c.contains('streaming') ||
-        c.contains('subscription'))
+        c.contains('subscription')) {
       return Icons.subscriptions_rounded;
-    if (c.contains('health') || c.contains('medical') || c.contains('doctor') || c.contains('pharmacy'))
+    }
+    if (c.contains('health') || c.contains('medical') || c.contains('doctor') || c.contains('pharmacy')) {
       return Icons.local_hospital_rounded;
-    if (c.contains('home') || c.contains('rent') || c.contains('mortgage'))
+    }
+    if (c.contains('home') || c.contains('rent') || c.contains('mortgage')) {
       return Icons.home_rounded;
-    if (c.contains('education') || c.contains('school') || c.contains('book') || c.contains('tuition'))
+    }
+    if (c.contains('education') || c.contains('school') || c.contains('book') || c.contains('tuition')) {
       return Icons.school_rounded;
-    if (c.contains('travel') || c.contains('flight') || c.contains('hotel'))
+    }
+    if (c.contains('travel') || c.contains('flight') || c.contains('hotel')) {
       return Icons.flight_rounded;
-    if (c.contains('coffee') || c.contains('cafe'))
+    }
+    if (c.contains('coffee') || c.contains('cafe')) {
       return Icons.coffee_rounded;
-    if (c.contains('gym') || c.contains('fitness') || c.contains('sport'))
+    }
+    if (c.contains('gym') || c.contains('fitness') || c.contains('sport')) {
       return Icons.fitness_center_rounded;
-    if (c.contains('utilities') || c.contains('electric') || c.contains('water'))
+    }
+    if (c.contains('utilities') || c.contains('electric') || c.contains('water')) {
       return Icons.bolt_rounded;
-    if (c.contains('insurance'))
+    }
+    if (c.contains('insurance')) {
       return Icons.shield_rounded;
-    if (c.contains('phone') || c.contains('mobile') || c.contains('internet'))
+    }
+    if (c.contains('phone') || c.contains('mobile') || c.contains('internet')) {
       return Icons.phone_android_rounded;
+    }
     return Icons.receipt_rounded;
   }
 
   @override
   Widget build(BuildContext context) {
     final hasLimit = budget.limit > 0;
-    final progress = hasLimit ? (spent / budget.limit).clamp(0.0, 1.0) as double : 0.0;
+    final progress = hasLimit ? (spent / budget.limit).clamp(0.0, 1.0) : 0.0;
     final isOver = hasLimit && spent > budget.limit;
     final color = isOver ? Theme.of(context).colorScheme.error : _colorForCategory(context, budget.category);
     final displayCategory = budget.category.isNotEmpty
@@ -595,7 +608,7 @@ class _BudgetItem extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
+                      color: color.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -622,7 +635,7 @@ class _BudgetItem extends StatelessWidget {
                               : '${fmt.format(spent)} spent  no limit',
                           style: TextStyle(
                               fontSize: 12,
-                              color: isOver ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                              color: isOver ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -634,8 +647,8 @@ class _BudgetItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: isOver
-                          ? Theme.of(context).colorScheme.error.withOpacity(0.1)
-                          : color.withOpacity(0.1),
+                          ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1)
+                          : color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -658,7 +671,7 @@ class _BudgetItem extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.3), width: 0.5),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3), width: 0.5),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
@@ -666,8 +679,8 @@ class _BudgetItem extends StatelessWidget {
                         value: progress,
                         minHeight: 8,
                         backgroundColor: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withOpacity(0.08)
-                          : Colors.black.withOpacity(0.05),
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.05),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           isOver ? Theme.of(context).colorScheme.error : color,
                         ),
@@ -687,4 +700,5 @@ class _BudgetItem extends StatelessWidget {
       );
   }
 }
+
 

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocket_flow/models/export_models.dart';
-import 'package:pocket_flow/models/transaction.dart' as model;
 import 'package:pocket_flow/models/account.dart';
 import 'package:pocket_flow/models/budget.dart';
+import 'package:pocket_flow/models/export_models.dart';
+import 'package:pocket_flow/models/transaction.dart' as model;
 
 void main() {
   group('Export Data Models', () {
@@ -25,7 +25,7 @@ void main() {
       final config = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
-        startDate: DateTime(2024, 1, 1),
+        startDate: DateTime(2024),
         endDate: DateTime(2024, 1, 31),
       );
 
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('ExportConfig should handle null dates', () {
-      final config = ExportConfig(
+      const config = ExportConfig(
         format: ExportFormat.csv,
         dataTypes: [ExportDataType.transactions],
       );
@@ -157,7 +157,7 @@ void main() {
         budgetCount: 5,
         savingsGoalCount: 2,
         recurringTransactionCount: 4,
-        dateRangeStart: DateTime(2024, 1, 1),
+        dateRangeStart: DateTime(2024),
         dateRangeEnd: DateTime(2024, 1, 31),
         totalIncome: 5000.0,
         totalExpense: 3000.0,
@@ -198,7 +198,7 @@ void main() {
 
   group('Export File Naming', () {
     test('Should include timestamp in filename', () {
-      final config = ExportConfig(
+      const config = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
       );
@@ -282,7 +282,7 @@ expect(dataType.displayName, isNotEmpty);
 
   group('Edge Cases', () {
     test('ExportConfig should handle empty data types list', () {
-      final config = ExportConfig(
+      const config = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [],
       );
@@ -346,13 +346,13 @@ expect(dataType.displayName, isNotEmpty);
 
   group('Filter Validation', () {
     test('Category filter should be optional', () {
-      final config1 = ExportConfig(
+      const config1 = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
       );
       expect(config1.categoryFilter, isNull);
 
-      final config2 = ExportConfig(
+      const config2 = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
         categoryFilter: ['Food', 'Transport'],
@@ -361,13 +361,13 @@ expect(dataType.displayName, isNotEmpty);
     });
 
     test('Account filter should be optional', () {
-      final config1 = ExportConfig(
+      const config1 = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
       );
       expect(config1.accountFilter, isNull);
 
-      final config2 = ExportConfig(
+      const config2 = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
         accountFilter: [1, 2, 3],
@@ -376,7 +376,7 @@ expect(dataType.displayName, isNotEmpty);
     });
 
     test('Date filters should be optional', () {
-      final config = ExportConfig(
+      const config = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
       );
@@ -386,7 +386,7 @@ expect(dataType.displayName, isNotEmpty);
     });
 
     test('Include deleted should default to false', () {
-      final config = ExportConfig(
+      const config = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
       );
@@ -395,7 +395,7 @@ expect(dataType.displayName, isNotEmpty);
     });
 
     test('Include metadata should default to true', () {
-      final config = ExportConfig(
+      const config = ExportConfig(
         format: ExportFormat.json,
         dataTypes: [ExportDataType.transactions],
       );

@@ -4,6 +4,10 @@ import '../../../services/auth_service.dart';
 import '../../../theme/app_theme.dart';
 
 class BackupSection extends StatelessWidget {
+
+  const BackupSection({
+    required this.isSignedIn, required this.folder, required this.lastBackup, required this.backupFreq, required this.loading, required this.onSignIn, required this.onFolderPicker, required this.onBackup, required this.onRestore, required this.onFrequencyChanged, super.key,
+  });
   final bool isSignedIn;
   final DriveFolder? folder;
   final String? lastBackup;
@@ -14,20 +18,6 @@ class BackupSection extends StatelessWidget {
   final VoidCallback onBackup;
   final VoidCallback onRestore;
   final Function(String) onFrequencyChanged;
-
-  const BackupSection({
-    super.key,
-    required this.isSignedIn,
-    required this.folder,
-    required this.lastBackup,
-    required this.backupFreq,
-    required this.loading,
-    required this.onSignIn,
-    required this.onFolderPicker,
-    required this.onBackup,
-    required this.onRestore,
-    required this.onFrequencyChanged,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,12 +48,12 @@ class BackupSection extends StatelessWidget {
               ] else ...[
                 Row(
                   children: [
-                    Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                    Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Choose where to save backups on your Google Drive',
-                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
                       ),
                     ),
                   ],
@@ -73,9 +63,9 @@ class BackupSection extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.1).withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3).withValues(alpha: 0.3)),
+                      border: Border.all(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3).withValues(alpha: 0.3)),
                     ),
                     child: Row(children: [
                       Icon(Icons.folder, color: Theme.of(context).colorScheme.secondary, size: 20),
@@ -90,7 +80,7 @@ class BackupSection extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(folder!.path,
                                 style: TextStyle(
-                                    fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                                    fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                           ],
                         ),
                       ),
@@ -104,9 +94,9 @@ class BackupSection extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.1).withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3).withValues(alpha: 0.3)),
+                      border: Border.all(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3).withValues(alpha: 0.3)),
                     ),
                     child: Row(children: [
                       Icon(Icons.warning_amber, color: Theme.of(context).colorScheme.secondary, size: 20),
@@ -128,10 +118,10 @@ class BackupSection extends StatelessWidget {
                 if (lastBackup != null)
                   Text(
                       'Last backup: ${DateFormat('MMM d, yyyy h:mm a').format(DateTime.parse(lastBackup!))}',
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)))
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)))
                 else
                   Text('No backup yet',
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
                 const SizedBox(height: 12),
                 Row(children: [
                   const Text('Auto-backup: ', style: TextStyle(fontSize: 13)),
@@ -179,3 +169,4 @@ class BackupSection extends StatelessWidget {
     );
   }
 }
+

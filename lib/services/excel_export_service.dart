@@ -467,7 +467,7 @@ class ExcelExportService {
     final allBudgets = <Budget>[];
 
     for (int i = 0; i < 12; i++) {
-      final date = DateTime(now.year, now.month - i, 1);
+      final date = DateTime(now.year, now.month - i);
       final budgets = await AppDatabase.getBudgets(date.month, date.year);
       allBudgets.addAll(budgets);
     }

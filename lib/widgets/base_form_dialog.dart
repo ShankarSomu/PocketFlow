@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 /// Base class for form dialogs
 abstract class BaseFormDialog<T> extends StatelessWidget {
-  final T? existingItem;
-  final String title;
 
   const BaseFormDialog({
-    super.key,
+    required this.title, super.key,
     this.existingItem,
-    required this.title,
   });
+  final T? existingItem;
+  final String title;
 
   /// Build form fields
   Widget buildForm(BuildContext context);
@@ -58,7 +57,7 @@ abstract class BaseFormDialog<T> extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                if (existingItem != null && onDelete != null)
+                if (existingItem != null)
                   TextButton.icon(
                     onPressed: () async {
                       final confirmed = await showDialog<bool>(
@@ -78,8 +77,8 @@ abstract class BaseFormDialog<T> extends StatelessWidget {
                           ],
                         ),
                       );
-                      if (confirmed == true && context.mounted) {
-                        await onDelete!(context);
+                      if ((confirmed ?? false) && context.mounted) {
+                        await onDelete(context);
                         if (context.mounted) Navigator.pop(context);
                       }
                     },

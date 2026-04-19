@@ -1,8 +1,8 @@
-import 'package:pocket_flow/models/transaction.dart';
 import 'package:pocket_flow/models/account.dart';
 import 'package:pocket_flow/models/budget.dart';
-import 'package:pocket_flow/models/savings_goal.dart';
 import 'package:pocket_flow/models/recurring_transaction.dart';
+import 'package:pocket_flow/models/savings_goal.dart';
+import 'package:pocket_flow/models/transaction.dart';
 
 /// Supported export formats
 enum ExportFormat {
@@ -77,15 +77,6 @@ enum ExportDataType {
 
 /// Configuration for export operation
 class ExportConfig {
-  final ExportFormat format;
-  final List<ExportDataType> dataTypes;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final List<String>? categoryFilter;
-  final List<int>? accountFilter;
-  final bool includeDeleted;
-  final bool includeMetadata;
-  final String? customFileName;
 
   const ExportConfig({
     required this.format,
@@ -103,6 +94,15 @@ class ExportConfig {
     this.includeMetadata = true,
     this.customFileName,
   });
+  final ExportFormat format;
+  final List<ExportDataType> dataTypes;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final List<String>? categoryFilter;
+  final List<int>? accountFilter;
+  final bool includeDeleted;
+  final bool includeMetadata;
+  final String? customFileName;
 
   /// Get default filename based on format and date range
   String getFileName() {
@@ -148,21 +148,20 @@ class ExportConfig {
 
 /// Container for all exportable data
 class ExportData {
+
+  const ExportData({
+    required this.metadata, this.transactions = const [],
+    this.accounts = const [],
+    this.budgets = const [],
+    this.savingsGoals = const [],
+    this.recurringTransactions = const [],
+  });
   final List<Transaction> transactions;
   final List<Account> accounts;
   final List<Budget> budgets;
   final List<SavingsGoal> savingsGoals;
   final List<RecurringTransaction> recurringTransactions;
   final ExportMetadata metadata;
-
-  const ExportData({
-    this.transactions = const [],
-    this.accounts = const [],
-    this.budgets = const [],
-    this.savingsGoals = const [],
-    this.recurringTransactions = const [],
-    required this.metadata,
-  });
 
   /// Convert to JSON-serializable map
   Map<String, dynamic> toJson() {
@@ -190,6 +189,15 @@ class ExportData {
 
 /// Metadata about the export
 class ExportMetadata {
+
+  const ExportMetadata({
+    required this.appVersion,
+    required this.exportDate,
+    required this.transactionCount, required this.accountCount, required this.budgetCount, required this.savingsGoalCount, required this.recurringTransactionCount, required this.totalIncome, required this.totalExpense, required this.netAmount, this.dateRangeStart,
+    this.dateRangeEnd,
+    this.includedCategories = const [],
+    this.includedAccounts = const [],
+  });
   final String appVersion;
   final DateTime exportDate;
   final DateTime? dateRangeStart;
@@ -204,23 +212,6 @@ class ExportMetadata {
   final double netAmount;
   final List<String> includedCategories;
   final List<int> includedAccounts;
-
-  const ExportMetadata({
-    required this.appVersion,
-    required this.exportDate,
-    this.dateRangeStart,
-    this.dateRangeEnd,
-    required this.transactionCount,
-    required this.accountCount,
-    required this.budgetCount,
-    required this.savingsGoalCount,
-    required this.recurringTransactionCount,
-    required this.totalIncome,
-    required this.totalExpense,
-    required this.netAmount,
-    this.includedCategories = const [],
-    this.includedAccounts = const [],
-  });
 
   Map<String, dynamic> toJson() {
     return {
@@ -250,22 +241,12 @@ class ExportMetadata {
 
 /// Result of an export operation
 class ExportResult {
-  final bool success;
-  final String? filePath;
-  final int? fileSize;
-  final String? error;
-  final ExportFormat format;
-  final DateTime timestamp;
-  final Duration duration;
 
   const ExportResult({
     required this.success,
-    this.filePath,
+    required this.format, required this.timestamp, required this.duration, this.filePath,
     this.fileSize,
     this.error,
-    required this.format,
-    required this.timestamp,
-    required this.duration,
   });
 
   /// Create a successful result
@@ -299,6 +280,13 @@ class ExportResult {
       duration: duration,
     );
   }
+  final bool success;
+  final String? filePath;
+  final int? fileSize;
+  final String? error;
+  final ExportFormat format;
+  final DateTime timestamp;
+  final Duration duration;
 
   /// Get human-readable file size
   String get formattedSize {
@@ -327,26 +315,17 @@ class ExportResult {
 
 /// CSV column configuration
 class CsvColumnConfig {
-  final String header;
-  final String Function(Transaction) getValue;
 
   const CsvColumnConfig({
     required this.header,
     required this.getValue,
   });
+  final String header;
+  final String Function(Transaction) getValue;
 }
 
 /// PDF report configuration
 class PdfReportConfig {
-  final String title;
-  final bool includeCoverPage;
-  final bool includeCharts;
-  final bool includeSummary;
-  final bool includeTransactionList;
-  final bool includeCategoryBreakdown;
-  final bool includeAccountSummary;
-  final String? customHeader;
-  final String? customFooter;
 
   const PdfReportConfig({
     this.title = 'Financial Report',
@@ -359,4 +338,13 @@ class PdfReportConfig {
     this.customHeader,
     this.customFooter,
   });
+  final String title;
+  final bool includeCoverPage;
+  final bool includeCharts;
+  final bool includeSummary;
+  final bool includeTransactionList;
+  final bool includeCategoryBreakdown;
+  final bool includeAccountSummary;
+  final String? customHeader;
+  final String? customFooter;
 }

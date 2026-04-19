@@ -4,10 +4,10 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class BudgetCards extends StatelessWidget {
+
+  const BudgetCards({required this.categorySpend, required this.fmt, super.key});
   final Map<String, double> categorySpend;
   final NumberFormat fmt;
-
-  const BudgetCards({super.key, required this.categorySpend, required this.fmt});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ class BudgetCards extends StatelessWidget {
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.blue.withOpacity(0.3), width: 0.5),
+                        border: Border.all(color: AppTheme.blue.withValues(alpha: 0.3), width: 0.5),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -53,9 +53,9 @@ class BudgetCards extends StatelessWidget {
                           value: percentage,
                           minHeight: 8,
                           backgroundColor: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withOpacity(0.08)
+                            ? Colors.white.withValues(alpha: 0.08)
                             : AppTheme.slate200,
-                          valueColor: AlwaysStoppedAnimation(AppTheme.blue),
+                          valueColor: const AlwaysStoppedAnimation(AppTheme.blue),
                         ),
                       ),
                     ),
@@ -68,3 +68,4 @@ class BudgetCards extends StatelessWidget {
     );
   }
 }
+

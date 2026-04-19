@@ -17,7 +17,7 @@ class CategorySeeder {
 
   /// Reseed all default categories (will skip if already exist)
   static Future<void> reseedCategories() async {
-    final db = await AppDatabase.db;
+    final db = await AppDatabase.db();
     
     // Clear existing default categories
     await db.delete('categories', where: 'is_default = 1');

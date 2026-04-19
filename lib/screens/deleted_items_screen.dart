@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../db/database.dart';
-import '../models/transaction.dart' as model;
-import '../models/account.dart';
-import '../models/savings_goal.dart';
-import '../models/recurring_transaction.dart';
-import '../models/deletable_entity.dart';
+
 import '../core/formatters.dart';
+import '../db/database.dart';
+import '../models/account.dart';
+import '../models/deletable_entity.dart';
+import '../models/recurring_transaction.dart';
+import '../models/savings_goal.dart';
+import '../models/transaction.dart' as model;
 
 /// Screen for viewing and restoring deleted items
 class DeletedItemsScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _DeletedItemsScreenState extends State<DeletedItemsScreen>
       ),
     );
 
-    if (confirm == true) {
+    if (confirm ?? false) {
       final count = await AppDatabase.purgeOldDeletedItems();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,9 +151,9 @@ class _DeletedItemsScreenState extends State<DeletedItemsScreen>
 // ── Transactions Tab ─────────────────────────────────────────────────────────
 
 class _DeletedTransactionsTab extends StatefulWidget {
-  final VoidCallback onRestore;
 
   const _DeletedTransactionsTab({required this.onRestore});
+  final VoidCallback onRestore;
 
   @override
   State<_DeletedTransactionsTab> createState() =>
@@ -208,7 +209,7 @@ class _DeletedTransactionsTabState extends State<_DeletedTransactionsTab> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm ?? false) {
       await AppDatabase.permanentlyDeleteTransaction(t.id!);
       widget.onRestore();
       _load();
@@ -252,8 +253,8 @@ class _DeletedTransactionsTabState extends State<_DeletedTransactionsTab> {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: t.type == 'income'
-                  ? Colors.green.withOpacity(0.2)
-                  : Colors.red.withOpacity(0.2),
+                  ? Colors.green.withValues(alpha: 0.2)
+                  : Colors.red.withValues(alpha: 0.2),
               child: Icon(
                 t.type == 'income' ? Icons.arrow_upward : Icons.arrow_downward,
                 color: t.type == 'income' ? Colors.green : Colors.red,
@@ -328,9 +329,9 @@ class _DeletedTransactionsTabState extends State<_DeletedTransactionsTab> {
 // ── Accounts Tab ─────────────────────────────────────────────────────────────
 
 class _DeletedAccountsTab extends StatefulWidget {
-  final VoidCallback onRestore;
 
   const _DeletedAccountsTab({required this.onRestore});
+  final VoidCallback onRestore;
 
   @override
   State<_DeletedAccountsTab> createState() => _DeletedAccountsTabState();
@@ -386,7 +387,7 @@ class _DeletedAccountsTabState extends State<_DeletedAccountsTab> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm ?? false) {
       await AppDatabase.permanentlyDeleteAccount(a.id!);
       widget.onRestore();
       _load();
@@ -508,9 +509,9 @@ class _DeletedAccountsTabState extends State<_DeletedAccountsTab> {
 // ── Goals Tab ────────────────────────────────────────────────────────────────
 
 class _DeletedGoalsTab extends StatefulWidget {
-  final VoidCallback onRestore;
 
   const _DeletedGoalsTab({required this.onRestore});
+  final VoidCallback onRestore;
 
   @override
   State<_DeletedGoalsTab> createState() => _DeletedGoalsTabState();
@@ -565,7 +566,7 @@ class _DeletedGoalsTabState extends State<_DeletedGoalsTab> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm ?? false) {
       await AppDatabase.permanentlyDeleteGoal(g.id!);
       widget.onRestore();
       _load();
@@ -668,9 +669,9 @@ class _DeletedGoalsTabState extends State<_DeletedGoalsTab> {
 // ── Recurring Tab ────────────────────────────────────────────────────────────
 
 class _DeletedRecurringTab extends StatefulWidget {
-  final VoidCallback onRestore;
 
   const _DeletedRecurringTab({required this.onRestore});
+  final VoidCallback onRestore;
 
   @override
   State<_DeletedRecurringTab> createState() => _DeletedRecurringTabState();
@@ -725,7 +726,7 @@ class _DeletedRecurringTabState extends State<_DeletedRecurringTab> {
       ),
     );
 
-    if (confirm == true) {
+    if (confirm ?? false) {
       await AppDatabase.permanentlyDeleteRecurring(r.id!);
       widget.onRestore();
       _load();
@@ -770,8 +771,8 @@ class _DeletedRecurringTabState extends State<_DeletedRecurringTab> {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: r.type == 'income'
-                  ? Colors.green.withOpacity(0.2)
-                  : Colors.red.withOpacity(0.2),
+                  ? Colors.green.withValues(alpha: 0.2)
+                  : Colors.red.withValues(alpha: 0.2),
               child: Icon(
                 Icons.repeat_rounded,
                 color: r.type == 'income' ? Colors.green : Colors.red,
@@ -842,3 +843,4 @@ class _DeletedRecurringTabState extends State<_DeletedRecurringTab> {
     );
   }
 }
+

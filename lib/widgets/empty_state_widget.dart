@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 
 class EmptyStateWidget extends StatelessWidget {
+
+  const EmptyStateWidget({
+    required this.icon, required this.title, required this.message, super.key,
+    this.actionLabel,
+    this.onAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
+  });
   final IconData icon;
   final String title;
   final String message;
@@ -8,17 +16,6 @@ class EmptyStateWidget extends StatelessWidget {
   final VoidCallback? onAction;
   final String? secondaryActionLabel;
   final VoidCallback? onSecondaryAction;
-
-  const EmptyStateWidget({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-    this.secondaryActionLabel,
-    this.onSecondaryAction,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +29,13 @@ class EmptyStateWidget extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 56,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 24),
@@ -56,7 +53,7 @@ class EmptyStateWidget extends StatelessWidget {
               message,
               style: TextStyle(
                 fontSize: 15,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -139,7 +136,7 @@ class EmptyStates {
   }
 
   static Widget search(BuildContext context) {
-    return EmptyStateWidget(
+    return const EmptyStateWidget(
       icon: Icons.search_off_rounded,
       title: 'No Results Found',
       message: 'Try adjusting your search or filters.',
@@ -156,3 +153,4 @@ class EmptyStates {
     );
   }
 }
+

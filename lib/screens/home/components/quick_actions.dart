@@ -3,8 +3,8 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class QuickActions extends StatelessWidget {
+  const QuickActions({required this.onAction, super.key});
   final void Function(String feature) onAction;
-  const QuickActions({super.key, required this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class QuickActions extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: InkWell(
-                onTap: () => onAction(action['feature'] as String),
+                onTap: () => onAction(action['feature']! as String),
                 borderRadius: BorderRadius.circular(18),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -35,10 +35,10 @@ class QuickActions extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(action['icon'] as IconData, size: 20, color: AppTheme.slate900),
+                      Icon(action['icon']! as IconData, size: 20, color: AppTheme.slate900),
                       const SizedBox(height: 6),
                       Text(
-                        action['label'] as String,
+                        action['label']! as String,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 11, color: AppTheme.slate900),
                       ),

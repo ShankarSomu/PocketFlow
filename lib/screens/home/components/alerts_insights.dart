@@ -5,9 +5,9 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class AlertsInsights extends StatelessWidget {
+  const AlertsInsights({required this.accounts, required this.fmt, super.key});
   final List<Account> accounts;
   final NumberFormat fmt;
-  const AlertsInsights({super.key, required this.accounts, required this.fmt});
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +20,9 @@ class AlertsInsights extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text('Alerts & Insights', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.slate900)),
               Icon(Icons.insights_outlined, color: AppTheme.slate700),
             ],
@@ -42,10 +42,10 @@ class AlertsInsights extends StatelessWidget {
 }
 
 class InsightTile extends StatelessWidget {
+  const InsightTile({required this.label, required this.value, required this.color, super.key});
   final String label;
   final String value;
   final Color color;
-  const InsightTile({super.key, required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {

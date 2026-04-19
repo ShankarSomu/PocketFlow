@@ -1,23 +1,24 @@
-import '../models/transaction.dart' as model;
-import '../models/budget.dart';
-import '../models/savings_goal.dart';
-import '../models/account.dart';
-import '../models/category.dart';
-import '../db/database.dart';
-import 'refresh_notifier.dart';
-import 'app_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../db/database.dart';
+import '../models/account.dart';
+import '../models/budget.dart';
+import '../models/category.dart';
+import '../models/savings_goal.dart';
+import '../models/transaction.dart' as model;
+import 'app_logger.dart';
+import 'refresh_notifier.dart';
 
 sealed class ParseResult {}
 
 class ParseSuccess extends ParseResult {
-  final String message;
   ParseSuccess(this.message);
+  final String message;
 }
 
 class ParseError extends ParseResult {
-  final String message;
   ParseError(this.message);
+  final String message;
 }
 
 class ChatParser {
@@ -212,7 +213,6 @@ class ChatParser {
           await AppDatabase.insertCategory(Category(
             name: catName,
             icon: icon,
-            color: '#6C63FF',
           ));
           notifyDataChanged();
           return ParseSuccess('✓ Category created: $icon $catName');

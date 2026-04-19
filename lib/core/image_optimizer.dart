@@ -55,13 +55,13 @@ class ImageOptimizer {
 
 /// Image cache configuration
 class ImageCacheConfig {
-  final int maxSize;
-  final int maxSizeBytes;
 
   const ImageCacheConfig({
     this.maxSize = 1000,
     this.maxSizeBytes = 100 << 20, // 100 MB
   });
+  final int maxSize;
+  final int maxSizeBytes;
 
   static const ImageCacheConfig defaultConfig = ImageCacheConfig();
   
@@ -78,22 +78,21 @@ class ImageCacheConfig {
 
 /// Cached network image widget (simplified version)
 class OptimizedImage extends StatelessWidget {
-  final String imageUrl;
-  final double? width;
-  final double? height;
-  final BoxFit? fit;
-  final Widget? placeholder;
-  final Widget? errorWidget;
 
   const OptimizedImage({
-    super.key,
-    required this.imageUrl,
+    required this.imageUrl, super.key,
     this.width,
     this.height,
     this.fit,
     this.placeholder,
     this.errorWidget,
   });
+  final String imageUrl;
+  final double? width;
+  final double? height;
+  final BoxFit? fit;
+  final Widget? placeholder;
+  final Widget? errorWidget;
 
   @override
   Widget build(BuildContext context) {

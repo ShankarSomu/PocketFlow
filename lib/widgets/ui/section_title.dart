@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// A standardized section title widget with a main title and subtitle.
-class FigmaSectionTitle extends StatelessWidget {
+class SectionTitle extends StatelessWidget {
+  const SectionTitle({required this.title, required this.subtitle, super.key});
   final String title;
   final String subtitle;
-  const FigmaSectionTitle({super.key, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +24,11 @@ class FigmaSectionTitle extends StatelessWidget {
           subtitle,
           style: TextStyle(
             fontSize: 14,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ],
     );
   }
 }
+

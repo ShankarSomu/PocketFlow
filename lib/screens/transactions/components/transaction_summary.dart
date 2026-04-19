@@ -6,20 +6,15 @@ import '../../../../theme/app_theme.dart';
 
 /// Gradient card showing net balance and income/expense split
 class TransactionSummaryCard extends StatelessWidget {
+
+  const TransactionSummaryCard({
+    required this.account, required this.totalIncome, required this.totalExpense, required this.transactionCount, required this.fmt, super.key,
+  });
   final Account? account;
   final double totalIncome;
   final double totalExpense;
   final int transactionCount;
   final NumberFormat fmt;
-
-  const TransactionSummaryCard({
-    super.key,
-    required this.account,
-    required this.totalIncome,
-    required this.totalExpense,
-    required this.transactionCount,
-    required this.fmt,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +29,7 @@ class TransactionSummaryCard extends StatelessWidget {
         gradient: ThemeService.instance.cardGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppTheme.cardShadow,
-        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), width: 1),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +39,7 @@ class TransactionSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.credit_card_rounded,
@@ -61,7 +56,7 @@ class TransactionSummaryCard extends StatelessWidget {
                           fontWeight: FontWeight.w600)),
                   Text(masked,
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
+                          color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
                           fontSize: 12)),
                 ],
               ),
@@ -70,12 +65,12 @@ class TransactionSummaryCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
+                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text('$transactionCount txns',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
+                        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
                         fontSize: 12)),
               ),
             ],
@@ -83,7 +78,7 @@ class TransactionSummaryCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text('Net Balance',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
+                  color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.9),
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
@@ -122,25 +117,21 @@ class TransactionSummaryCard extends StatelessWidget {
 }
 
 class SummaryPill extends StatelessWidget {
+
+  const SummaryPill({
+    required this.label, required this.amount, required this.icon, required this.color, super.key,
+  });
   final String label;
   final String amount;
   final IconData icon;
   final Color color;
-
-  const SummaryPill({
-    super.key,
-    required this.label,
-    required this.amount,
-    required this.icon,
-    required this.color,
-  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.2),
+        color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -149,7 +140,7 @@ class SummaryPill extends StatelessWidget {
             width: 26,
             height: 26,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 13),
@@ -178,3 +169,4 @@ class SummaryPill extends StatelessWidget {
     );
   }
 }
+

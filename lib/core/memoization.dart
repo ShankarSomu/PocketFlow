@@ -1,12 +1,11 @@
-import 'package:flutter/foundation.dart';
 
 /// Simple memoization cache with LRU eviction
 class MemoizationCache<K, V> {
+
+  MemoizationCache({this.maxSize = 100});
   final int maxSize;
   final Map<K, V> _cache = {};
   final List<K> _lruQueue = [];
-
-  MemoizationCache({this.maxSize = 100});
 
   /// Get value from cache
   V? get(K key) {
@@ -54,11 +53,11 @@ class MemoizationCache<K, V> {
 
 /// Memoize expensive computations
 class Memoizer<T> {
+
+  Memoizer({this.maxAge});
   T? _cachedValue;
   DateTime? _cachedTime;
   final Duration? maxAge;
-
-  Memoizer({this.maxAge});
 
   /// Get cached value or compute new one
   T call(T Function() computation) {
@@ -90,12 +89,12 @@ class Memoizer<T> {
 
 /// Memoize async computations
 class AsyncMemoizer<T> {
+
+  AsyncMemoizer({this.maxAge});
   Future<T>? _cachedFuture;
   T? _cachedValue;
   DateTime? _cachedTime;
   final Duration? maxAge;
-
-  AsyncMemoizer({this.maxAge});
 
   /// Get cached value or compute new one
   Future<T> call(Future<T> Function() computation) async {
@@ -117,7 +116,7 @@ class AsyncMemoizer<T> {
 
     _cachedFuture = computation();
     try {
-      _cachedValue = await _cachedFuture!;
+      _cachedValue = await _cachedFuture;
       _cachedTime = DateTime.now();
       return _cachedValue!;
     } finally {
@@ -207,10 +206,10 @@ mixin MemoizationMixin {
 
 /// Function memoization helper
 class MemoizedFunction<A, R> {
-  final R Function(A) _function;
-  final Map<A, R> _cache = {};
 
   MemoizedFunction(this._function);
+  final R Function(A) _function;
+  final Map<A, R> _cache = {};
 
   R call(A arg) {
     if (_cache.containsKey(arg)) {
@@ -226,10 +225,10 @@ class MemoizedFunction<A, R> {
 
 /// Two-argument function memoization
 class MemoizedFunction2<A, B, R> {
-  final R Function(A, B) _function;
-  final Map<String, R> _cache = {};
 
   MemoizedFunction2(this._function);
+  final R Function(A, B) _function;
+  final Map<String, R> _cache = {};
 
   R call(A arg1, B arg2) {
     final key = '$arg1:$arg2';

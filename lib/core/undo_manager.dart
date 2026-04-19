@@ -1,30 +1,31 @@
-import 'package:flutter/material.dart';
 import 'dart:collection';
+
+import 'package:flutter/material.dart';
 
 /// Undo action
 class UndoAction<T> {
-  final String description;
-  final T data;
-  final Future<void> Function(T data) onUndo;
-  final DateTime timestamp;
 
   UndoAction({
     required this.description,
     required this.data,
     required this.onUndo,
   }) : timestamp = DateTime.now();
+  final String description;
+  final T data;
+  final Future<void> Function(T data) onUndo;
+  final DateTime timestamp;
 }
 
 /// Undo manager for managing undo operations
 class UndoManager<T> extends ChangeNotifier {
-  final Queue<UndoAction<T>> _undoStack = Queue();
-  final int maxStackSize;
-  final Duration undoTimeout;
 
   UndoManager({
     this.maxStackSize = 20,
     this.undoTimeout = const Duration(seconds: 30),
   });
+  final Queue<UndoAction<T>> _undoStack = Queue();
+  final int maxStackSize;
+  final Duration undoTimeout;
 
   /// Check if undo is available
   bool get canUndo => _undoStack.isNotEmpty;
@@ -119,14 +120,10 @@ mixin UndoMixin<T> on ChangeNotifier {
 /// Undo snackbar widget
 class UndoSnackBar extends SnackBar {
   UndoSnackBar({
-    super.key,
-    required String message,
-    required VoidCallback onUndo,
-    Duration duration = const Duration(seconds: 5),
-    SnackBarAction? additionalAction,
+    required String message, required VoidCallback onUndo, super.key,
+    super.duration = const Duration(seconds: 5),
   }) : super(
           content: Text(message),
-          duration: duration,
           action: SnackBarAction(
             label: 'UNDO',
             onPressed: onUndo,
@@ -153,16 +150,15 @@ void showUndoSnackBar({
 
 /// Undo button widget
 class UndoButton extends StatelessWidget {
-  final UndoManager undoManager;
-  final String? tooltip;
-  final void Function()? onUndoComplete;
 
   const UndoButton({
-    super.key,
-    required this.undoManager,
+    required this.undoManager, super.key,
     this.tooltip,
     this.onUndoComplete,
   });
+  final UndoManager undoManager;
+  final String? tooltip;
+  final void Function()? onUndoComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -198,13 +194,13 @@ class UndoButton extends StatelessWidget {
 
 /// Transaction deletion with undo example
 class DeletionWithUndo<T> {
-  final BuildContext context;
-  final UndoManager<T> undoManager;
 
   DeletionWithUndo({
     required this.context,
     required this.undoManager,
   });
+  final BuildContext context;
+  final UndoManager<T> undoManager;
 
   /// Delete item with undo support
   Future<void> delete({
@@ -240,9 +236,9 @@ class DeletionWithUndo<T> {
 
 /// Global undo manager for app-wide operations
 class AppUndoManager {
-  static final AppUndoManager _instance = AppUndoManager._internal();
   factory AppUndoManager() => _instance;
   AppUndoManager._internal();
+  static final AppUndoManager _instance = AppUndoManager._internal();
 
   final UndoManager<dynamic> _manager = UndoManager<dynamic>();
 

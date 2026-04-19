@@ -88,7 +88,7 @@ class AITabState extends State<AITab> {
                       ),
                       child: Text(p.label, textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: selectedProvider == p ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            color: selectedProvider == p ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                             fontWeight: FontWeight.w600, fontSize: 13)),
                     ),
                   ),
@@ -99,17 +99,17 @@ class AITabState extends State<AITab> {
                 onTap: () async {},
                 child: Text(
                   'Get key: ${selectedProvider.setupUrl}',
-                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), decoration: TextDecoration.underline),
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), decoration: TextDecoration.underline),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: ctrl,
                 obscureText: obscure,
-                style: TextStyle(fontSize: 13),
+                style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: selectedProvider.hint,
-                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 13),
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -124,7 +124,7 @@ class AITabState extends State<AITab> {
                       borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)),
                   suffixIcon: IconButton(
                     icon: Icon(obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        size: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                        size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
                     onPressed: () => setLocal(() => obscure = !obscure),
                   ),
                 ),
@@ -142,8 +142,8 @@ class AITabState extends State<AITab> {
                     style: TextStyle(color: Theme.of(context).colorScheme.error)),
               ),
             TextButton(
-              onPressed: () => Navigator.pop(ctx, null),
-              child: Text('Cancel'),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
@@ -153,7 +153,7 @@ class AITabState extends State<AITab> {
                 await AiService.saveApiKey(key, selectedProvider);
                 if (ctx.mounted) Navigator.pop(ctx, true);
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         ),
@@ -165,7 +165,7 @@ class AITabState extends State<AITab> {
   @override
   Widget build(BuildContext context) {
     final accountItems = [
-      const DropdownMenuItem<int>(value: null, child: Text('None selected')),
+      const DropdownMenuItem<int>(child: Text('None selected')),
       ..._accounts.map((a) => DropdownMenuItem(value: a.id, child: Text(a.name))),
     ];
 
@@ -212,7 +212,7 @@ class AITabState extends State<AITab> {
                                 color: Theme.of(context).colorScheme.onPrimaryContainer,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700)),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
                             'Configure how the AI interprets your transactions',
                             style: TextStyle(
@@ -284,7 +284,7 @@ class AITabState extends State<AITab> {
           children: [
             DropdownRow(
               icon: Icons.tune_rounded,
-              iconColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              iconColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               title: 'Log Level',
               subtitle: 'Controls verbosity of app logs',
               value: _logLevel,
@@ -306,3 +306,4 @@ class AITabState extends State<AITab> {
     );
   }
 }
+

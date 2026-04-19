@@ -2,20 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class StatCard extends StatelessWidget {
+
+  const StatCard({
+    required this.label, required this.value, required this.icon, required this.gradient, required this.fmt, super.key,
+  });
   final String label;
   final double value;
   final IconData icon;
   final Gradient gradient;
   final NumberFormat fmt;
-
-  const StatCard({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.gradient,
-    required this.fmt,
-  });
 
   @override
   Widget build(BuildContext context) {

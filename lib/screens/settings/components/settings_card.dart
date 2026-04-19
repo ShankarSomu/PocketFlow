@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 
 class SettingsCard extends StatelessWidget {
+  
+  const SettingsCard({
+    required this.title, required this.icon, required this.children, super.key,
+  });
   final String title;
   final IconData icon;
   final List<Widget> children;
-  
-  const SettingsCard({
-    super.key,
-    required this.title,
-    required this.icon,
-    required this.children,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +17,7 @@ class SettingsCard extends StatelessWidget {
       color: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+        side: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -43,3 +40,4 @@ class SettingsCard extends StatelessWidget {
     );
   }
 }
+

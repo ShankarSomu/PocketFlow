@@ -1,17 +1,17 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../core/color_extensions.dart';
+import 'package:record/record.dart';
+
 import '../../core/formatters.dart';
 import '../../db/database.dart';
 import '../../models/transaction.dart' as model;
+import '../../services/app_logger.dart';
 import '../../services/chat_parser.dart';
 import '../../services/groq_service.dart';
 import '../../services/refresh_notifier.dart';
-import '../../services/app_logger.dart';
-import '../../services/theme_service.dart';
 import 'components/chat_components.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -28,7 +28,7 @@ class ChatScreenState extends State<ChatScreen> {
   final List<Map<String, String>> _aiHistory = []; // conversation history for Groq
   bool _hasApiKey = false;
   bool _aiThinking = false;
-  bool _showRecent = false;
+  final bool _showRecent = false;
   
   // Voice input (Whisper via Groq)
   final AudioRecorder _recorder = AudioRecorder();
@@ -63,9 +63,11 @@ class ChatScreenState extends State<ChatScreen> {
       if (path != null && path.isNotEmpty) {
         if (!hasKey) {
           if (mounted) setState(() => _isTranscribing = false);
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Voice transcription needs an API key — tap ⋮ → Setup AI')),
           );
+          }
           return;
         }
         final transcript = await GroqService.transcribeAudio(path);
@@ -96,24 +98,28 @@ class ChatScreenState extends State<ChatScreen> {
     // Start recording
     final micStatus = await Permission.microphone.request();
     if (!micStatus.isGranted) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Microphone permission required')),
       );
+      }
       return;
     }
     try {
       final dir = await getTemporaryDirectory();
       final path = '${dir.path}/pf_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
       await _recorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000, sampleRate: 16000),
+        const RecordConfig(sampleRate: 16000),
         path: path,
       );
       if (mounted) setState(() => _isRecording = true);
     } catch (e) {
       AppLogger.err('record_start', e);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not start recording: $e')),
       );
+      }
     }
   }
 
@@ -199,8 +205,6 @@ class ChatScreenState extends State<ChatScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
       builder: (ctx) => ApiKeySetup(
         isChange: isChange,
         onSaved: () {
@@ -421,7 +425,7 @@ class ChatScreenState extends State<ChatScreen> {
                       gradient: LinearGradient(
                         colors: [
                           Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -429,7 +433,7 @@ class ChatScreenState extends State<ChatScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -455,19 +459,19 @@ class ChatScreenState extends State<ChatScreen> {
                           'Smart Finance Assistant',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.refresh_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    icon: Icon(Icons.refresh_rounded, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     tooltip: 'New chat',
                     onPressed: () => setState(() { _messages.clear(); _aiHistory.clear(); }),
                   ),
                   PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    icon: Icon(Icons.more_vert_rounded, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     itemBuilder: (context) => [
                       const PopupMenuItem(value: 'settings', child: Text('Change AI Key')),
@@ -493,13 +497,13 @@ class ChatScreenState extends State<ChatScreen> {
                             gradient: LinearGradient(
                               colors: [
                                 Theme.of(context).colorScheme.primary,
-                                Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                                Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))],
+                            boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))],
                           ),
                           padding: const EdgeInsets.all(18),
                           child: Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.onPrimary, size: 36),
@@ -578,3 +582,4 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+

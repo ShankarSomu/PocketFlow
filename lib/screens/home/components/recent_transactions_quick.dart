@@ -5,16 +5,15 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/glass_card.dart';
 
 class RecentTransactionsQuick extends StatelessWidget {
+
+  const RecentTransactionsQuick({required this.recent, required this.fmt, super.key});
   final List<model.Transaction> recent;
   final NumberFormat fmt;
-
-  const RecentTransactionsQuick({super.key, required this.recent, required this.fmt});
 
   @override
   Widget build(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
-      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

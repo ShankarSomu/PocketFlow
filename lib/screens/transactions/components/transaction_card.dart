@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../models/transaction.dart' as model;
+
 import '../../../../models/account.dart';
+import '../../../../models/transaction.dart' as model;
 import 'transaction_helpers.dart';
 
 class TransactionCard extends StatelessWidget {
+
+  const TransactionCard({
+    required this.transaction, required this.account, required this.fmt, required this.showDivider, required this.onTap, super.key,
+  });
   final model.Transaction transaction;
   final Account? account;
   final NumberFormat fmt;
   final bool showDivider;
   final VoidCallback onTap;
-
-  const TransactionCard({
-    super.key,
-    required this.transaction,
-    required this.account,
-    required this.fmt,
-    required this.showDivider,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +40,7 @@ class TransactionCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -75,7 +71,7 @@ class TransactionCard extends StatelessWidget {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurface
-                                  .withOpacity(0.5)),
+                                  .withValues(alpha: 0.5)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ]
@@ -108,3 +104,4 @@ class TransactionCard extends StatelessWidget {
     );
   }
 }
+

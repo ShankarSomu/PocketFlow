@@ -6,16 +6,12 @@ import '../../../widgets/glass_card.dart';
 import 'stat_card.dart';
 
 class MonthlySummaryCard extends StatelessWidget {
+  const MonthlySummaryCard(
+      {required this.income, required this.expenses, required this.net, required this.fmt, super.key,
+      this.isProjected = false});
   final double income, expenses, net;
   final NumberFormat fmt;
   final bool isProjected;
-  const MonthlySummaryCard(
-      {super.key,
-      required this.income,
-      required this.expenses,
-      required this.net,
-      required this.fmt,
-      this.isProjected = false});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +32,6 @@ class MonthlySummaryCard extends StatelessWidget {
       },
       child: GlassCard(
         padding: const EdgeInsets.all(16),
-        borderRadius: 16,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -118,8 +113,7 @@ class MonthlySummaryCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: (expenses > income ? AppTheme.error : AppTheme.emerald).withOpacity(0.3), 
-                  width: 1
+                  color: (expenses > income ? AppTheme.error : AppTheme.emerald).withValues(alpha: 0.3)
                 ),
               ),
               child: ClipRRect(
@@ -128,7 +122,7 @@ class MonthlySummaryCard extends StatelessWidget {
                   value: spentRatio,
                   minHeight: 12,
                   backgroundColor: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withOpacity(0.1)
+                    ? Colors.white.withValues(alpha: 0.1)
                     : AppTheme.emerald.veryFaint,
                   valueColor: AlwaysStoppedAnimation(
                     expenses > income ? AppTheme.error : AppTheme.emerald,
@@ -152,3 +146,4 @@ class MonthlySummaryCard extends StatelessWidget {
     );
   }
 }
+

@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 
 class ProfileHeroCard extends StatelessWidget {
+
+  const ProfileHeroCard({
+    required this.user, required this.isSignedIn, required this.savingsRate, required this.budgetCompliance, required this.goalsOnTrack, required this.totalGoals, super.key,
+  });
   final dynamic user;
   final bool isSignedIn;
   final double savingsRate, budgetCompliance;
   final int goalsOnTrack, totalGoals;
-
-  const ProfileHeroCard({
-    super.key,
-    required this.user,
-    required this.isSignedIn,
-    required this.savingsRate,
-    required this.budgetCompliance,
-    required this.goalsOnTrack,
-    required this.totalGoals,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +36,10 @@ class ProfileHeroCard extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -62,12 +56,12 @@ class ProfileHeroCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withOpacity(0.3),
-                        Colors.white.withOpacity(0.15),
+                        Colors.white.withValues(alpha: 0.3),
+                        Colors.white.withValues(alpha: 0.15),
                       ],
                     ),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
                   ),
                   child: user?.photoUrl != null
                       ? ClipOval(child: Image.network(user!.photoUrl!, fit: BoxFit.cover))
@@ -90,7 +84,7 @@ class ProfileHeroCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         isSignedIn ? (user?.email ?? '') : 'Not signed in',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.6), fontSize: 10),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.6), fontSize: 10),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -100,16 +94,16 @@ class ProfileHeroCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
+                    color: Colors.white.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.stars_rounded, size: 10, color: Theme.of(context).colorScheme.onPrimary),
+                      Icon(Icons.check_circle_rounded, size: 10, color: Theme.of(context).colorScheme.onPrimary),
                       const SizedBox(width: 4),
                       Text(
-                        isSignedIn ? 'Premium' : 'Guest',
+                        'Free',
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.onPrimary,
                             fontSize: 9,
@@ -156,16 +150,16 @@ class ProfileHeroCard extends StatelessWidget {
 }
 
 class _StatChip extends StatelessWidget {
+  const _StatChip({required this.label, required this.value, required this.good});
   final String label, value;
   final bool good;
-  const _StatChip({required this.label, required this.value, required this.good});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -176,13 +170,13 @@ class _StatChip extends StatelessWidget {
             children: [
               Text(label,
                   style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
                       fontSize: 9,
                       fontWeight: FontWeight.w600)),
               Icon(
                 good ? Icons.trending_up_rounded : Icons.trending_down_rounded,
                 size: 12,
-                color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8),
+                color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8),
               ),
             ],
           ),
@@ -198,3 +192,4 @@ class _StatChip extends StatelessWidget {
     );
   }
 }
+

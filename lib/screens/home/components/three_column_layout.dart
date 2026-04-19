@@ -5,16 +5,13 @@ import 'accounts_quick_view.dart';
 import 'recent_transactions_quick.dart';
 
 class ThreeColumnLayout extends StatelessWidget {
+
+  const ThreeColumnLayout({
+    required this.accountsQuickView, required this.recent, required this.fmt, super.key,
+  });
   final List<Map<String, dynamic>> accountsQuickView;
   final List<model.Transaction> recent;
   final NumberFormat fmt;
-
-  const ThreeColumnLayout({
-    super.key,
-    required this.accountsQuickView,
-    required this.recent,
-    required this.fmt,
-  });
 
   @override
   Widget build(BuildContext context) {

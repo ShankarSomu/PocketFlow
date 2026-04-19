@@ -1,4 +1,21 @@
 class SavingsGoal {
+
+  SavingsGoal({
+    required this.name, required this.target, required this.saved, this.id,
+    this.accountId,
+    this.priority = 999,
+    this.deletedAt,
+  });
+
+  factory SavingsGoal.fromMap(Map<String, dynamic> m) => SavingsGoal(
+        id: m['id'],
+        name: m['name'],
+        target: m['target'],
+        saved: m['saved'],
+        accountId: m['account_id'],
+        priority: m['priority'] ?? 999,
+        deletedAt: m['deleted_at'],
+      );
   final int? id;
   final String name;
   final double target;
@@ -6,16 +23,6 @@ class SavingsGoal {
   final int? accountId;   // linked account
   final int priority;     // lower = higher priority (1 = top)
   final int? deletedAt;
-
-  SavingsGoal({
-    this.id,
-    required this.name,
-    required this.target,
-    required this.saved,
-    this.accountId,
-    this.priority = 999,
-    this.deletedAt,
-  });
 
   double get progress => target > 0 ? (saved / target).clamp(0.0, 1.0) : 0;
   double get remaining => (target - saved).clamp(0.0, double.infinity);
@@ -40,16 +47,6 @@ class SavingsGoal {
         'priority': priority,
         'deleted_at': deletedAt,
       };
-
-  factory SavingsGoal.fromMap(Map<String, dynamic> m) => SavingsGoal(
-        id: m['id'],
-        name: m['name'],
-        target: m['target'],
-        saved: m['saved'],
-        accountId: m['account_id'],
-        priority: m['priority'] ?? 999,
-        deletedAt: m['deleted_at'],
-      );
 
   SavingsGoal copyWith({
     double? saved,

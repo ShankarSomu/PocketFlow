@@ -1,26 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:pocket_flow/core/formatters.dart';
 import 'package:pocket_flow/core/color_extensions.dart';
-import 'package:pocket_flow/widgets/cards/cards.dart';
+import 'package:pocket_flow/core/formatters.dart';
 import 'package:pocket_flow/utils/calculation_helpers.dart';
+import 'package:pocket_flow/widgets/cards/cards.dart';
 
 /// Example widget showing how to use the new utilities
 /// This demonstrates best practices for the refactored codebase
 class ExampleRefactoredWidget extends StatelessWidget {
+
+  const ExampleRefactoredWidget({
+    required this.income, required this.expenses, required this.lastTransaction, required this.budgetAmount, required this.budgetSpent, super.key,
+  });
   final double income;
   final double expenses;
   final DateTime lastTransaction;
   final double budgetAmount;
   final double budgetSpent;
-
-  const ExampleRefactoredWidget({
-    super.key,
-    required this.income,
-    required this.expenses,
-    required this.lastTransaction,
-    required this.budgetAmount,
-    required this.budgetSpent,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -209,15 +204,15 @@ class ExampleRefactoredWidget extends StatelessWidget {
 
 /// Helper widget for info rows
 class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
 
   const _InfoRow({
     required this.label,
     required this.value,
     this.valueColor,
   });
+  final String label;
+  final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -250,14 +245,12 @@ class _InfoRow extends StatelessWidget {
 
 // ❌ OLD WAY (Before Refactoring)
 class OldWayExample extends StatelessWidget {
-  final double amount;
-  final DateTime date;
 
   const OldWayExample({
-    super.key,
-    required this.amount,
-    required this.date,
+    required this.amount, required this.date, super.key,
   });
+  final double amount;
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
@@ -300,14 +293,12 @@ class OldWayExample extends StatelessWidget {
 
 // ✅ NEW WAY (After Refactoring)
 class NewWayExample extends StatelessWidget {
-  final double amount;
-  final DateTime date;
 
   const NewWayExample({
-    super.key,
-    required this.amount,
-    required this.date,
+    required this.amount, required this.date, super.key,
   });
+  final double amount;
+  final DateTime date;
 
   @override
   Widget build(BuildContext context) {

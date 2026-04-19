@@ -31,7 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -50,14 +50,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: Icon(Icons.arrow_back_ios_new_rounded,
-                          color: theme.colorScheme.onSurface.withOpacity(0.8), size: 18),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8), size: 18),
                     ),
                   ),
                   Expanded(
@@ -82,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -97,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicatorPadding: const EdgeInsets.all(3),
                   labelColor: theme.colorScheme.onPrimary,
-                  unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.5),
+                  unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   labelStyle: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600),
                   dividerColor: Colors.transparent,
@@ -153,4 +153,5 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 }
+
 

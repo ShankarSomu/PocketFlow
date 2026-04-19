@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../repositories/recurring_repository.dart';
-import '../repositories/account_repository.dart';
-import '../repositories/savings_repository.dart';
-import '../models/recurring_transaction.dart';
 import '../models/account.dart';
+import '../models/recurring_transaction.dart';
 import '../models/savings_goal.dart';
+import '../repositories/account_repository.dart';
+import '../repositories/recurring_repository.dart';
+import '../repositories/savings_repository.dart';
 
 /// ViewModel for Recurring Transactions Screen
 class RecurringViewModel extends ChangeNotifier {
-  final RecurringRepository _recurringRepo;
-  final AccountRepository _accountRepo;
-  final SavingsRepository _savingsRepo;
 
   RecurringViewModel({
     required RecurringRepository recurringRepo,
@@ -20,6 +17,9 @@ class RecurringViewModel extends ChangeNotifier {
   })  : _recurringRepo = recurringRepo,
         _accountRepo = accountRepo,
         _savingsRepo = savingsRepo;
+  final RecurringRepository _recurringRepo;
+  final AccountRepository _accountRepo;
+  final SavingsRepository _savingsRepo;
 
   bool _loading = true;
   String? _error;

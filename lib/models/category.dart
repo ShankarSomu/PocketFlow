@@ -1,19 +1,27 @@
-class Category {
-  final int? id;
-  final String name;
-  final int? parentId;   // null = top-level category
-  final bool isDefault;
-  final String icon;     // emoji
-  final String color;    // hex color string e.g. '#FF6584'
+class Category {    // hex color string e.g. '#FF6584'
 
   const Category({
-    this.id,
-    required this.name,
+    required this.name, this.id,
     this.parentId,
     this.isDefault = false,
     this.icon = '📁',
     this.color = '#6C63FF',
   });
+
+  factory Category.fromMap(Map<String, dynamic> m) => Category(
+        id: m['id'],
+        name: m['name'],
+        parentId: m['parent_id'],
+        isDefault: m['is_default'] == 1,
+        icon: m['icon'] ?? '📁',
+        color: m['color'] ?? '#6C63FF',
+      );
+  final int? id;
+  final String name;
+  final int? parentId;   // null = top-level category
+  final bool isDefault;
+  final String icon;     // emoji
+  final String color;
 
   bool get isSubcategory => parentId != null;
 
@@ -25,15 +33,6 @@ class Category {
         'icon': icon,
         'color': color,
       };
-
-  factory Category.fromMap(Map<String, dynamic> m) => Category(
-        id: m['id'],
-        name: m['name'],
-        parentId: m['parent_id'],
-        isDefault: m['is_default'] == 1,
-        icon: m['icon'] ?? '📁',
-        color: m['color'] ?? '#6C63FF',
-      );
 
   Category copyWith({String? name, String? icon, String? color}) => Category(
         id: id,

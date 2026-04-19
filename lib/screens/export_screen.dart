@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../db/database.dart';
+
 import '../models/export_models.dart';
-import '../services/json_export_service.dart';
 import '../services/csv_export_service.dart';
 import '../services/excel_export_service.dart';
+import '../services/json_export_service.dart';
 import '../services/pdf_export_service.dart';
 
 /// Screen for exporting financial data in various formats
@@ -279,7 +278,7 @@ class _ExportScreenState extends State<ExportScreen> {
                       value: _selectedDataTypes.contains(type),
                       onChanged: (checked) {
                         setState(() {
-                          if (checked == true) {
+                          if (checked ?? false) {
                             _selectedDataTypes.add(type);
                           } else {
                             _selectedDataTypes.remove(type);
@@ -504,7 +503,7 @@ class _ExportScreenState extends State<ExportScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<CsvTemplate>(
-              value: _csvTemplate,
+              initialValue: _csvTemplate,
               decoration: const InputDecoration(
                 labelText: 'Template',
                 border: OutlineInputBorder(),

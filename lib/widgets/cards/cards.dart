@@ -25,4 +25,5 @@
 ///   message: 'Operation successful',
 /// )
 /// ```
+library;
 export 'card_variants.dart';

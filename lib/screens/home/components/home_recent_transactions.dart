@@ -8,14 +8,12 @@ import 'home_transaction_item.dart';
 
 /// Recent transactions list widget
 class HomeRecentTransactions extends StatelessWidget {
-  final List<model.Transaction> transactions;
-  final List<Account> accounts;
 
   const HomeRecentTransactions({
-    super.key,
-    required this.transactions,
-    required this.accounts,
+    required this.transactions, required this.accounts, super.key,
   });
+  final List<model.Transaction> transactions;
+  final List<Account> accounts;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +58,7 @@ class HomeRecentTransactions extends StatelessWidget {
               child: Center(
                   child: Text('No transactions yet',
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                           fontSize: 13))),
             )
           else
@@ -95,7 +93,7 @@ class HomeRecentTransactions extends StatelessWidget {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: color.withOpacity(0.12),
+                                  color: color.withValues(alpha: 0.12),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(icon,
@@ -121,7 +119,7 @@ class HomeRecentTransactions extends StatelessWidget {
                                             color: Theme.of(context)
                                                 .colorScheme
                                                 .onSurface
-                                                .withOpacity(0.5)),
+                                                .withValues(alpha: 0.5)),
                                         overflow: TextOverflow.ellipsis),
                                   ],
                                 ),
@@ -150,7 +148,7 @@ class HomeRecentTransactions extends StatelessWidget {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurface
-                                        .withOpacity(0.5)),
+                                        .withValues(alpha: 0.5)),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -175,3 +173,4 @@ class HomeRecentTransactions extends StatelessWidget {
     );
   }
 }
+

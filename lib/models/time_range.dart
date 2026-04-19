@@ -1,9 +1,5 @@
 /// Represents a time range with current and previous period for comparison
 class TimeRange {
-  final DateTime from;
-  final DateTime to;
-  final DateTime prevFrom;
-  final DateTime prevTo;
 
   const TimeRange({
     required this.from,
@@ -14,9 +10,9 @@ class TimeRange {
 
   /// Create a month range
   factory TimeRange.month(int month, int year) {
-    final from = DateTime(year, month, 1);
+    final from = DateTime(year, month);
     final to = DateTime(year, month + 1, 0, 23, 59, 59);
-    final prevFrom = DateTime(year, month - 1, 1);
+    final prevFrom = DateTime(year, month - 1);
     final prevTo = DateTime(year, month, 0, 23, 59, 59);
 
     return TimeRange(
@@ -29,9 +25,9 @@ class TimeRange {
 
   /// Create a year range
   factory TimeRange.year(int year) {
-    final from = DateTime(year, 1, 1);
+    final from = DateTime(year);
     final to = DateTime(year, 12, 31, 23, 59, 59);
-    final prevFrom = DateTime(year - 1, 1, 1);
+    final prevFrom = DateTime(year - 1);
     final prevTo = DateTime(year - 1, 12, 31, 23, 59, 59);
 
     return TimeRange(
@@ -55,6 +51,10 @@ class TimeRange {
       prevTo: prevTo,
     );
   }
+  final DateTime from;
+  final DateTime to;
+  final DateTime prevFrom;
+  final DateTime prevTo;
 
   /// Current period duration in days
   int get durationInDays => to.difference(from).inDays + 1;

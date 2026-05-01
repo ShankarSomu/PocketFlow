@@ -1,0 +1,1091 @@
+=== PocketFlow Diagnostics Report ===
+Generated: 2026-04-19 00:27:21.818502
+Privacy Mode: Detailed (Included Transactions)
+
+App Version: 1.0.0 (1)
+Platform: android T1SAS33.73-40-2-17
+Connectivity: [ConnectivityResult.wifi]
+
+=== PocketFlow Diagnostics ===
+Exported: 2026-04-19T00:27:21.818504
+Type: Full Technical Logs
+
+Total entries: 500
+
+--- Summary ---
+Errors: 6
+Warnings: 0
+
+--- USERACTION (2) ---
+2026-04-19T00:26:08 INFO    [userAction]   send_diagnostics | Diagnostics report shared
+2026-04-19T00:27:07 INFO    [userAction]   send_diagnostics | Diagnostics report shared
+
+--- DATABASE (474) ---
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | income $9577.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:04 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $22022.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $5530.15 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $17.43 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $282022.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $19.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Groceries
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $84.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:05 DEBUG   [database]     insertTransaction | expense $17499.26 Phone
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3137.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $252022.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $17000.0 Phone
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $17924.95 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3627.24 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $5.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3500.0 Phone
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3500.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $9577.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3627.24 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $14424.95 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $14424.95 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3627.24 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2022.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $14424.95 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3627.24 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Groceries
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3137.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $10500.0 Phone
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3500.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $10881.07 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $10881.07 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $10881.07 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $10881.07 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $69611.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $10881.07 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $1.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $10881.07 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $3500.0 Other
+2026-04-19T00:22:06 DEBUG   [database]     insertTransaction | expense $7420.1 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7420.1 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3137.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $2022.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $4569.78 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $122022.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3499.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $1.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $95670.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $102022.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $92022.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Groceries
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8423.0 Phone
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $5000.0 Phone
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $95687.0 Phone
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $42022.0 Other
+2026-04-19T00:22:07 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $9188.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Groceries
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $115109.54 Salary
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $22022.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3655.58 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Groceries
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3656.94 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $302022.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3783.94 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8924.89 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3808.94 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3137.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8929.38 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $272022.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8929.38 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8929.38 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2022.0 Other
+2026-04-19T00:22:08 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $192022.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $172022.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Groceries
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $16.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7330.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $16.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $8973.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3137.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9184.91 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9184.87 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $7026.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $6688.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $13.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $15.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9184.87 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9184.87 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9184.87 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9934.87 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9188.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $9934.87 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | income $3137.0 Other
+2026-04-19T00:22:09 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $10034.87 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $7.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $9934.87 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $9934.87 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $10034.87 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $10125.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $227898.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $423.33 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $600.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $9225.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $8423.0 Phone
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $600.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $8625.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $600.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $9577.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $600.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2022.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | income $3877.56 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3221.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $600.0 Other
+2026-04-19T00:22:10 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $5517.0 Phone
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $600.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $2602.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | income $4477.56 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $8423.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $600.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $3281.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | income $3137.0 Salary
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $716.0 Other
+2026-04-19T00:22:11 DEBUG   [database]     insertTransaction | expense $3281.0 Phone
+
+--- NAVIGATION (17) ---
+2026-04-19T00:22:27 DEBUG   [navigation]   Navigate to Budget
+2026-04-19T00:22:27 DEBUG   [navigation]   Navigate to Home
+2026-04-19T00:22:27 DEBUG   [navigation]   Navigate to Accounts
+2026-04-19T00:22:27 DEBUG   [navigation]   Navigate to Budget
+2026-04-19T00:22:27 DEBUG   [navigation]   Navigate to Accounts
+2026-04-19T00:22:28 DEBUG   [navigation]   Navigate to Accounts
+2026-04-19T00:22:29 DEBUG   [navigation]   Navigate to Budget
+2026-04-19T00:22:29 DEBUG   [navigation]   Navigate to Budget
+2026-04-19T00:22:35 DEBUG   [navigation]   Navigate to Recurring
+2026-04-19T00:22:35 DEBUG   [navigation]   Navigate to Savings
+2026-04-19T00:22:35 DEBUG   [navigation]   Navigate to Chat
+2026-04-19T00:22:35 DEBUG   [navigation]   Navigate to Recurring
+2026-04-19T00:22:37 DEBUG   [navigation]   Navigate to Transactions
+2026-04-19T00:22:37 DEBUG   [navigation]   Navigate to Transactions
+2026-04-19T00:23:17 DEBUG   [navigation]   Navigate to Home
+2026-04-19T00:23:17 DEBUG   [navigation]   Navigate to Home
+2026-04-19T00:27:11 DEBUG   [navigation]   Navigate to Home
+
+--- SYSTEM (1) ---
+2026-04-19T00:22:11 INFO    [system]       SMS scan complete | Total=11942, Imported=9472, Skipped=2470 (processed=0, non-financial=2375, parse-failed=95), Failed=0
+
+--- ERROR (6) ---
+2026-04-19T00:22:10 ERROR   [error]        Flutter Error | type 'Null' is not a subtype of type 'double' in type cast
+2026-04-19T00:22:10 ERROR   [error]        Stack Trace | #0      _TopMerchantsCard.build.<anonymous closure> (package:pocket_flow/screens/intelligence/intelligence_dashboard_screen.dart:743)
+#1      MappedIterable.elementAt (dart:_internal/iterable.dart:402)
+#2      ListIterator.moveNext (dart:_internal/iterable.dart:371)
+#3      List.addAll (dart:core-patch/growable_array.dart:328)
+#4      _TopMerchantsCard.build (package:pocket_flow/screens/intelligence/intelligence_dashboard_screen.dart:738)
+#5      StatelessElement.build (package:flutter/src/widgets/framework.dart:5889)
+#6      ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5817)
+#7      Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#8      ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#9      ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#10     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#11     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#12     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#13     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#14     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#15     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#16     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#17     MultiChildRenderObjectElement.inflateWidget (package:flutter/src/widgets/framework.dart:7264)
+#18     MultiChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7279)
+#19     _ViewportElement.mount (package:flutter/src/widgets/viewport.dart:254)
+#20     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#21     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#22     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#23     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#24     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#25     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#26     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#27     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#28     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#29     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#30     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#31     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#32     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#33     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#34     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#35     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#36     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#37     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#38     StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#39     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#40     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#41     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#42     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#43     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#44     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#45     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#46     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#47     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#48     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#49     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#50     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#51     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#52     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#53     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#54     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#55     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#56     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#57     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#58     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#59     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#60     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#61     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#62     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#63     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#64     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#65     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#66     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#67     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#68     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#69     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#70     StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#71     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#72     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#73     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#74     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#75     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#76     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#77     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#78     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#79     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#80     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#81     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#82     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#83     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#84     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#85     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#86     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#87     StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#88     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#89     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#90     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#91     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#92     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#93     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#94     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#95     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#96     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#97     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#98     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#99     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#100    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#101    StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#102    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#103    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#104    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#105    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#106    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#107    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#108    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#109    StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#110    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#111    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#112    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#113    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#114    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#115    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#116    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#117    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#118    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#119    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#120    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#121    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#122    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#123    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#124    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#125    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#126    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#127    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#128    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#129    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#130    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#131    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#132    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#133    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#134    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#135    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#136    MultiChildRenderObjectElement.inflateWidget (package:flutter/src/widgets/framework.dart:7264)
+#137    MultiChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7279)
+#138    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#139    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#140    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#141    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#142    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#143    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#144    StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#145    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#146    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#147    Element.updateChild (package:flutter/src/widgets/framework.dart:4053)
+#148    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#149    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#150    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#151    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#152    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7122)
+#153    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#154    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#155    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#156    StatelessElement.update (package:flutter/src/widgets/framework.dart:5895)
+#157    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#158    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#159    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#160    StatelessElement.update (package:flutter/src/widgets/framework.dart:5895)
+#161    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#162    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#163    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#164    StatelessElement.update (package:flutter/src/widgets/framework.dart:5895)
+#165    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#166    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#167    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#168    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#169    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#170    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#171    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#172    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#173    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#174    Element.updateChildren (package:flutter/src/widgets/framework.dart:4191)
+#175    MultiChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7295)
+#176    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#177    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#178    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#179    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#180    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#181    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#182    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#183    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#184    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#185    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#186    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#187    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#188    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#189    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#190    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#191    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#192    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#193    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#194    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#195    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#196    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#197    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#198    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#199    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#200    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7122)
+#201    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#202    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#203    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#204    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#205    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#206    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7122)
+#207    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#208    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#209    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#210    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#211    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#212    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#213    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#214    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#215    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#216    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#217    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#218    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#219    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#220    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#221    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#222    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#223    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#224    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#225    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#226    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#227    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#228    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#229    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#230    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#231    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#232    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#233    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#234    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#235    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#236    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#237    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#238    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#239    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#240    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#241    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#242    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#243    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#244    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#245    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#246    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#247    BuildScope._tryRebuild (package:flutter/src/widgets/framework.dart:2750)
+#248    BuildScope._flushDirtyElements (package:flutter/src/widgets/framework.dart:2807)
+#249    BuildOwner.buildScope (package:flutter/src/widgets/framework.dart:3111)
+#250    WidgetsBinding.drawFrame (package:flutter/src/widgets/binding.dart:1302)
+#251    RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495)
+#252    SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1430)
+#253    SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1345)
+#254    SchedulerBinding._handleDrawFrame (package:flutter/src/scheduler/binding.dart:1198)
+#255    _invoke (dart:ui/hooks.dart:356)
+#256    PlatformDispatcher._drawFrame (dart:ui/platform_dispatcher.dart:444)
+#257    _drawFrame (dart:ui/hooks.dart:328)
+
+2026-04-19T00:22:12 ERROR   [error]        Flutter Error | type 'Null' is not a subtype of type 'double' in type cast
+2026-04-19T00:22:12 ERROR   [error]        Stack Trace | #0      _TopMerchantsCard.build.<anonymous closure> (package:pocket_flow/screens/intelligence/intelligence_dashboard_screen.dart:743)
+#1      MappedIterable.elementAt (dart:_internal/iterable.dart:402)
+#2      ListIterator.moveNext (dart:_internal/iterable.dart:371)
+#3      List.addAll (dart:core-patch/growable_array.dart:328)
+#4      _TopMerchantsCard.build (package:pocket_flow/screens/intelligence/intelligence_dashboard_screen.dart:738)
+#5      StatelessElement.build (package:flutter/src/widgets/framework.dart:5889)
+#6      ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5817)
+#7      Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#8      ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#9      ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#10     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#11     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#12     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#13     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#14     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#15     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#16     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#17     MultiChildRenderObjectElement.inflateWidget (package:flutter/src/widgets/framework.dart:7264)
+#18     MultiChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7279)
+#19     _ViewportElement.mount (package:flutter/src/widgets/viewport.dart:254)
+#20     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#21     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#22     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#23     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#24     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#25     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#26     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#27     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#28     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#29     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#30     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#31     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#32     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#33     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#34     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#35     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#36     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#37     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#38     StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#39     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#40     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#41     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#42     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#43     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#44     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#45     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#46     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#47     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#48     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#49     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#50     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#51     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#52     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#53     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#54     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#55     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#56     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#57     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#58     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#59     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#60     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#61     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#62     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#63     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#64     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#65     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#66     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#67     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#68     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#69     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#70     StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#71     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#72     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#73     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#74     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#75     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#76     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#77     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#78     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#79     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#80     SingleChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7115)
+#81     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#82     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#83     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#84     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#85     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#86     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#87     StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#88     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#89     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#90     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#91     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#92     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#93     ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#94     ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#95     Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#96     Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#97     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#98     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#99     Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#100    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#101    StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#102    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#103    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#104    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#105    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#106    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#107    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#108    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#109    StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#110    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#111    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#112    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#113    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#114    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#115    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#116    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#117    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#118    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#119    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#120    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#121    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#122    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#123    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#124    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#125    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#126    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#127    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#128    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#129    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#130    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#131    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#132    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#133    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#134    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#135    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#136    MultiChildRenderObjectElement.inflateWidget (package:flutter/src/widgets/framework.dart:7264)
+#137    MultiChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7279)
+#138    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#139    Element.updateChild (package:flutter/src/widgets/framework.dart:4059)
+#140    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#141    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#142    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#143    ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5799)
+#144    StatefulElement._firstBuild (package:flutter/src/widgets/framework.dart:5973)
+#145    ComponentElement.mount (package:flutter/src/widgets/framework.dart:5793)
+#146    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4587)
+#147    Element.updateChild (package:flutter/src/widgets/framework.dart:4053)
+#148    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#149    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#150    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#151    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#152    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7122)
+#153    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#154    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#155    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#156    StatelessElement.update (package:flutter/src/widgets/framework.dart:5895)
+#157    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#158    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#159    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#160    StatelessElement.update (package:flutter/src/widgets/framework.dart:5895)
+#161    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#162    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#163    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#164    StatelessElement.update (package:flutter/src/widgets/framework.dart:5895)
+#165    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#166    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#167    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#168    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#169    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#170    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#171    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#172    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#173    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#174    Element.updateChildren (package:flutter/src/widgets/framework.dart:4191)
+#175    MultiChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7295)
+#176    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#177    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#178    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#179    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#180    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#181    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#182    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#183    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#184    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#185    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#186    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#187    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#188    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#189    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#190    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#191    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#192    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#193    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#194    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#195    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#196    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#197    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#198    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#199    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#200    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7122)
+#201    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#202    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#203    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#204    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#205    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#206    SingleChildRenderObjectElement.update (package:flutter/src/widgets/framework.dart:7122)
+#207    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#208    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#209    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#210    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#211    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#212    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#213    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#214    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#215    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#216    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#217    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#218    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#219    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#220    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#221    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#222    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#223    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#224    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#225    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#226    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#227    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#228    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#229    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#230    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#231    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#232    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#233    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#234    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#235    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#236    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#237    ProxyElement.update (package:flutter/src/widgets/framework.dart:6149)
+#238    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#239    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#240    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#241    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#242    StatefulElement.update (package:flutter/src/widgets/framework.dart:6007)
+#243    Element.updateChild (package:flutter/src/widgets/framework.dart:4037)
+#244    ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5841)
+#245    StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5982)
+#246    Element.rebuild (package:flutter/src/widgets/framework.dart:5529)
+#247    BuildScope._tryRebuild (package:flutter/src/widgets/framework.dart:2750)
+#248    BuildScope._flushDirtyElements (package:flutter/src/widgets/framework.dart:2807)
+#249    BuildOwner.buildScope (package:flutter/src/widgets/framework.dart:3111)
+#250    WidgetsBinding.drawFrame (package:flutter/src/widgets/binding.dart:1302)
+#251    RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495)
+#252    SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1430)
+#253    SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1345)
+#254    SchedulerBinding._handleDrawFrame (package:flutter/src/scheduler/binding.dart:1198)
+#255    _invoke (dart:ui/hooks.dart:356)
+#256    PlatformDispatcher._drawFrame (dart:ui/platform_dispatcher.dart:444)
+#257    _drawFrame (dart:ui/hooks.dart:328)
+
+2026-04-19T00:27:14 ERROR   [error]        Flutter Error | Invalid argument(s): 0.01
+2026-04-19T00:27:14 ERROR   [error]        Stack Trace | #0      double.clamp (dart:core-patch/double.dart:232)
+#1      InteractiveDonutPainter.paint (package:pocket_flow/screens/home/components/interactive_donut.dart:367)
+#2      RenderCustomPaint._paintWithPainter (package:flutter/src/rendering/custom_paint.dart:593)
+#3      RenderCustomPaint.paint (package:flutter/src/rendering/custom_paint.dart:641)
+#4      RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#5      PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#6      RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:143)
+#7      RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#8      PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#9      RenderBoxContainerDefaultsMixin.defaultPaint (package:flutter/src/rendering/box.dart:3368)
+#10     RenderFlex.paint (package:flutter/src/rendering/flex.dart:1402)
+#11     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#12     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#13     RenderBoxContainerDefaultsMixin.defaultPaint (package:flutter/src/rendering/box.dart:3368)
+#14     RenderFlex.paint (package:flutter/src/rendering/flex.dart:1402)
+#15     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#16     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#17     RenderShiftedBox.paint (package:flutter/src/rendering/shifted_box.dart:98)
+#18     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#19     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#20     RenderShiftedBox.paint (package:flutter/src/rendering/shifted_box.dart:98)
+#21     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#22     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#23     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:143)
+#24     RenderDecoratedBox.paint (package:flutter/src/rendering/proxy_box.dart:2512)
+#25     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#26     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#27     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:143)
+#28     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#29     PaintingContext.paintChild (package:flutter/src/rendering/object.dart:265)
+#30     RenderProxyBoxMixin.paint (package:flutter/src/rendering/proxy_box.dart:143)
+#31     RenderObject._paintWithContext (package:flutter/src/rendering/object.dart:3429)
+#32     PaintingContext._repaintCompositedChild (package:flutter/src/rendering/object.dart:180)
+#33     PaintingContext.repaintCompositedChild (package:flutter/src/rendering/object.dart:125)
+#34     PipelineOwner.flushPaint (package:flutter/src/rendering/object.dart:1325)
+#35     PipelineOwner.flushPaint (package:flutter/src/rendering/object.dart:1335)
+#36     RendererBinding.drawFrame (package:flutter/src/rendering/binding.dart:631)
+#37     WidgetsBinding.drawFrame (package:flutter/src/widgets/binding.dart:1304)
+#38     RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495)
+#39     SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1430)
+#40     SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1345)
+#41     SchedulerBinding._handleDrawFrame (package:flutter/src/scheduler/binding.dart:1198)
+#42     _invoke (dart:ui/hooks.dart:356)
+#43     PlatformDispatcher._drawFrame (dart:ui/platform_dispatcher.dart:444)
+#44     _drawFrame (dart:ui/hooks.dart:328)
+
+
+
+ 

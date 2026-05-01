@@ -540,12 +540,12 @@ class _RecurringPatternCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: patternColor.withOpacity(0.1),
+                  color: patternColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   _getPatternIcon(pattern.type),
-                  color: patternColor.withOpacity(0.7),
+                  color: patternColor.withValues(alpha: 0.7),
                   size: 20,
                 ),
               ),
@@ -570,7 +570,7 @@ class _RecurringPatternCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: patternColor.withOpacity(0.05),
+                            color: patternColor.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -578,7 +578,7 @@ class _RecurringPatternCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: patternColor.withOpacity(0.7),
+                              color: patternColor.withValues(alpha: 0.7),
                             ),
                           ),
                         ),

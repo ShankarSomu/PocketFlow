@@ -1,0 +1,926 @@
+{
+  "nodes": [
+    {
+      "id": "doc_layered_architecture",
+      "label": "Layered Architecture",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_ui_layer",
+      "label": "UI Layer (Screens & Widgets)",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_presentation_layer",
+      "label": "Presentation Layer (ViewModels)",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_business_logic_layer",
+      "label": "Business Logic Layer (Services)",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_data_layer",
+      "label": "Data Layer (Repositories & DB)",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_dependency_injection",
+      "label": "Dependency Injection (AppDependencies)",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_mvvm_pattern",
+      "label": "MVVM Pattern",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_repository_pattern",
+      "label": "Repository Pattern",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_provider_state",
+      "label": "Provider + ChangeNotifier State",
+      "file_type": "document",
+      "source_file": "docs/architecture/overview.md"
+    },
+    {
+      "id": "doc_sms_pipeline",
+      "label": "SMS Intelligence Pipeline",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/overview.md"
+    },
+    {
+      "id": "doc_ingestion_layer",
+      "label": "SMS Ingestion Layer",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/overview.md"
+    },
+    {
+      "id": "doc_classification_layer",
+      "label": "SMS Classification Layer",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_entity_extraction_layer",
+      "label": "Entity Extraction Layer",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md"
+    },
+    {
+      "id": "doc_account_resolution_engine",
+      "label": "Account Resolution Engine",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/account-resolution.md"
+    },
+    {
+      "id": "doc_transfer_detection_engine",
+      "label": "Transfer Detection Engine",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md"
+    },
+    {
+      "id": "doc_recurring_pattern_detection",
+      "label": "Recurring Pattern Detection",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md"
+    },
+    {
+      "id": "doc_continuous_learning",
+      "label": "Continuous Learning System",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/overview.md"
+    },
+    {
+      "id": "doc_privacy_filter",
+      "label": "Privacy Filter (OTP/Password)",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_confidence_scoring",
+      "label": "Confidence Scoring System",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/overview.md"
+    },
+    {
+      "id": "doc_financial_sms_detection",
+      "label": "Financial SMS Detection",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_message_type_classification",
+      "label": "Message Type Classification",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_transaction_message",
+      "label": "Transaction Message Type",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_transfer_message",
+      "label": "Transfer Message Type",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_balance_update_message",
+      "label": "Balance Update Message Type",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_payment_reminder_message",
+      "label": "Payment Reminder Message Type",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/classification.md"
+    },
+    {
+      "id": "doc_amount_extraction",
+      "label": "Amount Extraction",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md"
+    },
+    {
+      "id": "doc_merchant_extraction",
+      "label": "Merchant Extraction",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md"
+    },
+    {
+      "id": "doc_account_identifier_extraction",
+      "label": "Account Identifier Extraction",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md"
+    },
+    {
+      "id": "doc_institution_extraction",
+      "label": "Institution Name Extraction",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md"
+    },
+    {
+      "id": "doc_date_extraction",
+      "label": "Date & Time Extraction",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md"
+    },
+    {
+      "id": "doc_identifier_match_strategy",
+      "label": "Identifier Match Strategy",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/account-resolution.md"
+    },
+    {
+      "id": "doc_institution_match_strategy",
+      "label": "Institution Match Strategy",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/account-resolution.md"
+    },
+    {
+      "id": "doc_historical_mapping",
+      "label": "Historical Transaction Mapping",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/account-resolution.md"
+    },
+    {
+      "id": "doc_account_candidate",
+      "label": "Account Candidate Auto-Creation",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/account-resolution.md"
+    },
+    {
+      "id": "doc_sms_account_mapping",
+      "label": "SMS Account Mapping (Learning)",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/account-resolution.md"
+    },
+    {
+      "id": "doc_double_counting_problem",
+      "label": "Double-Counting Problem",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md"
+    },
+    {
+      "id": "doc_debit_credit_pair_matching",
+      "label": "Debit-Credit Pair Matching",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md"
+    },
+    {
+      "id": "doc_transfer_pair",
+      "label": "Transfer Pair (Linked Transactions)",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md"
+    },
+    {
+      "id": "doc_net_worth_calculation",
+      "label": "Net Worth Calculation",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md"
+    },
+    {
+      "id": "doc_fixed_interval_pattern",
+      "label": "Fixed Interval Pattern",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md"
+    },
+    {
+      "id": "doc_subscription_detection",
+      "label": "Subscription Detection",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md"
+    },
+    {
+      "id": "doc_upcoming_charge_alert",
+      "label": "Upcoming Charge Alert",
+      "file_type": "document",
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md"
+    },
+    {
+      "id": "doc_tflite_model",
+      "label": "TFLite SMS Classifier Model",
+      "file_type": "document",
+      "source_file": "docs/features/machine-learning/overview.md"
+    },
+    {
+      "id": "doc_on_device_inference",
+      "label": "On-Device ML Inference",
+      "file_type": "document",
+      "source_file": "docs/features/machine-learning/overview.md"
+    },
+    {
+      "id": "doc_ml_fallback_strategy",
+      "label": "ML + Rule-Based Fallback Strategy",
+      "file_type": "document",
+      "source_file": "docs/features/machine-learning/overview.md"
+    },
+    {
+      "id": "doc_tokenization",
+      "label": "SMS Tokenization",
+      "file_type": "document",
+      "source_file": "docs/features/machine-learning/overview.md"
+    },
+    {
+      "id": "doc_user_feedback_loop",
+      "label": "User Feedback Loop (ML)",
+      "file_type": "document",
+      "source_file": "docs/features/machine-learning/overview.md"
+    },
+    {
+      "id": "doc_modified_single_entry",
+      "label": "Modified Single-Entry Accounting",
+      "file_type": "document",
+      "source_file": "docs/features/accounting/system-overview.md"
+    },
+    {
+      "id": "doc_account_balance_tracking",
+      "label": "Account Balance Tracking",
+      "file_type": "document",
+      "source_file": "docs/features/accounting/system-overview.md"
+    },
+    {
+      "id": "doc_budget_system",
+      "label": "Budget System",
+      "file_type": "document",
+      "source_file": "docs/features/accounting/system-overview.md"
+    },
+    {
+      "id": "doc_credit_card_handling",
+      "label": "Credit Card Liability Handling",
+      "file_type": "document",
+      "source_file": "docs/features/accounting/system-overview.md"
+    }
+  ],
+  "edges": [
+    {
+      "source": "doc_ui_layer",
+      "target": "doc_presentation_layer",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_presentation_layer",
+      "target": "doc_business_logic_layer",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_business_logic_layer",
+      "target": "doc_data_layer",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_layered_architecture",
+      "target": "doc_mvvm_pattern",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_layered_architecture",
+      "target": "doc_repository_pattern",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_layered_architecture",
+      "target": "doc_dependency_injection",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_presentation_layer",
+      "target": "doc_provider_state",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_sms_pipeline",
+      "target": "doc_ingestion_layer",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_ingestion_layer",
+      "target": "doc_privacy_filter",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_privacy_filter",
+      "target": "doc_classification_layer",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_classification_layer",
+      "target": "doc_entity_extraction_layer",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_entity_extraction_layer",
+      "target": "doc_account_resolution_engine",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_account_resolution_engine",
+      "target": "doc_transfer_detection_engine",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_transfer_detection_engine",
+      "target": "doc_recurring_pattern_detection",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_sms_pipeline",
+      "target": "doc_confidence_scoring",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_sms_pipeline",
+      "target": "doc_continuous_learning",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_classification_layer",
+      "target": "doc_financial_sms_detection",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_financial_sms_detection",
+      "target": "doc_message_type_classification",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_message_type_classification",
+      "target": "doc_transaction_message",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_message_type_classification",
+      "target": "doc_transfer_message",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_message_type_classification",
+      "target": "doc_balance_update_message",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_message_type_classification",
+      "target": "doc_payment_reminder_message",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_classification_layer",
+      "target": "doc_tflite_model",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_entity_extraction_layer",
+      "target": "doc_amount_extraction",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_entity_extraction_layer",
+      "target": "doc_merchant_extraction",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_entity_extraction_layer",
+      "target": "doc_account_identifier_extraction",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_entity_extraction_layer",
+      "target": "doc_institution_extraction",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_entity_extraction_layer",
+      "target": "doc_date_extraction",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_account_resolution_engine",
+      "target": "doc_identifier_match_strategy",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/account-resolution.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_account_resolution_engine",
+      "target": "doc_institution_match_strategy",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/account-resolution.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_account_resolution_engine",
+      "target": "doc_historical_mapping",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/account-resolution.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_account_resolution_engine",
+      "target": "doc_account_candidate",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/account-resolution.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_continuous_learning",
+      "target": "doc_sms_account_mapping",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/account-resolution.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_transfer_detection_engine",
+      "target": "doc_double_counting_problem",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_transfer_detection_engine",
+      "target": "doc_debit_credit_pair_matching",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_transfer_detection_engine",
+      "target": "doc_transfer_pair",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_transfer_pair",
+      "target": "doc_net_worth_calculation",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_recurring_pattern_detection",
+      "target": "doc_fixed_interval_pattern",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_recurring_pattern_detection",
+      "target": "doc_subscription_detection",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_recurring_pattern_detection",
+      "target": "doc_upcoming_charge_alert",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_tflite_model",
+      "target": "doc_on_device_inference",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/machine-learning/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_tflite_model",
+      "target": "doc_tokenization",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/machine-learning/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_classification_layer",
+      "target": "doc_ml_fallback_strategy",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/machine-learning/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_continuous_learning",
+      "target": "doc_user_feedback_loop",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/machine-learning/overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_modified_single_entry",
+      "target": "doc_double_counting_problem",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/accounting/system-overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_modified_single_entry",
+      "target": "doc_transfer_pair",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/accounting/system-overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_modified_single_entry",
+      "target": "doc_net_worth_calculation",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/accounting/system-overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_budget_system",
+      "target": "doc_account_balance_tracking",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/accounting/system-overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_credit_card_handling",
+      "target": "doc_transfer_detection_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9,
+      "source_file": "docs/features/accounting/system-overview.md",
+      "weight": 1.0
+    },
+    {
+      "source": "doc_sms_pipeline",
+      "target": "services_sms_pipeline_executor_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_classification_layer",
+      "target": "services_sms_classification_service_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/sms-intelligence/classification.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_entity_extraction_layer",
+      "target": "services_entity_extraction_service_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_account_resolution_engine",
+      "target": "services_account_resolution_engine_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/sms-intelligence/account-resolution.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_transfer_detection_engine",
+      "target": "services_transfer_detection_engine_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/sms-intelligence/transfer-detection.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_recurring_pattern_detection",
+      "target": "services_recurring_pattern_engine_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/sms-intelligence/recurring-patterns.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_confidence_scoring",
+      "target": "services_confidence_scoring_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "docs/features/sms-intelligence/overview.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_tflite_model",
+      "target": "services_ml_sms_classifier_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "docs/features/machine-learning/overview.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_sms_account_mapping",
+      "target": "db_database_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/features/sms-intelligence/account-resolution.md",
+      "weight": 0.8
+    },
+    {
+      "source": "doc_budget_system",
+      "target": "services_sms_classification_service_dart",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "docs/features/accounting/system-overview.md",
+      "weight": 0.7
+    },
+    {
+      "source": "doc_layered_architecture",
+      "target": "main_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 0.8
+    },
+    {
+      "source": "doc_dependency_injection",
+      "target": "core_app_dependencies_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/architecture/overview.md",
+      "weight": 0.9
+    },
+    {
+      "source": "doc_merchant_extraction",
+      "target": "services_merchant_normalization_service_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/features/sms-intelligence/entity-extraction.md",
+      "weight": 0.8
+    },
+    {
+      "source": "doc_user_feedback_loop",
+      "target": "services_transaction_feedback_service_dart",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "docs/features/machine-learning/overview.md",
+      "weight": 0.9
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "sms_pipeline_full_flow",
+      "label": "Full SMS Processing Pipeline",
+      "nodes": [
+        "doc_ingestion_layer",
+        "doc_classification_layer",
+        "doc_entity_extraction_layer",
+        "doc_account_resolution_engine",
+        "doc_transfer_detection_engine"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/features/sms-intelligence/overview.md"
+    },
+    {
+      "id": "ml_classification_system",
+      "label": "ML + Rule-Based Classification System",
+      "nodes": [
+        "doc_tflite_model",
+        "doc_ml_fallback_strategy",
+        "doc_tokenization",
+        "doc_classification_layer"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/machine-learning/overview.md"
+    },
+    {
+      "id": "transfer_accounting_integrity",
+      "label": "Transfer & Accounting Integrity",
+      "nodes": [
+        "doc_double_counting_problem",
+        "doc_transfer_pair",
+        "doc_net_worth_calculation",
+        "doc_modified_single_entry"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95,
+      "source_file": "docs/features/accounting/system-overview.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

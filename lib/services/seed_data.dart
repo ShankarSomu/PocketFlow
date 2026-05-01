@@ -404,7 +404,7 @@ class SeedData {
       category: category,
       note: note,
       date: DateTime(year, month, day < 1 ? 1 : day),
-      accountId: accountId,
+      accountId: accountId!,
       // Hybrid Transaction Mapping fields
       sourceType: sourceType ?? 'manual',
       merchant: merchant ?? note, // Use note as merchant fallback

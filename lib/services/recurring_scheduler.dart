@@ -65,7 +65,7 @@ class RecurringScheduler {
               category: 'savings',
               note: 'Goal: ${goal.name}',
               date: date,
-              accountId: r.accountId,
+              accountId: r.accountId!,
               recurringId: r.id,
             ));
           }
@@ -79,7 +79,7 @@ class RecurringScheduler {
         category: r.category,
         note: r.note,
         date: date,
-        accountId: r.accountId,
+        accountId: r.accountId!,
         recurringId: r.id,
       ));
     }

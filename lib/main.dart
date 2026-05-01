@@ -17,7 +17,9 @@ import 'package:pocket_flow/services/app_logger.dart';
 import 'package:pocket_flow/services/auth_service.dart';
 import 'package:pocket_flow/services/deep_link_service.dart';
 import 'package:pocket_flow/services/image_cache_service.dart';
+import 'package:pocket_flow/services/ml_sms_classifier.dart';
 import 'package:pocket_flow/services/navigation_state.dart';
+import 'package:pocket_flow/services/sms_keyword_service.dart';
 import 'services/notification_manager.dart';
 import 'services/notification_service.dart';
 import 'services/recurring_scheduler.dart';
@@ -25,6 +27,9 @@ import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
 import 'utils/performance_utils.dart';
 import 'widgets/feature_hint.dart';
+
+// Global hybrid SMS parser instance (rule-based + ML)
+late final HybridSmsParser hybridSmsParser;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +61,26 @@ void main() async {
   await AppLogger.load();
   await AppLogger.init();
   
+  // Initialize ML SMS parser early (needed for SMS import)
+  hybridSmsParser = HybridSmsParser();
+  try {
+    await hybridSmsParser.initialize();
+    AppLogger.log(
+      LogLevel.info,
+      LogCategory.system,
+      'ML SMS Classifier initialized',
+      detail: 'Hybrid parser ready (rules + ML)',
+    );
+  } catch (e) {
+    // Log error but don't crash app - parser will fall back to rules-only mode
+    AppLogger.log(
+      LogLevel.warning,
+      LogCategory.system,
+      'ML SMS Classifier initialization failed',
+      detail: 'Falling back to rules-only mode: $e',
+    );
+  }
+  
   // Initialize critical services in parallel to speed up boot
   await Future.wait([
     AuthService.init(),
@@ -67,7 +92,19 @@ void main() async {
     NotificationManager.instance.init(),
   ]);
 
-  NotificationService.scheduleWeeklySummary();
+  // Initialize SMS keyword service in background (non-blocking)
+  // This loads keywords from database but won't block app startup
+  SmsKeywordService.initialize().catchError((e) {
+    AppLogger.log(
+      LogLevel.error,
+      LogCategory.system,
+      'SMS keyword service initialization failed',
+      detail: '$e',
+    );
+  });
+
+  // Disabled while weekly summary scheduling is crashing in
+  // flutter_local_notifications on Android.
   PerformanceMonitor.init();
   AuthService.autoBackupIfDue();
   RecurringScheduler.processDue();

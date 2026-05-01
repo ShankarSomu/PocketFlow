@@ -70,7 +70,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   void _showForm([Account? existing]) {
-    String selectedType = existing?.type ?? 'debit';
+    String selectedType = existing?.type ?? 'checking';
     int? dueDateDay = existing?.dueDateDay;
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final balCtrl = TextEditingController(text: existing != null ? existing.balance.toStringAsFixed(2) : '');
@@ -98,14 +98,15 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   value: selectedType,
                   decoration: const InputDecoration(labelText: 'Account Type', border: OutlineInputBorder()),
                   items: const [
-                    DropdownMenuItem(value: 'checking', child: Text('Debit / Checking')),
+                    DropdownMenuItem(value: 'checking', child: Text('Salary / Checking')),
                     DropdownMenuItem(value: 'savings', child: Text('Savings')),
-                    DropdownMenuItem(value: 'credit', child: Text('Credit Card')),
-                    DropdownMenuItem(value: 'loan', child: Text('Loan / Debt')),
+                    DropdownMenuItem(value: 'credit_card', child: Text('Credit Card')),
+                    DropdownMenuItem(value: 'loan', child: Text('Loan')),
                     DropdownMenuItem(value: 'cash', child: Text('Cash')),
                     DropdownMenuItem(value: 'investment', child: Text('Investment')),
+                    DropdownMenuItem(value: 'unidentified', child: Text('Unidentified (Auto-created)')),
                   ],
-                  onChanged: (v) => setLocal(() => selectedType = v ?? 'debit'),
+                  onChanged: (v) => setLocal(() => selectedType = v ?? 'checking'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -117,25 +118,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   controller: balCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: (selectedType == 'credit' || selectedType == 'loan') ? 'Current Balance (amount owed)' : 'Balance',
+                    labelText: (selectedType == 'credit_card' || selectedType == 'loan') ? 'Current Balance (amount owed)' : 'Balance',
                     prefixText: '\$',
                     border: const OutlineInputBorder(),
-                    helperText: (selectedType == 'credit' || selectedType == 'loan')
+                    helperText: (selectedType == 'credit_card' || selectedType == 'loan')
                         ? 'Amount you currently owe on this ${selectedType == 'loan' ? 'loan' : 'card'}'
-                        : 'Starting balance for this account',
+                        : 'Current balance for this account',
                   ),
                 ),
-                if (selectedType == 'credit' || selectedType == 'loan') ...[
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: last4Ctrl,
-                    keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    decoration: InputDecoration(
-                      labelText: selectedType == 'loan' ? 'Last 4 digits or ID (optional)' : 'Last 4 digits (optional)',
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
+                
+                // Credit Card & Loan Specific Fields
+                if (selectedType == 'credit_card' || selectedType == 'loan') ...[
                   const SizedBox(height: 12),
                   TextField(
                     controller: limitCtrl,
@@ -144,15 +137,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       labelText: selectedType == 'loan' ? 'Original Loan Amount (optional)' : 'Credit Limit (optional)',
                       prefixText: '\$',
                       border: const OutlineInputBorder(),
+                      helperText: selectedType == 'loan' 
+                          ? 'Total amount borrowed initially'
+                          : 'Maximum credit available',
                     ),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<int?>(
                     value: dueDateDay,
                     decoration: InputDecoration(
-                      labelText: 'Payment Due Date (day of month)',
+                      labelText: selectedType == 'loan' ? 'Payment Due Date' : 'Credit Card Due Date',
                       border: const OutlineInputBorder(),
-                      helperText: 'e.g. 15 = due on 15th of each month',
+                      helperText: 'Day of month when payment is due',
                     ),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('No due date')),
@@ -167,55 +163,76 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     onChanged: (v) => setLocal(() => dueDateDay = v),
                   ),
                 ],
+                
+                // Credit Card Specific Field
+                if (selectedType == 'credit_card') ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: last4Ctrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Last 4 Digits of Card (optional)',
+                      hintText: '1234',
+                      border: OutlineInputBorder(),
+                      helperText: 'Printed on your physical card',
+                    ),
+                  ),
+                ],
+                
                 const SizedBox(height: 16),
-                // SMS Intelligence Fields
-                ExpansionTile(
-                  title: const Text('SMS Intelligence (Optional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Help auto-match SMS messages to this account', style: TextStyle(fontSize: 12)),
-                  initiallyExpanded: false,
-                  children: [
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: institutionCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Institution Name',
-                        hintText: 'e.g., Chase, Bank of America',
-                        border: OutlineInputBorder(),
-                        helperText: 'Name of your bank or financial institution',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: identifierCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Account Identifier',
-                        hintText: 'e.g., ****1234',
-                        border: OutlineInputBorder(),
-                        helperText: 'Last 4 digits or masked account number from SMS',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: keywordsCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'SMS Keywords',
-                        hintText: 'e.g., CHASE, JPMORGAN',
-                        border: OutlineInputBorder(),
-                        helperText: 'Comma-separated sender IDs from bank SMS',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: aliasCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Account Alias',
-                        hintText: 'e.g., My Main Card',
-                        border: OutlineInputBorder(),
-                        helperText: 'Friendly name for easy identification',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
+                const Divider(),
+                const SizedBox(height: 12),
+                
+                // SMS Auto-Matching Fields (Inline)
+                Text(
+                  'SMS Auto-Matching (Optional)',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(ctx).colorScheme.primary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Help automatically link SMS transactions to this account',
+                  style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6)),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: institutionCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Institution Name',
+                    hintText: 'e.g., Chase, Bank of America, Citi',
+                    border: OutlineInputBorder(),
+                    helperText: 'Your bank or financial institution',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: identifierCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Account Number from SMS',
+                    hintText: 'e.g., 3530, ****1234, XX5678',
+                    border: OutlineInputBorder(),
+                    helperText: 'Account number as it appears in SMS alerts',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: keywordsCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'SMS Sender IDs (optional)',
+                    hintText: 'e.g., CHASE, BOFA, CITI',
+                    border: OutlineInputBorder(),
+                    helperText: 'Comma-separated sender names from SMS',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: aliasCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Display Alias (optional)',
+                    hintText: 'e.g., My Main Card, Savings Fund',
+                    border: OutlineInputBorder(),
+                    helperText: 'Friendly nickname for this account',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(children: [
@@ -267,8 +284,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         type: selectedType,
                         balance: bal,
                         last4: last4Ctrl.text.trim().isEmpty ? null : last4Ctrl.text.trim(),
-                        dueDateDay: (selectedType == 'credit' || selectedType == 'loan') ? dueDateDay : null,
-                        creditLimit: (selectedType == 'credit' || selectedType == 'loan') ? double.tryParse(limitCtrl.text) : null,
+                        dueDateDay: (selectedType == 'credit_card' || selectedType == 'loan') ? dueDateDay : null,
+                        creditLimit: (selectedType == 'credit_card' || selectedType == 'loan') ? double.tryParse(limitCtrl.text) : null,
                         institutionName: institutionCtrl.text.trim().isEmpty ? null : institutionCtrl.text.trim(),
                         accountIdentifier: identifierCtrl.text.trim().isEmpty ? null : identifierCtrl.text.trim(),
                         smsKeywords: keywords,
@@ -323,7 +340,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
         child: StatefulBuilder(
           builder: (ctx, setLocal) {
             final toAccount = _accounts.where((a) => a.id == toId).firstOrNull;
-            final isCreditTarget = toAccount?.type == 'credit';
+            final isCreditTarget = toAccount?.isLiability ?? false;
             final outstanding = toId != null ? (_balances[toId] ?? 0) : 0.0;
 
             return Column(
@@ -353,7 +370,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                           child: Row(
                             children: [
                               Expanded(child: Text(a.name)),
-                              if (a.type == 'credit')
+                              if (a.isLiability)
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                                   decoration: BoxDecoration(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
@@ -428,7 +445,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     double totalAssets = 0, totalDebt = 0;
     for (final a in _accounts) {
       final bal = _balances[a.id] ?? 0;
-      if (a.type == 'credit') {
+      if (a.isLiability) {
         totalDebt += bal;
       } else {
         totalAssets += bal;
@@ -547,7 +564,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     return switch (type) {
       'checking' || 'debit' => [colorScheme.primary, colorScheme.primary.withValues(alpha: 0.8)],
       'savings' => [colorScheme.tertiary, colorScheme.tertiary.withValues(alpha: 0.8)],
-      'credit' => [colorScheme.error, colorScheme.error.withValues(alpha: 0.8)],
+      'credit' || 'credit_card' => [colorScheme.error, colorScheme.error.withValues(alpha: 0.8)],
       'cash' => [colorScheme.secondary, colorScheme.secondary.withValues(alpha: 0.8)],
       'investment' => [colorScheme.primary.withValues(alpha: 0.7), colorScheme.primary.withValues(alpha: 0.5)],
       _ => [colorScheme.primary.withValues(alpha: 0.6), colorScheme.primary.withValues(alpha: 0.4)],
@@ -557,7 +574,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
   IconData _typeIcon(String type) => switch (type) {
         'checking' || 'debit' => Icons.account_balance_rounded,
         'savings' => Icons.savings_rounded,
-        'credit' => Icons.credit_card_rounded,
+        'credit' || 'credit_card' => Icons.credit_card_rounded,
         'cash' => Icons.payments_rounded,
         'investment' => Icons.trending_up_rounded,
         _ => Icons.account_balance_wallet_rounded,
@@ -568,7 +585,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     return switch (type) {
       'checking' || 'debit' => colorScheme.primary,
       'savings' => colorScheme.tertiary,
-      'credit' => colorScheme.error,
+      'credit' || 'credit_card' => colorScheme.error,
       'cash' => colorScheme.secondary,
       'investment' => colorScheme.primary.withValues(alpha: 0.7),
       _ => colorScheme.primary.withValues(alpha: 0.6),
@@ -796,12 +813,9 @@ class _AccountItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isCredit = account.type == 'credit';
-    final now = DateTime.now();
-    final daysUntil = account.dueDateDay != null
-        ? DateTime(now.year, now.month, account.dueDateDay!).difference(now).inDays
-        : null;
-    final dueSoon = isCredit && daysUntil != null && daysUntil <= 3;
+    final isLiability = account.isLiability;
+    final daysUntil = account.daysUntilDue;
+    final dueSoon = isLiability && daysUntil != null && daysUntil <= 3;
 
     return InkWell(
       onTap: onTap,
@@ -865,7 +879,7 @@ class _AccountItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: isCredit
+                    color: account.isCredit
                         ? (balance > 0 ? Theme.of(context).extension<AppColorScheme>()!.error : Theme.of(context).extension<AppColorScheme>()!.success)
                         : Theme.of(context).colorScheme.onSurface,
                   ),

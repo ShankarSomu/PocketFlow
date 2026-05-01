@@ -1,0 +1,32 @@
+{
+  "files": {
+    "code": [
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\add_transfer_labels.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\check_data_leakage.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\create_smoke_dataset.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\data_cleaning_agent.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\dedup_and_resplit.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\format_training_data.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\generate_improved_negatives.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\generate_sms_training.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\prepare_classifier_dataset.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\sample_non_financial.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\smoke_train.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\train_sms_extractor.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\validate_dataset.py"
+    ],
+    "document": [
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\dataset_report.txt",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\requirements.txt"
+    ],
+    "paper": [],
+    "image": [],
+    "video": []
+  },
+  "total_files": 15,
+  "total_words": 2373,
+  "needs_graph": false,
+  "warning": "Corpus is ~2,373 words - fits in a single context window. You may not need a graph.",
+  "skipped_sensitive": [],
+  "graphifyignore_patterns": 0
+}

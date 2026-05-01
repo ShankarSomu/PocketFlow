@@ -1,16 +1,47 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart' show md5;
 import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../db/database.dart';
+import '../models/account.dart';
+import '../models/sms_types.dart';
 import '../models/transaction.dart' as model;
 import 'app_logger.dart';
+import 'chat_parser.dart';
+import 'recurring_pattern_engine.dart';
+import 'sms_pipeline_executor.dart';
+import 'sms_classifier_service.dart';
+import 'sms_classification_service.dart';
+import 'entity_extraction_service.dart';
+import 'account_resolution_engine.dart';
+import 'privacy_guard.dart';
+
+// ── Internal Classes ──────────────────────────────────────────────────────────
+
+/// Holds parsed SMS data for batch processing
+class _ParsedSmsData {
+  final model.Transaction transaction;
+  final String smsBody;
+  final DateTime smsDate;
+  final int smsId;
+
+  _ParsedSmsData({
+    required this.transaction,
+    required this.smsBody,
+    required this.smsDate,
+    required this.smsId,
+  });
+}
 
 // ── SMS Scan Settings Keys ────────────────────────────────────────────────────
 const _kSmsEnabled = 'sms_enabled';
-const _kSmsScanRange = 'sms_scan_range';       // 'all' | '6m' | '3m' | '1m' | '1w'
+const _kSmsScanRange = 'sms_scan_range';       // 'all' | '6m' | '3m' | '1m' | '1w' | 'custom'
 const _kSmsLastScan = 'sms_last_scan';
 const _kSmsProcessed = 'sms_processed_ids';    // JSON set of processed SMS IDs
+const _kSmsCustomStartDate = 'sms_custom_start_date';
+const _kSmsCustomEndDate = 'sms_custom_end_date';
+const _kSmsLastScanResult = 'sms_last_scan_result'; // JSON of last scan result
 
 /// How far back to look when scanning SMS.
 enum SmsScanRange {
@@ -18,7 +49,8 @@ enum SmsScanRange {
   sixMonths('6m', 'Last 6 months'),
   threeMonths('3m', 'Last 3 months'),
   oneMonth('1m', 'Last 1 month'),
-  oneWeek('1w', 'Last 1 week');
+  oneWeek('1w', 'Last 1 week'),
+  customRange('custom', 'Custom range');
 
   final String key;
   final String label;
@@ -40,129 +72,64 @@ enum SmsScanRange {
         return now.subtract(const Duration(days: 30));
       case SmsScanRange.oneWeek:
         return now.subtract(const Duration(days: 7));
+      case SmsScanRange.customRange:
+        // Custom range cutoff will be handled separately
+        return null;
     }
   }
 }
 
 // ── Financial SMS patterns ────────────────────────────────────────────────────
 
-/// Regex for extracting amount. Handles:
-/// $1,234.56 | USD 1234 | Rs.1,000 | INR 500 | ₹500 | RM 25 | AED 50
-final _amountRe = RegExp(
-  r'(?:(?:USD|INR|Rs\.?|₹|RM|AED|GBP|EUR|SGD|CAD|AUD|HKD)\s*)?'
-  r'([\d,]+(?:\.\d{1,2})?)'
-  r'(?:\s*(?:USD|INR|Rs|₹))?',
+/// Regex for extracting amount with currency symbol (highest priority)
+/// Matches: $75.50, $1,200, $1,234.56, ₹500, Rs.100
+final _amountWithCurrencyRe = RegExp(
+  r'(?:USD|INR|Rs\.?|₹|RM|AED|GBP|EUR|SGD|CAD|AUD|HKD|\$)\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)',
   caseSensitive: false,
 );
 
-/// Debit keywords → expense
-const _debitKeywords = [
-  'debited', 'deducted', 'spent', 'paid', 'payment of', 'purchase',
-  'withdrawn', 'charged', 'transaction of', 'used at', 'txn of',
-  'amount of rs', 'amt rs', 'transaction amt', 'payment done',
-];
-
-/// Credit keywords → income
-const _creditKeywords = [
-  'credited', 'received', 'deposited', 'refund', 'cashback',
-  'salary', 'credit of', 'amount credited', 'added to',
-];
-
-/// Financial sender IDs (short codes, alphanumeric senders)
-final _bankSenderRe = RegExp(
-  '^(?:AD-|BZ-|VK-|AX-|JD-|HD-|SB-|IC-|KO-|UN-|CX-|AM-)?'
-  '(?:HDFCBK|ICICIBK|SBIINB|AXISBK|KOTAKB|PNBSMS|BOBIMT|CITIBK|'
-  'SCBANK|HSBCIN|RBLBK|YESBK|IDFCBK|AUBANK|FEDERAL|INDUSIND|'
-  'CANBNK|BOIIND|UNIONBK|SYNDICBK|BANDHAN|JPBANK|DBANK|AMEXIN|'
-  'PAYTM|GPAY|PHONEPE|AMAZONP|FREECHARGE|MOBIKWIK|BAJAJFIN)',
+/// Regex for amount near transaction keywords (medium priority)
+/// Matches: "amount of 500", "deposit 1,234.56", "credited 75.50"
+final _amountNearKeywordRe = RegExp(
+  r'(?:amount|amt|deposit|credited|debited|paid|received|payment|withdrawn|transfer|spent)\s*(?:of\s+)?(?:rs\.?|inr|usd|₹|\$)?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)',
   caseSensitive: false,
 );
 
-/// Merchant name extractors — captures "at MERCHANT" or "to MERCHANT"
-final _merchantAtRe = RegExp(r"\bat\s+([A-Za-z0-9 &\-'\.]{3,40})", caseSensitive: false);
-final _merchantToRe = RegExp(r"\bto\s+([A-Za-z0-9 &\-'\.]{3,40})", caseSensitive: false);
-final _merchantForRe = RegExp(r"\bfor\s+([A-Za-z0-9 &\-'\.]{3,40})", caseSensitive: false);
-
-// ── Category mapping from merchant keywords ───────────────────────────────────
-
-const _merchantCategoryMap = <String, String>{
-  // 🛒 Groceries / Supermarkets
-  'walmart': 'Groceries', 'target': 'Shopping', 'costco': 'Groceries',
-  'kroger': 'Groceries', 'safeway': 'Groceries', 'whole foods': 'Groceries',
-  'dmart': 'Groceries', 'bigbasket': 'Groceries', 'blinkit': 'Groceries',
-  'zepto': 'Groceries', 'swiggy instamart': 'Groceries',
-  'reliance fresh': 'Groceries', 'more': 'Groceries',
-
-  // 🍔 Food / Dining
-  'swiggy': 'Dining Out', 'zomato': 'Dining Out', 'uber eats': 'Dining Out',
-  'doordash': 'Dining Out', 'grubhub': 'Dining Out', 'mcdonalds': 'Dining Out',
-  'mcdonald': 'Dining Out', 'kfc': 'Dining Out', 'subway': 'Dining Out',
-  'pizza hut': 'Dining Out', 'dominos': 'Dining Out', 'domino': 'Dining Out',
-  'starbucks': 'Coffee', 'dunkin': 'Coffee', 'costa': 'Coffee',
-
-  // 🚗 Transport
-  'uber': 'Transport', 'ola': 'Transport', 'lyft': 'Transport',
-  'rapido': 'Transport', 'grab': 'Transport', 'gojek': 'Transport',
-  'irctc': 'Transport', 'makemytrip': 'Travel', 'goibibo': 'Travel',
-  'redbus': 'Transport', 'yulu': 'Transport', 'shell': 'Fuel',
-  'bp': 'Fuel', 'iocl': 'Fuel', 'hpcl': 'Fuel', 'bpcl': 'Fuel',
-  'petrol': 'Fuel', 'pump': 'Fuel',
-
-  // 🛍️ Shopping / E-commerce
-  'amazon': 'Shopping', 'flipkart': 'Shopping', 'myntra': 'Shopping',
-  'meesho': 'Shopping', 'ajio': 'Shopping', 'nykaa': 'Beauty',
-  'alibaba': 'Shopping', 'aliexpress': 'Shopping', 'ebay': 'Shopping',
-  'shopify': 'Shopping', 'zara': 'Clothing', 'h&m': 'Clothing',
-  'uniqlo': 'Clothing', 'gap': 'Clothing',
-
-  // 🏥 Health / Medical
-  'pharmacy': 'Pharmacy', 'apollo': 'Pharmacy', 'medplus': 'Pharmacy',
-  '1mg': 'Pharmacy', 'netmeds': 'Pharmacy', 'hospital': 'Doctor',
-  'clinic': 'Doctor', 'dental': 'Dental', 'gym': 'Gym',
-  'cult.fit': 'Gym', 'cultsport': 'Gym', 'healthkart': 'Gym',
-
-  // 📺 Entertainment / Streaming
-  'netflix': 'Streaming', 'spotify': 'Streaming', 'hotstar': 'Streaming',
-  'jio cinema': 'Streaming', 'amazon prime': 'Streaming', 'prime video': 'Streaming',
-  'apple tv': 'Streaming', 'youtube premium': 'Streaming',
-  'disney': 'Streaming', 'zee5': 'Streaming', 'sonyliv': 'Streaming',
-  'bookmyshow': 'Movies', 'pvr': 'Movies', 'inox': 'Movies',
-  'steam': 'Games', 'playstation': 'Games', 'xbox': 'Games',
-
-  // 📱 Bills / Utilities
-  'airtel': 'Phone', 'jio': 'Phone', 'vodafone': 'Phone', 'vi': 'Phone',
-  'bsnl': 'Phone', 'act fibernet': 'Internet', 'hathway': 'Internet',
-  'electricity': 'Utilities', 'bescom': 'Utilities', 'mahadiscom': 'Utilities',
-  'water bill': 'Utilities', 'gas bill': 'Utilities', 'lpg': 'Utilities',
-
-  // ✈️ Travel
-  'indigo': 'Flights', 'air india': 'Flights', 'spicejet': 'Flights',
-  'vistara': 'Flights', 'emirates': 'Flights', 'booking.com': 'Hotels',
-  'oyo': 'Hotels', 'hotels.com': 'Hotels', 'airbnb': 'Hotels',
-  'agoda': 'Hotels',
-
-  // 💰 Finance / Insurance
-  'lic': 'Insurance', 'hdfc life': 'Insurance', 'star health': 'Insurance',
-  'policybazaar': 'Insurance', 'navi': 'Insurance',
-  'zerodha': 'Investment', 'groww': 'Investment', 'upstox': 'Investment',
-  'coinbase': 'Investment', 'binance': 'Investment',
-
-  // 🏠 Housing / Rent
-  'rent': 'Rent', 'nobroker': 'Rent', 'magicbricks': 'Rent',
-  'maintenance': 'Repairs', 'society': 'Repairs',
-};
-
-String _guessCategoryFromMerchant(String merchant) {
-  final lower = merchant.toLowerCase();
-  for (final entry in _merchantCategoryMap.entries) {
-    if (lower.contains(entry.key)) return entry.value;
-  }
-  return 'Other';
-}
+/// Generic amount pattern (lowest priority, fallback only) - ONLY with decimals
+/// Matches: 1234.56, 500.00, 75.50
+final _amountGenericRe = RegExp(
+  r'\b(\d{1,7}\.\d{2})\b',  // Only match amounts with exactly 2 decimals
+  caseSensitive: false,
+);
 
 // ── SmsService ────────────────────────────────────────────────────────────────
 
 class SmsService {
+  // ── SMS Fingerprinting ──────────────────────────────────────────────────────
+  
+  /// Generate unique fingerprint for SMS to prevent duplicates
+  static String generateSmsFingerprint({
+    required String? merchant,
+    required double amount,
+    required DateTime date,
+    required String? accountIdentifier,
+  }) {
+    // Normalize inputs
+    final normalizedMerchant = (merchant ?? 'unknown').toLowerCase().trim();
+    final normalizedAmount = amount.toStringAsFixed(2);
+    final normalizedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final normalizedLast4 = (accountIdentifier ?? 'none').toLowerCase().replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // Create fingerprint string
+    final fingerprintInput = '$normalizedMerchant|$normalizedAmount|$normalizedDate|$normalizedLast4';
+    
+    // Generate MD5 hash
+    final bytes = utf8.encode(fingerprintInput);
+    final hash = md5.convert(bytes);
+    
+    return hash.toString();
+  }
+
   // ── Settings ────────────────────────────────────────────────────────────────
 
   static Future<bool> isEnabled() async {
@@ -177,12 +144,30 @@ class SmsService {
 
   static Future<SmsScanRange> getScanRange() async {
     final p = await SharedPreferences.getInstance();
-    return SmsScanRange.fromKey(p.getString(_kSmsScanRange) ?? 'all');
+    return SmsScanRange.fromKey(p.getString(_kSmsScanRange) ?? '1m');
   }
 
   static Future<void> setScanRange(SmsScanRange r) async {
     final p = await SharedPreferences.getInstance();
     await p.setString(_kSmsScanRange, r.key);
+  }
+
+  static Future<DateTime?> getCustomStartDate() async {
+    final p = await SharedPreferences.getInstance();
+    final s = p.getString(_kSmsCustomStartDate);
+    return s != null ? DateTime.tryParse(s) : null;
+  }
+
+  static Future<DateTime?> getCustomEndDate() async {
+    final p = await SharedPreferences.getInstance();
+    final s = p.getString(_kSmsCustomEndDate);
+    return s != null ? DateTime.tryParse(s) : null;
+  }
+
+  static Future<void> setCustomDateRange(DateTime start, DateTime end) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kSmsCustomStartDate, start.toIso8601String());
+    await p.setString(_kSmsCustomEndDate, end.toIso8601String());
   }
 
   static Future<DateTime?> getLastScan() async {
@@ -196,6 +181,45 @@ class SmsService {
     await p.setString(_kSmsLastScan, dt.toIso8601String());
   }
 
+  static Future<SmsImportResult?> getLastScanResult() async {
+    final p = await SharedPreferences.getInstance();
+    final raw = p.getString(_kSmsLastScanResult);
+    if (raw == null) return null;
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      return SmsImportResult(
+        imported: map['imported'] ?? 0,
+        skipped: map['skipped'] ?? 0,
+        failed: map['failed'] ?? 0,
+        filteredByDate: map['filteredByDate'] ?? 0,
+        alreadyProcessed: map['alreadyProcessed'] ?? 0,
+        nonFinancial: map['nonFinancial'] ?? 0,
+        parseFailed: map['parseFailed'] ?? 0,
+        duplicates: map['duplicates'] ?? 0,
+        blockedByRule: map['blockedByRule'] ?? 0,
+        scanDate: map['scanDate'] != null ? DateTime.tryParse(map['scanDate']) : null,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> _saveLastScanResult(SmsImportResult result) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kSmsLastScanResult, jsonEncode({
+      'imported': result.imported,
+      'skipped': result.skipped,
+      'failed': result.failed,
+      'filteredByDate': result.filteredByDate,
+      'alreadyProcessed': result.alreadyProcessed,
+      'nonFinancial': result.nonFinancial,
+      'parseFailed': result.parseFailed,
+      'duplicates': result.duplicates,
+      'blockedByRule': result.blockedByRule,
+      'scanDate': DateTime.now().toIso8601String(),
+    }));
+  }
+
   static Future<Set<int>> _getProcessedIds() async {
     final p = await SharedPreferences.getInstance();
     final raw = p.getString(_kSmsProcessed);
@@ -207,8 +231,26 @@ class SmsService {
   static Future<void> _saveProcessedIds(Set<int> ids) async {
     final p = await SharedPreferences.getInstance();
     // Keep only latest 5000 to avoid unbounded growth
-    final trimmed = ids.length > 5000 ? ids.skip(ids.length - 5000).toSet() : ids;
+    final Set<int> trimmed;
+    if (ids.length > 5000) {
+      AppLogger.sms(
+        'Processed IDs trimmed: ${ids.length} → 5000. Oldest IDs dropped; re-scan may re-import some messages.',
+        level: LogLevel.warning,
+      );
+      trimmed = ids.skip(ids.length - 5000).toSet();
+    } else {
+      trimmed = ids;
+    }
     await p.setString(_kSmsProcessed, jsonEncode(trimmed.toList()));
+  }
+
+  /// Clear all SMS scan state (processed IDs, last scan date, last scan result).
+  /// Call this when the user deletes all app data so the next scan reimports everything.
+  static Future<void> clearSmsState() async {
+    final p = await SharedPreferences.getInstance();
+    await p.remove(_kSmsProcessed);
+    await p.remove(_kSmsLastScan);
+    await p.remove(_kSmsLastScanResult);
   }
 
   // ── Permission ───────────────────────────────────────────────────────────────
@@ -225,160 +267,415 @@ class SmsService {
   // ── Main scan ────────────────────────────────────────────────────────────────
 
   /// Reads SMS inbox, parses financial messages, inserts new transactions.
-  /// Returns [SmsImportResult] with stats.
-  static Future<SmsImportResult> scanAndImport({bool force = false}) async {
+  /// Optimized for responsiveness to prevent ANR.
+  static Future<SmsImportResult> scanAndImport({
+    bool force = false,
+    void Function(int current)? onProgress,
+  }) async {
+    final scanStartTime = DateTime.now();
+    AppLogger.sms('=== SMS SCAN STARTED ===', level: LogLevel.info);
+    
     if (!await hasPermission()) {
+      AppLogger.sms('SMS scan aborted - no permission', level: LogLevel.error);
       return const SmsImportResult(error: 'SMS permission not granted');
     }
 
     final range = await getScanRange();
-    final cutoff = range.cutoff;
+    DateTime? cutoff = range.cutoff;
+    DateTime? endDate;
 
+    if (range == SmsScanRange.customRange) {
+      cutoff = await getCustomStartDate();
+      endDate = await getCustomEndDate();
+    }
+
+    AppLogger.sms('Phase 0: Querying SMS inbox', level: LogLevel.info);
     final query = SmsQuery();
-    final List<SmsMessage> allMessages = await query.querySms(
-      kinds: [SmsQueryKind.inbox],
-    );
+    List<SmsMessage> allMessages = [];
+    try {
+      allMessages = await query.querySms(kinds: [SmsQueryKind.inbox]);
+      
+      // Sort messages by date descending (newest first) to allow early exit
+      // Using a slightly more defensive sort
+      allMessages.sort((a, b) {
+        final da = a.date ?? DateTime(0);
+        final db = b.date ?? DateTime(0);
+        return db.compareTo(da);
+      });
+      
+    } catch (e) {
+      AppLogger.err('sms_query_failed', e);
+      return SmsImportResult(error: 'Failed to query SMS: $e');
+    }
 
     final processedIds = await _getProcessedIds();
+    
     int imported = 0;
     int skipped = 0;
     int failed = 0;
+    int pending = 0;
     final newIds = <int>{};
 
+    int totalInRange = 0;
+    int filteredByDate = 0;
+    int alreadyProcessed = 0;
+    int nonFinancial = 0;
+    int parseFailed = 0;
+    int duplicatesFound = 0;
+    int blockedByRule = 0;
+    int messagesChecked = 0;
+
+    AppLogger.sms('Phase 2: Initializing ML classifier', level: LogLevel.info);
+    await SmsClassifierService.initialize();
+
+    final processingStartTime = DateTime.now();
+    
     for (final sms in allMessages) {
+      messagesChecked++;
+      
+      // CRITICAL: Yield to the UI thread every single message.
+      // SMS processing (ML inference + DB writes) is heavy. 
+      // This prevents the "App Not Responding" (ANR) dialog.
+      await Future.delayed(Duration.zero);
+
+      // Update progress every 10 messages to avoid flooding the UI with rebuilds
+      if (messagesChecked % 10 == 0 || messagesChecked == allMessages.length) {
+        if (onProgress != null) onProgress(messagesChecked);
+        
+        final elapsed = DateTime.now().difference(processingStartTime);
+        final avg = elapsed.inMilliseconds / messagesChecked;
+        AppLogger.sms(
+          'Progress: $messagesChecked/${allMessages.length}',
+          detail: 'Avg ${avg.toStringAsFixed(1)}ms/msg, Imported=$imported',
+          level: LogLevel.info,
+        );
+      }
+
+      final id = sms.id;
+      final date = sms.date;
+      final body = sms.body ?? '';
+      final sender = sms.sender ?? '';
+
+      if (id == null) continue;
+
+      if (date != null) {
+        // Since we sorted newest-to-oldest, we can stop entirely once we hit the cutoff
+        if (cutoff != null && date.isBefore(cutoff)) {
+          filteredByDate++;
+          AppLogger.sms('scan_stop_cutoff_reached', detail: 'Reached date ${date.toIso8601String()}');
+          break; 
+        }
+        
+        if (endDate != null && date.isAfter(endDate)) {
+          filteredByDate++;
+          continue;
+        }
+      }
+
+      totalInRange++;
+
+      if (!force && processedIds.contains(id)) {
+        skipped++;
+        alreadyProcessed++;
+        continue;
+      }
+
       try {
-        final id = sms.id;
-        if (id == null) continue;
-
-        // Time range filter
-        final date = sms.date;
-        if (cutoff != null && date != null && date.isBefore(cutoff)) continue;
-
-        // Skip already processed
-        if (processedIds.contains(id)) { skipped++; continue; }
-
-        // Only process financial SMS
-        final body = sms.body ?? '';
-        if (!_isFinancialSms(body, sms.sender ?? '')) { skipped++; continue; }
-
-        final parsed = _parseSms(body, date ?? DateTime.now());
-        if (parsed == null) { skipped++; continue; }
-
-        // Store SMS source in transaction
-        final transaction = model.Transaction(
-          type: parsed.type,
-          amount: parsed.amount,
-          category: parsed.category,
-          note: parsed.note,
-          date: parsed.date,
-          accountId: parsed.accountId,
-          smsSource: body, // Store original SMS text
+        final result = await SmsPipelineExecutor.processSms(
+          senderAddress: sender,
+          messageBody: body,
+          receivedAt: date ?? DateTime.now(),
         );
 
-        await AppDatabase.insertTransaction(transaction);
+        if (!result.success) {
+          failed++;
+          parseFailed++;
+          continue;
+        }
+
         newIds.add(id);
-        imported++;
+
+        if (result.isTransaction) {
+          imported++;
+        } else if (result.isPending) {
+          pending++;
+          skipped++;
+        } else {
+          skipped++;
+          if (result.smsType == SmsType.nonFinancial) {
+            nonFinancial++;
+            if (result.message == 'Blocked by learned rule') {
+              blockedByRule++;
+            }
+          } else {
+            parseFailed++;
+          }
+        }
       } catch (e) {
-        AppLogger.err('sms_import', e);
         failed++;
+        parseFailed++;
+        AppLogger.err('sms_msg_process_err', e);
       }
     }
 
-    // Persist processed IDs
+    // Phase 3: Save state
     processedIds.addAll(newIds);
     await _saveProcessedIds(processedIds);
     await _setLastScan(DateTime.now());
 
-    return SmsImportResult(imported: imported, skipped: skipped, failed: failed);
-  }
-
-  // ── Parsing helpers ──────────────────────────────────────────────────────────
-
-  static bool _isFinancialSms(String body, String sender) {
-    final lower = body.toLowerCase();
-    // Must contain an amount-like pattern
-    if (!_amountRe.hasMatch(lower)) return false;
-    // Must contain at least one debit/credit keyword
-    for (final k in [..._debitKeywords, ..._creditKeywords]) {
-      if (lower.contains(k)) return true;
-    }
-    // Or the sender looks like a bank
-    if (_bankSenderRe.hasMatch(sender)) return true;
-    return false;
-  }
-
-  static model.Transaction? _parseSms(String body, DateTime date) {
-    final lower = body.toLowerCase();
-
-    // Determine type
-    String type = 'expense';
-    for (final k in _creditKeywords) {
-      if (lower.contains(k)) { type = 'income'; break; }
-    }
-
-    // Extract amount — pick the largest plausible amount
-    double? amount;
-    for (final m in _amountRe.allMatches(body)) {
-      final raw = m.group(1)?.replaceAll(',', '');
-      final v = double.tryParse(raw ?? '');
-      if (v != null && v > 0 && v < 10000000) {
-        if (amount == null || v > amount) amount = v;
+    // Phase 4: Transfer Detection (Post-processing)
+    if (imported > 0) {
+      // Yield before heavy post-processing
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      try {
+        AppLogger.sms('Phase 4: Running transfer detection', level: LogLevel.info);
+        final fixedCount = await cleanupDuplicateTransfers();
+        duplicatesFound = fixedCount;
+      } catch (e) {
+        AppLogger.err('sms_transfer_detection', e);
       }
     }
-    if (amount == null || amount <= 0) return null;
 
-    // Extract merchant
-    String merchant = '';
-    final atMatch = _merchantAtRe.firstMatch(body);
-    final toMatch = _merchantToRe.firstMatch(body);
-    final forMatch = _merchantForRe.firstMatch(body);
+    // Phase 5: Recurring Pattern Detection
+    // Guard: Only run automatic detection if a small/moderate number of transactions were imported.
+    // Huge imports should run pattern detection manually from the Intelligence screen.
+    if (imported > 0 && imported <= 50) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      try {
+        AppLogger.sms('Phase 5: Running recurring pattern detection', level: LogLevel.info);
+        final results = await RecurringPatternEngine.runDetection();
+        final created = results['patterns_created'] ?? 0;
+        if (created > 0) {
+          AppLogger.sms('Auto-created $created recurring patterns', level: LogLevel.info);
+        }
+      } catch (e) {
+        AppLogger.err('sms_recurring_detection', e);
+      }
+    }
 
-    if (atMatch != null) {
-      merchant = atMatch.group(1)?.trim() ?? '';
-    } else if (type == 'expense' && toMatch != null) merchant = toMatch.group(1)?.trim() ?? '';
-    else if (type == 'income' && toMatch != null) merchant = toMatch.group(1)?.trim() ?? '';
-    else if (forMatch != null) merchant = forMatch.group(1)?.trim() ?? '';
+    final totalDuration = DateTime.now().difference(scanStartTime);
+    AppLogger.sms('=== SMS SCAN COMPLETE ===', 
+      detail: 'Processed ${allMessages.length} messages in ${totalDuration.inSeconds}s, Imported $imported',
+      level: LogLevel.info);
 
-    // Clean up merchant (remove trailing garbage)
-    merchant = merchant.replaceAll(RegExp(r'[.\s]+$'), '').trim();
-    if (merchant.length < 2) merchant = '';
-
-    final category = merchant.isNotEmpty
-        ? _guessCategoryFromMerchant(merchant)
-        : (type == 'income' ? 'Salary' : 'Other');
-
-    final note = merchant.isNotEmpty
-        ? '📱 SMS: $merchant'
-        : '📱 SMS Import';
-
-    return model.Transaction(
-      type: type,
-      amount: amount,
-      category: category,
-      note: note,
-      date: date,
+    final result = SmsImportResult(
+      imported: imported,
+      skipped: skipped,
+      failed: failed,
+      filteredByDate: filteredByDate,
+      alreadyProcessed: alreadyProcessed,
+      nonFinancial: nonFinancial,
+      parseFailed: parseFailed,
+      duplicates: duplicatesFound,
+      blockedByRule: blockedByRule,
     );
+    await _saveLastScanResult(result);
+    return result;
+  }
+
+  /// Scan existing transactions for duplicates and convert them to transfers.
+  /// Optimized with bucketing and yielding to prevent UI freezes.
+  static Future<int> cleanupDuplicateTransfers() async {
+    try {
+      final db = await AppDatabase.db();
+      int fixedCount = 0;
+      
+      final sixMonthsAgo = DateTime.now().subtract(const Duration(days: 183));
+      final transactions = await db.query(
+        'transactions',
+        where: "source_type = 'sms' AND date >= ? AND type IN ('expense', 'income')",
+        whereArgs: [sixMonthsAgo.toIso8601String()],
+      );
+      
+      if (transactions.isEmpty) return 0;
+      
+      final txnList = transactions.map((m) => model.Transaction.fromMap(m)).toList();
+      
+      // Group by Date and Amount to avoid O(N^2) global search
+      final buckets = <String, List<model.Transaction>>{};
+      for (final txn in txnList) {
+        final dateKey = "${txn.date.year}-${txn.date.month}-${txn.date.day}";
+        final amountKey = txn.amount.toStringAsFixed(2);
+        final key = "$dateKey|$amountKey";
+        buckets.putIfAbsent(key, () => []).add(txn);
+      }
+      
+      final processed = <int>{};
+      final batch = db.batch();
+      
+      int bucketCount = 0;
+      for (final bucket in buckets.values) {
+        if (bucket.length < 2) continue;
+        
+        // Yield every 50 buckets to keep UI responsive
+        if (bucketCount++ % 50 == 0) await Future.delayed(Duration.zero);
+        
+        for (var i = 0; i < bucket.length; i++) {
+          if (processed.contains(bucket[i].id)) continue;
+          final txn1 = bucket[i];
+          final body1 = txn1.smsSource?.toLowerCase() ?? '';
+          
+          final is1Payment = body1.contains('payment') || body1.contains('posted');
+          final is1Debit = body1.contains('debit') || body1.contains('draft') || 
+                           body1.contains('withdrew') || body1.contains('deducted');
+
+          for (var j = i + 1; j < bucket.length; j++) {
+            if (processed.contains(bucket[j].id)) continue;
+            final txn2 = bucket[j];
+            final body2 = txn2.smsSource?.toLowerCase() ?? '';
+            
+            final is2Payment = body2.contains('payment') || body2.contains('posted');
+            final is2Debit = body2.contains('debit') || body2.contains('draft') || 
+                             body2.contains('withdrew') || body2.contains('deducted');
+            
+            if ((is1Payment && is2Debit) || (is2Payment && is1Debit)) {
+              batch.update(
+                'transactions',
+                {
+                  'type': 'transfer',
+                  'category': 'Transfer',
+                  'note': '${txn1.note ?? ''} [Auto-detected transfer]',
+                },
+                where: 'id = ?',
+                whereArgs: [txn1.id],
+              );
+              
+              batch.update(
+                'transactions',
+                {
+                  'type': 'transfer',
+                  'category': 'Transfer',
+                  'note': '${txn2.note ?? ''} [Auto-detected transfer]',
+                },
+                where: 'id = ?',
+                whereArgs: [txn2.id],
+              );
+              
+              processed.add(txn1.id!);
+              processed.add(txn2.id!);
+              fixedCount += 2;
+              break; 
+            }
+          }
+        }
+      }
+      
+      if (fixedCount > 0) {
+        await batch.commit(noResult: true);
+      }
+      
+      return fixedCount;
+    } catch (e) {
+      AppLogger.err('cleanup_duplicates', e);
+      return 0;
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  static String _previewSmsBody(String body, {int maxLength = 80}) {
+    final normalized = body.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.isEmpty) return '<empty>';
+    if (normalized.length <= maxLength) return normalized;
+    return '${normalized.substring(0, maxLength)}...';
+  }
+
+  static Future<void> createAccountsFromTransactions() async {
+    final db = await AppDatabase.db();
+    final txnResults = await db.query(
+      'transactions',
+      where: "source_type = 'sms' AND (extracted_institution IS NOT NULL OR extracted_identifier IS NOT NULL)",
+    );
+    
+    if (txnResults.isEmpty) return;
+    
+    final accountGroups = <String, List<Map<String, dynamic>>>{};
+    for (final txn in txnResults) {
+      final bank = txn['extracted_institution'] as String?;
+      final identifier = txn['extracted_identifier'] as String?;
+      if (identifier == null || identifier.isEmpty) continue;
+      
+      final key = '${bank ?? "Unknown"}|$identifier';
+      accountGroups.putIfAbsent(key, () => []).add(txn);
+    }
+    
+    for (final entry in accountGroups.entries) {
+      final parts = entry.key.split('|');
+      final bank = parts[0] == 'Unknown' ? null : parts[0];
+      final identifier = parts[1];
+      
+      final existing = await AppDatabase.findAccountByIdentity(
+        institutionName: bank,
+        accountIdentifier: identifier,
+      );
+      
+      int accountId;
+      if (existing != null) {
+        accountId = existing.id!;
+      } else {
+        final accountName = (bank != null) ? '$bank $identifier' : 'Account $identifier';
+        final newAccount = Account(
+          name: accountName,
+          type: 'unidentified',
+          balance: 0,
+          institutionName: bank,
+          accountIdentifier: identifier,
+        );
+        accountId = await AppDatabase.insertAccount(newAccount);
+      }
+      
+      for (final txn in entry.value) {
+        await db.update('transactions', {'account_id': accountId}, 
+          where: 'id = ?', whereArgs: [txn['id']]);
+      }
+    }
   }
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────
 
 class SmsImportResult {
-
   const SmsImportResult({
     this.imported = 0,
     this.skipped = 0,
     this.failed = 0,
+    this.filteredByDate = 0,
+    this.alreadyProcessed = 0,
+    this.nonFinancial = 0,
+    this.parseFailed = 0,
+    this.duplicates = 0,
+    this.blockedByRule = 0,
+    this.scanDate,
     this.error,
   });
   final int imported;
   final int skipped;
   final int failed;
+  final int filteredByDate;
+  final int alreadyProcessed;
+  final int nonFinancial;
+  final int parseFailed;
+  final int duplicates;
+  final int blockedByRule;
+  final DateTime? scanDate;
   final String? error;
 
   bool get hasError => error != null;
 
   @override
-  String toString() =>
-      error ?? 'Imported: $imported  •  Skipped: $skipped  •  Failed: $failed';
+  String toString() {
+    if (error != null) return error!;
+    final parts = <String>[];
+    if (imported > 0) parts.add('Imported: $imported');
+    if (skipped > 0) parts.add('Skipped: $skipped');
+    if (failed > 0) parts.add('Failed: $failed');
+    if (filteredByDate > 0) parts.add('Out of range: $filteredByDate');
+    if (alreadyProcessed > 0) parts.add('Already processed: $alreadyProcessed');
+    if (nonFinancial > 0) parts.add('Non-financial: $nonFinancial');
+    if (blockedByRule > 0) parts.add('Blocked by rules: $blockedByRule');
+    if (parseFailed > 0) parts.add('Parse failed: $parseFailed');
+    if (duplicates > 0) parts.add('Duplicates: $duplicates');
+    return parts.isEmpty ? 'No messages processed' : parts.join('  •  ');
+  }
 }

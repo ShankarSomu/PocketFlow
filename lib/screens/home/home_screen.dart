@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
       for (final account in accounts) {
         final balance = await AppDatabase.accountBalance(account.id!, account);
         balances[account.id!] = balance;
-        if (account.type == 'credit') {
+        if (account.isLiability) {
           totalBalance -= balance;
         } else {
           totalBalance += balance;

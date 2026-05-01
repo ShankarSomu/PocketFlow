@@ -101,8 +101,11 @@ class AppLogger {
     _buffer.add(entry);
     if (_buffer.length > _maxEntries) _buffer.removeAt(0);
     
-    // Debug print to console
-    print('[${level.name.toUpperCase()}] [${category.name}] $action${detail != null ? ' | $detail' : ''}${error != null ? ' ERROR: $error' : ''}');
+    // Debug print to console — tagged for adb logcat filtering
+    // Filter with: adb logcat -s POCKETFLOW:V SMS_PIPELINE:V
+    final tag = _smsTag(category);
+    // ignore: avoid_print
+    print('$tag [${level.name.toUpperCase()}] $action${detail != null ? ' | $detail' : ''}${error != null ? ' ERROR: $error' : ''}');
     
     _persist();
   }
@@ -134,6 +137,56 @@ class AppLogger {
   static void warn(String action, {String? detail, LogCategory? category}) =>
       log(LogLevel.warning, category ?? LogCategory.system, action,
           detail: detail);
+
+  /// SMS-specific log — always emits regardless of _minLevel so SMS debug
+  /// output is always visible in logcat during development.
+  /// Filter with: adb logcat -s SMS_PIPELINE:V
+  static void sms(String action, {String? detail, LogLevel level = LogLevel.debug}) {
+    final entry = LogEntry(
+      timestamp: DateTime.now(),
+      level: level,
+      category: LogCategory.system,
+      action: action,
+      detail: detail,
+    );
+    _buffer.add(entry);
+    if (_buffer.length > _maxEntries) _buffer.removeAt(0);
+    // ignore: avoid_print
+    print('SMS_PIPELINE [${level.name.toUpperCase()}] [${DateTime.now().toIso8601String()}] $action${detail != null ? ' | $detail' : ''}');
+    _persist();
+  }
+
+  /// Performance tracking for SMS operations
+  static void smsPerf(String operation, Duration elapsed, {String? detail}) {
+    final entry = LogEntry(
+      timestamp: DateTime.now(),
+      level: LogLevel.info,
+      category: LogCategory.system,
+      action: 'PERF: $operation',
+      detail: 'Took ${elapsed.inMilliseconds}ms${detail != null ? ' | $detail' : ''}',
+    );
+    _buffer.add(entry);
+    if (_buffer.length > _maxEntries) _buffer.removeAt(0);
+    // ignore: avoid_print
+    print('SMS_PERF [${DateTime.now().toIso8601String()}] $operation took ${elapsed.inMilliseconds}ms${detail != null ? ' | $detail' : ''}');
+    _persist();
+  }
+
+  // ── Tag helper ──────────────────────────────────────────────────────────────
+
+  /// Returns a logcat-friendly tag for the given category.
+  static String _smsTag(LogCategory category) {
+    switch (category) {
+      case LogCategory.system:
+        return 'SMS_PIPELINE';
+      case LogCategory.database:
+        return 'SMS_DB';
+      case LogCategory.error:
+        return 'SMS_ERROR';
+      default:
+        return 'POCKETFLOW';
+    }
+  }
 
   // ── Persistence ─────────────────────────────────────────────────────────────
 

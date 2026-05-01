@@ -10,7 +10,10 @@ import '../models/deletable_entity.dart';
 import '../models/recurring_transaction.dart';
 import '../models/savings_goal.dart';
 import '../models/transaction.dart' as model;
+import '../services/data_integrity_service.dart';
 import '../services/notification_service.dart';
+import 'seeds/account_extraction_seed.dart';
+import 'seeds/sms_keywords_seed.dart';
 
 // Wrap DB init to log errors
 
@@ -23,9 +26,27 @@ class AppDatabase {
     return _db!;
   }
 
+  /// Replaces the shared database instance.
+  ///
+  /// **For testing only.** Call this in [setUp] / [setUpAll] to inject an
+  /// in-memory database, and call `resetForTesting()` in [tearDown] to clean
+  /// up.
+  // ignore: invalid_use_of_visible_for_testing_member
+  static void setDatabaseForTesting(Database database) {
+    _db = database;
+  }
+
+  /// Clears the cached database instance so the next [db()] call re-opens it.
+  ///
+  /// **For testing only.**
+  // ignore: invalid_use_of_visible_for_testing_member
+  static void resetForTesting() {
+    _db = null;
+  }
+
   static Future<Database> _init() async {
     final path = join(await getDatabasesPath(), 'pocket_flow.db');
-    return openDatabase(path, version: 12,
+    return openDatabase(path, version: 24,
       onCreate: (db, _) => _createAll(db),
       onUpgrade: (db, oldVersion, _) async {
         if (oldVersion < 2) {
@@ -276,6 +297,479 @@ class AppDatabase {
           await db.execute('CREATE INDEX idx_transactions_recurring_group ON transactions(recurring_group_id)');
           await db.execute('CREATE INDEX idx_accounts_source ON accounts(source)');
         }
+        if (oldVersion < 13) {
+          // Add indexed rule engine for scalable SMS classification
+          await db.execute('''CREATE TABLE IF NOT EXISTS sms_classification_rules(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rule_type TEXT NOT NULL,
+            keywords TEXT NOT NULL,
+            normalized_merchants TEXT,
+            category TEXT,
+            transaction_type TEXT,
+            confidence REAL DEFAULT 1.0,
+            correct_count INTEGER DEFAULT 0,
+            incorrect_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            last_used_at INTEGER,
+            source TEXT DEFAULT 'user',
+            is_active INTEGER DEFAULT 1
+          )''');
+          
+          await db.execute('''CREATE TABLE IF NOT EXISTS sms_rule_index(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            keyword TEXT NOT NULL,
+            rule_id INTEGER NOT NULL,
+            UNIQUE(keyword, rule_id),
+            FOREIGN KEY(rule_id) REFERENCES sms_classification_rules(id) ON DELETE CASCADE
+          )''');
+          
+          await db.execute('''CREATE TABLE IF NOT EXISTS sms_pattern_cache(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pattern_signature TEXT NOT NULL UNIQUE,
+            category TEXT,
+            transaction_type TEXT,
+            matched_rule_ids TEXT,
+            hit_count INTEGER DEFAULT 1,
+            last_hit_at INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+          )''');
+          
+          await db.execute('''CREATE TABLE IF NOT EXISTS merchant_normalizations(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_name TEXT NOT NULL UNIQUE,
+            normalized_name TEXT NOT NULL,
+            frequency INTEGER DEFAULT 1,
+            created_at INTEGER NOT NULL
+          )''');
+          
+          // Indexes for fast lookups
+          await db.execute('CREATE INDEX idx_rule_index_keyword ON sms_rule_index(keyword)');
+          await db.execute('CREATE INDEX idx_rule_index_rule ON sms_rule_index(rule_id)');
+          await db.execute('CREATE INDEX idx_rules_active ON sms_classification_rules(is_active) WHERE is_active = 1');
+          await db.execute('CREATE INDEX idx_rules_category ON sms_classification_rules(category)');
+          await db.execute('CREATE INDEX idx_cache_signature ON sms_pattern_cache(pattern_signature)');
+          await db.execute('CREATE INDEX idx_merchant_norm ON merchant_normalizations(normalized_name)');
+          
+          await db.execute('''CREATE TABLE IF NOT EXISTS feedback_history(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaction_id INTEGER,
+            feedback_type TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+          )''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback_history(feedback_type)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_date ON feedback_history(created_at)');
+        }
+        if (oldVersion < 14) {
+          // Add user_disputed column to transactions
+          await db.execute('ALTER TABLE transactions ADD COLUMN user_disputed INTEGER DEFAULT 0');
+          
+          // Create feedback_events table
+          await db.execute('''CREATE TABLE IF NOT EXISTS feedback_events(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaction_id INTEGER NOT NULL,
+            event_type TEXT NOT NULL,
+            outcome TEXT,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+          )''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_events_txn ON feedback_events(transaction_id)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_feedback_events_type ON feedback_events(event_type)');
+        }
+        
+        if (oldVersion < 15) {
+          // ═══════════════════════════════════════════════════════════════
+          // Account Identity Extraction Rules (Phase 1)
+          // Rule-based system for extracting bank names and account identifiers
+          // Similar architecture to SMS Intelligence Engine
+          // ═══════════════════════════════════════════════════════════════
+          
+          // Core extraction rules table
+          await db.execute('''CREATE TABLE IF NOT EXISTS account_extraction_rules(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rule_type TEXT NOT NULL,
+            extraction_type TEXT NOT NULL,
+            pattern TEXT NOT NULL,
+            keywords TEXT NOT NULL,
+            region TEXT,
+            output_value TEXT,
+            confidence REAL DEFAULT 1.0,
+            correct_count INTEGER DEFAULT 0,
+            incorrect_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            last_used_at INTEGER,
+            source TEXT DEFAULT 'system',
+            is_active INTEGER DEFAULT 1,
+            priority INTEGER DEFAULT 0
+          )''');
+          
+          // Inverted index for fast keyword matching
+          await db.execute('''CREATE TABLE IF NOT EXISTS account_extraction_index(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            keyword TEXT NOT NULL,
+            rule_id INTEGER NOT NULL,
+            UNIQUE(keyword, rule_id),
+            FOREIGN KEY(rule_id) REFERENCES account_extraction_rules(id) ON DELETE CASCADE
+          )''');
+          
+          // Bank name normalizations (e.g., "BofA" → "Bank of America")
+          await db.execute('''CREATE TABLE IF NOT EXISTS bank_normalizations(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_name TEXT NOT NULL UNIQUE,
+            normalized_name TEXT NOT NULL,
+            region TEXT,
+            frequency INTEGER DEFAULT 1,
+            created_at INTEGER NOT NULL
+          )''');
+          
+          // Extraction feedback and learning
+          await db.execute('''CREATE TABLE IF NOT EXISTS account_extraction_feedback(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sms_text TEXT NOT NULL,
+            extracted_bank TEXT,
+            extracted_identifier TEXT,
+            correct_bank TEXT,
+            correct_identifier TEXT,
+            feedback_type TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+          )''');
+          
+          // Performance indexes
+          await db.execute('CREATE INDEX idx_extraction_index_keyword ON account_extraction_index(keyword)');
+          await db.execute('CREATE INDEX idx_extraction_index_rule ON account_extraction_index(rule_id)');
+          await db.execute('CREATE INDEX idx_extraction_rules_active ON account_extraction_rules(is_active) WHERE is_active = 1');
+          await db.execute('CREATE INDEX idx_extraction_rules_type ON account_extraction_rules(extraction_type)');
+          await db.execute('CREATE INDEX idx_extraction_rules_region ON account_extraction_rules(region)');
+          await db.execute('CREATE INDEX idx_bank_norm_original ON bank_normalizations(original_name)');
+          await db.execute('CREATE INDEX idx_bank_norm_normalized ON bank_normalizations(normalized_name)');
+          
+          // Seed initial extraction rules
+          await _seedAccountExtractionRules(db);
+        }
+        
+        if (oldVersion < 16) {
+          // ═══════════════════════════════════════════════════════════════
+          // SMS Keywords & Merchant Categories in Database  
+          // Move hardcoded keywords to database for easier maintenance
+          // ═══════════════════════════════════════════════════════════════
+          
+          // SMS transaction keywords (debit/credit/financial indicators)
+          await db.execute('''CREATE TABLE IF NOT EXISTS sms_keywords(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            keyword TEXT NOT NULL,
+            type TEXT NOT NULL,
+            region TEXT,
+            confidence REAL DEFAULT 1.0,
+            priority INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            usage_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL
+          )''');
+          
+          // Merchant to category mappings
+          await db.execute('''CREATE TABLE IF NOT EXISTS merchant_categories(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            merchant_pattern TEXT NOT NULL,
+            category TEXT NOT NULL,
+            region TEXT,
+            priority INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            match_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL
+          )''');
+          
+          // Performance indexes
+          await db.execute('CREATE INDEX idx_sms_keywords_type ON sms_keywords(type)');
+          await db.execute('CREATE INDEX idx_sms_keywords_region ON sms_keywords(region)');
+          await db.execute('CREATE INDEX idx_sms_keywords_active ON sms_keywords(is_active) WHERE is_active = 1');
+          await db.execute('CREATE INDEX idx_merchant_categories_pattern ON merchant_categories(merchant_pattern)');
+          await db.execute('CREATE INDEX idx_merchant_categories_region ON merchant_categories(region)');
+          await db.execute('CREATE INDEX idx_merchant_categories_active ON merchant_categories(is_active) WHERE is_active = 1');
+          
+          // Seed keywords and merchant categories
+          await _seedSmsKeywords(db);
+          await _seedMerchantCategories(db);
+          await _seedSenderPatterns(db);
+        }
+        if (oldVersion < 17) {
+          // ═══════════════════════════════════════════════════════════════
+          // Transfer Account Fields
+          // Add from_account_id and to_account_id for explicit transfer tracking
+          // ═══════════════════════════════════════════════════════════════
+          
+          await db.execute('ALTER TABLE transactions ADD COLUMN from_account_id INTEGER REFERENCES accounts(id)');
+          await db.execute('ALTER TABLE transactions ADD COLUMN to_account_id INTEGER REFERENCES accounts(id)');
+          
+          // Create indexes for transfer queries
+          await db.execute('CREATE INDEX idx_transactions_from_account ON transactions(from_account_id)');
+          await db.execute('CREATE INDEX idx_transactions_to_account ON transactions(to_account_id)');
+          
+          // Backfill existing transfers from transfer_pairs table
+          await db.execute('''
+            UPDATE transactions
+            SET from_account_id = (
+              SELECT source_account_id 
+              FROM transfer_pairs 
+              WHERE transfer_pairs.debit_transaction_id = transactions.id
+            ),
+            to_account_id = (
+              SELECT destination_account_id 
+              FROM transfer_pairs 
+              WHERE transfer_pairs.debit_transaction_id = transactions.id
+            )
+            WHERE id IN (
+              SELECT debit_transaction_id FROM transfer_pairs
+            )
+          ''');
+          
+          await db.execute('''
+            UPDATE transactions
+            SET from_account_id = (
+              SELECT source_account_id 
+              FROM transfer_pairs 
+              WHERE transfer_pairs.credit_transaction_id = transactions.id
+            ),
+            to_account_id = (
+              SELECT destination_account_id 
+              FROM transfer_pairs 
+              WHERE transfer_pairs.credit_transaction_id = transactions.id
+            )
+            WHERE id IN (
+              SELECT credit_transaction_id FROM transfer_pairs
+            )
+          ''');
+        }
+        if (oldVersion < 18) {
+          // ═══════════════════════════════════════════════════════════════
+          // Access Type Field
+          // Critical for SMS parsing - tracks HOW transactions are made
+          // (debit_card, credit_card, upi, bank_transfer, ach, cash, unknown)
+          // ═══════════════════════════════════════════════════════════════
+          
+          await db.execute('ALTER TABLE accounts ADD COLUMN access_type TEXT');
+          
+          // Create index for access_type queries
+          await db.execute('CREATE INDEX idx_accounts_access_type ON accounts(access_type)');
+        }
+        if (oldVersion < 19) {
+          // ═══════════════════════════════════════════════════════════════
+          // Enforce Transaction Integrity (Single Source of Truth)
+          // - accountId becomes required (NOT NULL)
+          // - category gets default value ('uncategorized')
+          // ═══════════════════════════════════════════════════════════════
+          
+          // Step 1: Delete orphaned transactions (those with null account_id)
+          final orphanedCount = await db.rawQuery(
+            'SELECT COUNT(*) as count FROM transactions WHERE account_id IS NULL'
+          );
+          final count = (orphanedCount.first['count'] as int?) ?? 0;
+          if (count > 0) {
+            AppLogger.db('migration_v19', detail: 'Removing $count orphaned transactions');
+            await db.delete('transactions', where: 'account_id IS NULL');
+          }
+          
+          // Step 2: Set default category for any null/empty categories
+          await db.execute(
+            "UPDATE transactions SET category = 'uncategorized' WHERE category IS NULL OR category = ''"
+          );
+          
+          AppLogger.db('migration_v19', detail: 'Enforced accountId NOT NULL and category defaults');
+        }
+        
+        if (oldVersion < 20) {
+          // ═══════════════════════════════════════════════════════════════
+          // User Feedback Learning System (v20)
+          // - Capture user corrections for machine learning
+          // - Track account confirmations for confidence boosting
+          // - Store quick feedback (thumbs up/down) for field-level learning
+          // ═══════════════════════════════════════════════════════════════
+          
+          AppLogger.db('migration_v20', detail: 'Creating feedback learning tables');
+          
+          // Table 1: User Account Confirmations
+          // Tracks when user approves/rejects sender+merchant mappings
+          await db.execute('''CREATE TABLE IF NOT EXISTS user_account_confirmations(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaction_id INTEGER NOT NULL,
+            institution TEXT,
+            merchant TEXT,
+            sender_id TEXT,
+            confirmed INTEGER NOT NULL,
+            confidence_before REAL,
+            confirmation_date TEXT NOT NULL,
+            FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+          )''');
+          await db.execute('CREATE INDEX idx_confirmations_txn ON user_account_confirmations(transaction_id)');
+          await db.execute('CREATE INDEX idx_confirmations_merchant ON user_account_confirmations(merchant)');
+          
+          // Table 2: User Corrections
+          // Tracks every field-level correction for learning
+          await db.execute('''CREATE TABLE IF NOT EXISTS user_corrections(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaction_id INTEGER NOT NULL,
+            field_name TEXT NOT NULL,
+            original_value TEXT,
+            corrected_value TEXT,
+            correction_date TEXT NOT NULL,
+            sms_text TEXT,
+            feedback_type TEXT NOT NULL,
+            FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+          )''');
+          await db.execute('CREATE INDEX idx_corrections_txn ON user_corrections(transaction_id)');
+          await db.execute('CREATE INDEX idx_corrections_field ON user_corrections(field_name)');
+          
+          // Table 3: Parsing Feedback
+          // Quick thumbs up/down per field for granular feedback
+          await db.execute('''CREATE TABLE IF NOT EXISTS parsing_feedback(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaction_id INTEGER NOT NULL,
+            field_name TEXT NOT NULL,
+            is_correct INTEGER NOT NULL,
+            feedback_date TEXT NOT NULL,
+            sms_text TEXT,
+            extracted_value TEXT,
+            FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+          )''');
+          await db.execute('CREATE INDEX idx_feedback_txn ON parsing_feedback(transaction_id)');
+          await db.execute('CREATE INDEX idx_feedback_field ON parsing_feedback(field_name)');
+          
+          AppLogger.db('migration_v20', detail: 'Feedback learning system ready');
+        }
+
+        if (oldVersion < 21) {
+          // ═══════════════════════════════════════════════════════════════
+          // Adaptive Learning Tables (v21)
+          // - merchant_normalization_rules: "AMZN MKTPLACE" → "Amazon"
+          // - merchant_category_map: "Amazon" → "Shopping"
+          // Both tables grow automatically from user corrections.
+          // ═══════════════════════════════════════════════════════════════
+
+          AppLogger.db('migration_v21', detail: 'Creating adaptive learning tables');
+
+          // Merchant normalization: raw SMS text → canonical display name
+          await db.execute('''CREATE TABLE IF NOT EXISTS merchant_normalization_rules(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            raw_pattern TEXT NOT NULL UNIQUE,
+            normalized_name TEXT NOT NULL,
+            usage_count INTEGER NOT NULL DEFAULT 1,
+            success_count INTEGER NOT NULL DEFAULT 1,
+            confidence REAL NOT NULL DEFAULT 1.0,
+            last_used_at TEXT NOT NULL
+          )''');
+          await db.execute(
+            'CREATE INDEX idx_merchant_norm_rules_pattern ON merchant_normalization_rules(raw_pattern)',
+          );
+
+          // Merchant → category mapping learned from user corrections
+          await db.execute('''CREATE TABLE IF NOT EXISTS merchant_category_map(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            merchant TEXT NOT NULL UNIQUE,
+            category TEXT NOT NULL,
+            usage_count INTEGER NOT NULL DEFAULT 1,
+            confidence REAL NOT NULL DEFAULT 1.0,
+            last_used_at TEXT NOT NULL
+          )''');
+          await db.execute(
+            'CREATE INDEX idx_merchant_category_map_merchant ON merchant_category_map(merchant)',
+          );
+
+          AppLogger.db('migration_v21', detail: 'Adaptive learning tables ready');
+        }
+
+        if (oldVersion < 22) {
+          // ═══════════════════════════════════════════════════════════════
+          // Signal Weight Persistence (v22)
+          // - signal_weights: persists per-signal confidence weights
+          // - Seeded with five default weights on first run
+          // ═══════════════════════════════════════════════════════════════
+
+          AppLogger.db('migration_v22', detail: 'Creating signal_weights table');
+
+          await db.execute('''CREATE TABLE IF NOT EXISTS signal_weights (
+            id     INTEGER PRIMARY KEY AUTOINCREMENT,
+            signal TEXT    NOT NULL UNIQUE,
+            weight REAL    NOT NULL
+          )''');
+
+          // Seed default signal weights
+          const defaultWeights = {
+            'has_amount':           0.40,
+            'has_account':          0.20,
+            'has_bank':             0.10,
+            'has_merchant':         0.10,
+            'has_transaction_verb': 0.20,
+          };
+          for (final entry in defaultWeights.entries) {
+            await db.insert('signal_weights', {
+              'signal': entry.key,
+              'weight': entry.value,
+            });
+          }
+
+          AppLogger.db('migration_v22', detail: 'signal_weights table ready with defaults');
+        }
+
+        if (oldVersion < 23) {
+          // ═══════════════════════════════════════════════════════════════
+          // Normalize account type 'credit' → 'credit_card' (v23)
+          // The form previously saved 'credit'; the model defines 'credit_card'.
+          // ═══════════════════════════════════════════════════════════════
+          await db.execute(
+            "UPDATE accounts SET type = 'credit_card' WHERE type = 'credit'",
+          );
+
+          // Add target_date to savings_goals for task 15
+          await db.execute(
+            'ALTER TABLE savings_goals ADD COLUMN target_date TEXT',
+          );
+
+          // Add end_date to recurring_transactions for task 22
+          await db.execute(
+            'ALTER TABLE recurring_transactions ADD COLUMN end_date TEXT',
+          );
+
+          // Add sort_order to accounts for task 29
+          await db.execute(
+            'ALTER TABLE accounts ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+          );
+          // Default sort_order = rowid so existing order is preserved
+          await db.execute(
+            'UPDATE accounts SET sort_order = id WHERE sort_order = 0',
+          );
+
+          // Performance indexes for task 39
+          await db.execute(
+            'CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date)',
+          );
+          await db.execute(
+            'CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id)',
+          );
+          await db.execute(
+            'CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category)',
+          );
+
+          AppLogger.db('migration_v23', detail: 'credit→credit_card, target_date, end_date, sort_order, indexes');
+        }
+
+        if (oldVersion < 24) {
+          // ═══════════════════════════════════════════════════════════════
+          // SMS Negative Samples (v24)
+          // Structural, sender-aware learning — replaces keyword-based blocking.
+          // ═══════════════════════════════════════════════════════════════
+          await db.execute('''CREATE TABLE IF NOT EXISTS sms_negative_samples(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            pattern_type TEXT NOT NULL,
+            length_bucket INTEGER NOT NULL,
+            has_number INTEGER NOT NULL DEFAULT 0,
+            has_url INTEGER NOT NULL DEFAULT 0,
+            original_sms TEXT,
+            created_at INTEGER NOT NULL
+          )''');
+          await db.execute('CREATE INDEX idx_neg_samples_sender ON sms_negative_samples(sender)');
+          await db.execute('CREATE INDEX idx_neg_samples_pattern ON sms_negative_samples(pattern_type)');
+          AppLogger.db('migration_v24', detail: 'sms_negative_samples table created');
+        }
       },
       onOpen: (db) async {
         // Run maintenance in background to avoid blocking splash screen
@@ -323,10 +817,12 @@ class AppDatabase {
         account_identifier TEXT,
         sms_keywords TEXT,
         account_alias TEXT,
+        access_type TEXT,
         source TEXT NOT NULL DEFAULT 'manual',
         confidence_score_account REAL,
         requires_confirmation INTEGER DEFAULT 0,
         created_from_sms_date TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
         deleted_at INTEGER
       )''');
     await db.execute('''
@@ -334,10 +830,10 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT NOT NULL,
         amount REAL NOT NULL,
-        category TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'uncategorized',
         note TEXT,
         date TEXT NOT NULL,
-        account_id INTEGER REFERENCES accounts(id),
+        account_id INTEGER NOT NULL REFERENCES accounts(id),
         recurring_id INTEGER REFERENCES recurring_transactions(id),
         sms_source TEXT,
         sms_id TEXT,
@@ -351,6 +847,8 @@ class AppDatabase {
         transfer_reference TEXT,
         recurring_group_id INTEGER REFERENCES recurring_patterns(id),
         is_recurring_candidate INTEGER DEFAULT 0,
+        from_account_id INTEGER REFERENCES accounts(id),
+        to_account_id INTEGER REFERENCES accounts(id),
         deleted_at INTEGER
       )''');
     await db.execute('''
@@ -375,6 +873,7 @@ class AppDatabase {
         goal_id INTEGER REFERENCES savings_goals(id),
         frequency TEXT NOT NULL,
         next_due_date TEXT NOT NULL,
+        end_date TEXT,
         is_active INTEGER NOT NULL DEFAULT 1,
         deleted_at INTEGER
       )''');
@@ -395,6 +894,7 @@ class AppDatabase {
         saved REAL NOT NULL DEFAULT 0,
         account_id INTEGER REFERENCES accounts(id),
         priority INTEGER NOT NULL DEFAULT 999,
+        target_date TEXT,
         deleted_at INTEGER
       )''');
     
@@ -492,8 +992,148 @@ class AppDatabase {
         UNIQUE(extracted_name, correct_name)
       )''');
     
+    await db.execute('''CREATE TABLE sms_classification_rules(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        rule_type TEXT NOT NULL,
+        keywords TEXT NOT NULL,
+        normalized_merchants TEXT,
+        category TEXT,
+        transaction_type TEXT,
+        confidence REAL DEFAULT 1.0,
+        correct_count INTEGER DEFAULT 0,
+        incorrect_count INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        last_used_at INTEGER,
+        source TEXT DEFAULT 'user',
+        is_active INTEGER DEFAULT 1
+      )''');
+    
+    await db.execute('''CREATE TABLE sms_rule_index(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        keyword TEXT NOT NULL,
+        rule_id INTEGER NOT NULL,
+        UNIQUE(keyword, rule_id),
+        FOREIGN KEY(rule_id) REFERENCES sms_classification_rules(id) ON DELETE CASCADE
+      )''');
+    
+    await db.execute('''CREATE TABLE sms_pattern_cache(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pattern_signature TEXT NOT NULL UNIQUE,
+        category TEXT,
+        transaction_type TEXT,
+        matched_rule_ids TEXT,
+        hit_count INTEGER DEFAULT 1,
+        last_hit_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      )''');
+    
+    await db.execute('''CREATE TABLE merchant_normalizations(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original_name TEXT NOT NULL UNIQUE,
+        normalized_name TEXT NOT NULL,
+        frequency INTEGER DEFAULT 1,
+        created_at INTEGER NOT NULL
+      )''');
+    
+    await db.execute('''CREATE TABLE feedback_history(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id INTEGER,
+        feedback_type TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+      )''');
+    
+    await db.execute('''CREATE TABLE merchant_normalization_rules(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        raw_pattern TEXT NOT NULL UNIQUE,
+        normalized_name TEXT NOT NULL,
+        usage_count INTEGER NOT NULL DEFAULT 1,
+        success_count INTEGER NOT NULL DEFAULT 1,
+        confidence REAL NOT NULL DEFAULT 1.0,
+        last_used_at TEXT NOT NULL
+      )''');
+    await db.execute('''CREATE TABLE merchant_category_map(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        merchant TEXT NOT NULL UNIQUE,
+        category TEXT NOT NULL,
+        usage_count INTEGER NOT NULL DEFAULT 1,
+        confidence REAL NOT NULL DEFAULT 1.0,
+        last_used_at TEXT NOT NULL
+      )''');
+    await db.execute('''CREATE TABLE signal_weights(
+        id     INTEGER PRIMARY KEY AUTOINCREMENT,
+        signal TEXT    NOT NULL UNIQUE,
+        weight REAL    NOT NULL
+      )''');
+    await db.execute('''CREATE TABLE user_account_confirmations(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id INTEGER NOT NULL,
+        institution TEXT,
+        merchant TEXT,
+        sender_id TEXT,
+        confirmed INTEGER NOT NULL,
+        confidence_before REAL,
+        confirmation_date TEXT NOT NULL,
+        FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+      )''');
+    await db.execute('''CREATE TABLE user_corrections(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id INTEGER NOT NULL,
+        field_name TEXT NOT NULL,
+        original_value TEXT,
+        corrected_value TEXT,
+        correction_date TEXT NOT NULL,
+        sms_text TEXT,
+        feedback_type TEXT NOT NULL,
+        FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+      )''');
+    await db.execute('''CREATE TABLE parsing_feedback(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id INTEGER NOT NULL,
+        field_name TEXT NOT NULL,
+        is_correct INTEGER NOT NULL,
+        feedback_date TEXT NOT NULL,
+        sms_text TEXT,
+        extracted_value TEXT,
+        FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+      )''');
+    await db.execute('''CREATE TABLE feedback_events(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        transaction_id INTEGER NOT NULL,
+        event_type TEXT NOT NULL,
+        outcome TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+      )''');
+
+    await db.execute('''CREATE TABLE IF NOT EXISTS sms_negative_samples(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender TEXT NOT NULL,
+        pattern_type TEXT NOT NULL,
+        length_bucket INTEGER NOT NULL,
+        has_number INTEGER NOT NULL DEFAULT 0,
+        has_url INTEGER NOT NULL DEFAULT 0,
+        original_sms TEXT,
+        created_at INTEGER NOT NULL
+      )''');
+    
     // Seed default categories
     await _seedDefaultCategories(db);
+
+    // Seed default signal weights
+    const defaultSignalWeights = {
+      'has_amount':           0.40,
+      'has_account':          0.20,
+      'has_bank':             0.10,
+      'has_merchant':         0.10,
+      'has_transaction_verb': 0.20,
+    };
+    for (final entry in defaultSignalWeights.entries) {
+      await db.insert('signal_weights', {
+        'signal': entry.key,
+        'weight': entry.value,
+      });
+    }
   }
 
   static Future<void> _seedDefaultCategories(Database db) async {
@@ -519,6 +1159,33 @@ class AppDatabase {
         });
       }
     }
+  }
+
+  /// Seed account extraction rules from external seed file
+  static Future<void> _seedAccountExtractionRules(Database db) async {
+    // Bank name extraction rules (US and Indian banks)
+    await AccountExtractionSeed.seedBankRules(db);
+    
+    // Account identifier patterns (card endings, account numbers, etc.)
+    await AccountExtractionSeed.seedIdentifierRules(db);
+    
+    // Bank name normalizations (variations -> canonical)
+    await AccountExtractionSeed.seedBankNormalizations(db);
+  }
+
+  /// Seed SMS keywords from external seed file
+  static Future<void> _seedSmsKeywords(Database db) async {
+    await SmsKeywordsSeed.seedKeywords(db);
+  }
+
+  /// Seed merchant categories from external seed file
+  static Future<void> _seedMerchantCategories(Database db) async {
+    await SmsKeywordsSeed.seedMerchantCategories(db);
+  }
+
+  /// Seed bank/payment app sender ID patterns from external seed file
+  static Future<void> _seedSenderPatterns(Database db) async {
+    await SmsKeywordsSeed.seedSenderPatterns(db);
   }
 
   // ── Categories ────────────────────────────────────────────────────────────
@@ -568,6 +1235,51 @@ class AppDatabase {
     return rows.map(Account.fromMap).toList();
   }
 
+  /// Find account by institution and identifier (for SMS auto-linking)
+  static Future<Account?> findAccountByIdentity({
+    String? institutionName,
+    String? accountIdentifier,
+  }) async {
+    if (institutionName == null && accountIdentifier == null) return null;
+    
+    final d = await db();
+    
+    // Try exact match first (both institution and identifier)
+    if (institutionName != null && accountIdentifier != null) {
+      final results = await d.query(
+        'accounts',
+        where: 'institution_name = ? AND account_identifier = ? AND deleted_at IS NULL',
+        whereArgs: [institutionName, accountIdentifier],
+        limit: 1,
+      );
+      if (results.isNotEmpty) return Account.fromMap(results.first);
+    }
+    
+    // Try identifier only
+    if (accountIdentifier != null) {
+      final results = await d.query(
+        'accounts',
+        where: 'account_identifier = ? AND deleted_at IS NULL',
+        whereArgs: [accountIdentifier],
+        limit: 1,
+      );
+      if (results.isNotEmpty) return Account.fromMap(results.first);
+    }
+    
+    // Try institution only
+    if (institutionName != null) {
+      final results = await d.query(
+        'accounts',
+        where: 'institution_name = ? AND deleted_at IS NULL',
+        whereArgs: [institutionName],
+        limit: 1,
+      );
+      if (results.isNotEmpty) return Account.fromMap(results.first);
+    }
+    
+    return null;
+  }
+
   static Future<void> updateAccount(Account a) async =>
       (await db()).update('accounts', a.toMap(), where: 'id=?', whereArgs: [a.id]);
 
@@ -589,11 +1301,24 @@ class AppDatabase {
   }
 
   /// Permanently delete account (cannot be undone)
-  /// Also nullifies account_id on all transactions
+  /// ⚠️ Will throw if account has transactions - use soft delete instead
   static Future<void> permanentlyDeleteAccount(int id) async {
     final d = await db();
-    await d.update('transactions', {'account_id': null},
-        where: 'account_id=?', whereArgs: [id]);
+    
+    // Check if account has transactions
+    final txnCount = await d.rawQuery(
+      'SELECT COUNT(*) as count FROM transactions WHERE account_id = ?',
+      [id],
+    );
+    final count = (txnCount.first['count'] as int?) ?? 0;
+    
+    if (count > 0) {
+      throw Exception(
+        'Cannot delete account with transactions. '
+        'Account has $count transaction(s). Use soft delete instead.'
+      );
+    }
+    
     await d.delete('accounts', where: 'id=?', whereArgs: [id]);
     AppLogger.db('permanentlyDeleteAccount', detail: 'id=$id');
   }
@@ -618,6 +1343,8 @@ class AppDatabase {
         'note': memo,
         'date': now.toIso8601String(),
         'account_id': fromId,
+        'from_account_id': fromId,
+        'to_account_id': toId,
       });
       await txn.insert('transactions', {
         'type': 'income',
@@ -626,12 +1353,63 @@ class AppDatabase {
         'note': memo,
         'date': now.toIso8601String(),
         'account_id': toId,
+        'from_account_id': fromId,
+        'to_account_id': toId,
       });
     });
+    
+    // Validate transfer integrity after creation
+    final isValid = await validateTransferIntegrity();
+    if (!isValid) {
+      AppLogger.warn(
+        'Transfer created but integrity check failed',
+        detail: 'Amount: \$${amount.toStringAsFixed(2)}, From: $fromId, To: $toId',
+        category: LogCategory.database
+      );
+    }
+  }
+
+  /// Validate transfer integrity
+  /// Ensures that sum of all transfers has zero net impact on total net worth
+  /// Returns true if valid, false if there's an integrity violation
+  static Future<bool> validateTransferIntegrity() async {
+    final d = await db();
+    
+    // Sum all transfer expenses (money leaving accounts)
+    final transferExpenses = await d.rawQuery(
+      "SELECT SUM(amount) as total FROM transactions "
+      "WHERE deleted_at IS NULL AND category = 'transfer' AND type = 'expense'",
+    );
+    
+    // Sum all transfer income (money entering accounts)
+    final transferIncome = await d.rawQuery(
+      "SELECT SUM(amount) as total FROM transactions "
+      "WHERE deleted_at IS NULL AND category = 'transfer' AND type = 'income'",
+    );
+    
+    final expenseTotal = (transferExpenses.first['total'] as num?)?.toDouble() ?? 0;
+    final incomeTotal = (transferIncome.first['total'] as num?)?.toDouble() ?? 0;
+    
+    // Transfers are valid if expense total equals income total (net = 0)
+    final difference = (expenseTotal - incomeTotal).abs();
+    final isValid = difference < 0.01; // Allow for floating point precision
+    
+    if (!isValid) {
+      AppLogger.err(
+        'Transfer integrity violation',
+        'Expense: \$${expenseTotal.toStringAsFixed(2)}, '
+        'Income: \$${incomeTotal.toStringAsFixed(2)}, '
+        'Difference: \$${difference.toStringAsFixed(2)}',
+        category: LogCategory.database
+      );
+    }
+    
+    return isValid;
   }
 
   /// Running balance = opening balance + income − expenses for that account.
-  /// Credit cards: opening balance is amount already owed; expenses add to it.
+  /// Liabilities (credit_card, loan): opening balance is amount owed; expenses add to it.
+  /// Assets (checking, savings, etc): opening balance increases with income.
   static Future<double> accountBalance(int accountId, Account account) async {
     final d = await db();
     final income = await d.rawQuery(
@@ -644,13 +1422,24 @@ class AppDatabase {
     );
     final i = (income.first['t'] as num?)?.toDouble() ?? 0;
     final e = (expense.first['t'] as num?)?.toDouble() ?? 0;
-    if (account.type == 'credit') return account.balance + e - i;
-    return account.balance + i - e;
+    
+    // Standardized formula based on account type
+    if (account.isLiability) {
+      // Liabilities: expenses increase debt, income reduces debt
+      return account.balance + e - i;
+    } else {
+      // Assets: income increases balance, expenses decrease balance
+      return account.balance + i - e;
+    }
   }
 
   // ── Transactions ─────────────────────────────────────────────────────────────
 
   static Future<int> insertTransaction(model.Transaction t) async {
+    // ⚠️ CRITICAL: Validate transaction integrity before insert
+    // Prevents accounting corruption (Rule A: No transaction without accountId)
+    await DataIntegrityService.validateTransactionBeforeInsert(t);
+    
     final d = await db();
     final id = await d.insert('transactions', t.toMap()..remove('id'));
     AppLogger.db('insertTransaction', detail: '${t.type} \$${t.amount} ${t.category}');
@@ -679,7 +1468,24 @@ class AppDatabase {
     return id;
   }
 
+  /// Update existing transaction
+  /// 
+  /// ⚠️ DEPRECATION WARNING: Updating transactions violates immutability principle.
+  /// Transactions should be immutable ledger entries.
+  /// 
+  /// Acceptable use cases:
+  /// - Updating metadata (needsReview, userDisputed, confidenceScore)
+  /// - Fixing data entry errors with audit trail
+  ///
+  /// For amount/type/accountId changes, consider:
+  /// 1. Soft delete old transaction
+  /// 2. Create new corrected transaction
+  /// This preserves audit trail and maintains true immutability.
   static Future<void> updateTransaction(model.Transaction t) async {
+    if (t.id == null) {
+      throw ArgumentError('Transaction ID is required for updates');
+    }
+    
     await (await db()).update('transactions', t.toMap(), where: 'id=?', whereArgs: [t.id]);
     AppLogger.db('updateTransaction', detail: 'id=${t.id} ${t.type} \$${t.amount}');
   }

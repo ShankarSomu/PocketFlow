@@ -158,6 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _loading = true);
     try {
       await AppDatabase.deleteAllData();
+      await SmsService.clearSmsState(); // Clear processed IDs so next scan reimports everything
       notifyDataChanged();
       if (!mounted) return;
       setState(() => _loading = false);
@@ -336,23 +337,204 @@ ${AppLogger.exportText(errorsOnly: !includeTransactionHistory)}
   }
 
   Future<void> _rescanSms() async {
-    setState(() => _loading = true);
     try {
-      final result = await SmsService.scanAndImport(force: true);
+      // Step 1: Check Android SMS permission first
+      final hasPermission = await SmsService.hasPermission();
+      
+      if (!hasPermission) {
+        // No permission - show dialog and offer to go to settings
+        if (!mounted) return;
+        final grantPermission = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('SMS Permission Required'),
+            content: const Text(
+              'PocketFlow needs permission to read SMS messages to automatically detect transactions. '
+              'Would you like to go to Settings to grant permission?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Go to Settings'),
+              ),
+            ],
+          ),
+        );
+        
+        if (grantPermission == true && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SettingsScreen(
+                initialTab: 2, // Preferences tab
+                autoStartSmsScan: false,
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      
+      // Step 2: Check if SMS Auto-Import feature is enabled
+      final smsEnabled = await SmsService.isEnabled();
+      
+      if (!smsEnabled) {
+        // Has permission but feature disabled - offer to go to settings
+        if (!mounted) return;
+        final enable = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Enable SMS Auto-Import'),
+            content: const Text(
+              'SMS Auto-Import is currently disabled. Would you like to go to Settings to enable it?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Go to Settings'),
+              ),
+            ],
+          ),
+        );
+        
+        if (enable == true && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SettingsScreen(
+                initialTab: 2, // Preferences tab
+                autoStartSmsScan: false,
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      
+      // Step 3: All checks passed - show scanning dialog in current screen
       if (!mounted) return;
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('SMS scan complete! Found ${result.imported} transactions')),
-      );
-      notifyDataChanged();
+      await _showSmsScanDialog();
+      
     } catch (e) {
+      // Handle any errors gracefully
       if (!mounted) return;
-      setState(() => _loading = false);
-      AppLogger.err('profile_rescan_sms', e);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to scan SMS')),
+        SnackBar(
+          content: Text('Failed to start SMS scan: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
+  }
+  
+  Future<void> _showSmsScanDialog() async {
+    // Use ValueNotifiers to update the dialog in real-time
+    final progressNotifier = ValueNotifier<int>(0);
+    final statusNotifier = ValueNotifier<String>('Starting scan...');
+    final completedNotifier = ValueNotifier<bool>(false);
+    
+    // Start the scan immediately
+    Future.microtask(() async {
+      try {
+        final scanResult = await SmsService.scanAndImport(
+          force: false,
+          onProgress: (current) {
+            progressNotifier.value = current;
+            statusNotifier.value = 'Checked $current messages';
+          },
+        );
+        
+        completedNotifier.value = true;
+        statusNotifier.value = scanResult.toString();
+        
+        // Reload account health
+        if (mounted) {
+          await _loadAccountHealth();
+        }
+      } catch (e) {
+        completedNotifier.value = true;
+        statusNotifier.value = 'Scan failed: $e';
+      }
+    });
+    
+    // Show the dialog
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ValueListenableBuilder<bool>(
+        valueListenable: completedNotifier,
+        builder: (context, isCompleted, child) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                if (!isCompleted) 
+                  const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  const Icon(Icons.check_circle_outline, color: Colors.green),
+                const SizedBox(width: 12),
+                Text(isCompleted ? 'Scan Complete' : 'Scanning SMS...'),
+              ],
+            ),
+            content: ValueListenableBuilder<String>(
+              valueListenable: statusNotifier,
+              builder: (context, status, child) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(status),
+                    if (!isCompleted) ...[
+                      const SizedBox(height: 16),
+                      const LinearProgressIndicator(),
+                    ],
+                  ],
+                );
+              },
+            ),
+            actions: [
+              if (isCompleted) ...[
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(
+                          initialTab: 2,
+                          autoStartSmsScan: false,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('View Settings'),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+    
+    // Clean up
+    progressNotifier.dispose();
+    statusNotifier.dispose();
+    completedNotifier.dispose();
   }
 
   Future<void> _inviteFriends() async {

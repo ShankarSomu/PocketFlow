@@ -4,6 +4,7 @@ import '../../../../db/database.dart';
 import '../../../../services/app_logger.dart';
 import '../../../../services/auth_service.dart';
 import '../../../../services/refresh_notifier.dart';
+import '../../../../services/sms_service.dart';
 import 'backup_widgets.dart';
 import 'settings_card.dart';
 import 'settings_widgets.dart';
@@ -188,6 +189,7 @@ class BackupTabState extends State<BackupTab> {
     setState(() => _backingUp = true);
     try {
       await AppDatabase.deleteAllData();
+      await SmsService.clearSmsState(); // Clear processed IDs so next scan reimports everything
       notifyDataChanged();
       if (!mounted) return;
       setState(() => _backingUp = false);

@@ -8,12 +8,14 @@ import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
+import '../../services/sms_correction_service.dart';
 import '../../services/time_filter.dart';
 import '../../widgets/category_picker.dart';
 import '../../widgets/empty_states.dart';
 import '../../widgets/error_state_widget.dart';
 import '../shared/shared.dart';
 import 'components/transactions_components.dart';
+import 'transaction_detail_screen.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({
@@ -21,10 +23,12 @@ class TransactionsScreen extends StatefulWidget {
     this.initialFilterType,
     this.initialAccountId,
     this.initialCategory,
+    this.initialFilterNeedsReview,
   });
   final String? initialFilterType;
   final int? initialAccountId;
   final String? initialCategory;
+  final bool? initialFilterNeedsReview;
 
   @override
   State<TransactionsScreen> createState() => _TransactionsScreenState();
@@ -33,15 +37,18 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen> {
   bool _loading = true;
   String? _error;
-  final bool _searchVisible = false;
+  bool _searchVisible = false;
   List<model.Transaction> _transactions = [];
   List<Account> _accounts = [];
   Map<int, double> _accountBalances = {};
   int _carouselIdx = 0; // 0 = All, 1..N = individual account
-  final String _searchQuery = '';
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   String? _filterType;
   String? _filterCategory;
   int? _filterAccountId;
+  String? _filterSourceType;
+  bool? _filterNeedsReview;
   
   // Intelligence stats
   int _pendingActionsCount = 0;
@@ -54,15 +61,21 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     _filterType = widget.initialFilterType;
     _filterAccountId = widget.initialAccountId;
     _filterCategory = widget.initialCategory;
+    _filterNeedsReview = widget.initialFilterNeedsReview;
     _load();
     appRefresh.addListener(_load);
     appTimeFilter.addListener(_load);
+    // If opened with needs-review filter, load all transactions (no date limit)
+    if (widget.initialFilterNeedsReview == true) {
+      _loadAllForReview();
+    }
   }
 
   @override
   void dispose() {
     appRefresh.removeListener(_load);
     appTimeFilter.removeListener(_load);
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -89,15 +102,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       try {
         final db = await AppDatabase.db();
         
-        // Check if tables exist and get counts
+        // Count needs_review transactions (all time, not filtered by date)
         try {
-          final pendingResult = await db.rawQuery(
-            'SELECT COUNT(*) as count FROM pending_actions WHERE status = ?',
-            ['pending'],
+          final reviewResult = await db.rawQuery(
+            "SELECT COUNT(*) as count FROM transactions WHERE needs_review = 1 AND deleted_at IS NULL AND source_type = 'sms'",
           );
-          pendingCount = pendingResult.first['count'] as int? ?? 0;
+          pendingCount = reviewResult.first['count'] as int? ?? 0;
         } catch (e) {
-          // Table might not exist yet
           pendingCount = 0;
         }
         
@@ -152,7 +163,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       final query = _searchQuery.toLowerCase();
       filtered = filtered.where((t) {
         return t.category.toLowerCase().contains(query) ||
-            (t.note?.toLowerCase().contains(query) ?? false);
+            (t.note?.toLowerCase().contains(query) ?? false) ||
+            (t.merchant?.toLowerCase().contains(query) ?? false) ||
+            t.amount.toString().contains(query);
       }).toList();
     }
     if (_filterType != null) {
@@ -164,7 +177,51 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     if (_filterAccountId != null) {
       filtered = filtered.where((t) => t.accountId == _filterAccountId).toList();
     }
+    if (_filterSourceType != null) {
+      filtered = filtered.where((t) => t.sourceType == _filterSourceType).toList();
+    }
+    if (_filterNeedsReview != null && _filterNeedsReview!) {
+      filtered = filtered.where((t) => t.requiresReview).toList();
+    }
     return filtered;
+  }
+
+  bool get _hasActiveFilters =>
+      _filterType != null ||
+      _filterCategory != null ||
+      _filterAccountId != null ||
+      _filterSourceType != null ||
+      (_filterNeedsReview ?? false) ||
+      _searchQuery.isNotEmpty;
+
+  void _clearAllFilters() {
+    setState(() {
+      _filterType = null;
+      _filterCategory = null;
+      _filterAccountId = null;
+      _filterSourceType = null;
+      _filterNeedsReview = null;
+      _searchQuery = '';
+      _searchController.clear();
+      _searchVisible = false;
+      _carouselIdx = 0;
+    });
+    // Reload with date filter restored
+    _load();
+  }
+
+  /// Load ALL transactions (ignoring date filter) to show needs-review items
+  /// which may have dates outside the current time filter window.
+  Future<void> _loadAllForReview() async {
+    try {
+      final allTransactions = await AppDatabase.getTransactions();
+      if (!mounted) return;
+      setState(() {
+        _transactions = allTransactions;
+      });
+    } catch (_) {
+      // Silently fall back to current list
+    }
   }
 
   void _showFilters() {
@@ -214,6 +271,39 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 ],
                 onChanged: (v) => setLocal(() => _filterAccountId = v),
               ),
+              const SizedBox(height: 16),
+              const Text('Source', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String?>(
+                initialValue: _filterSourceType,
+                decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('All sources')),
+                  DropdownMenuItem(value: 'sms', child: Text('📱 SMS')),
+                  DropdownMenuItem(value: 'manual', child: Text('✏️ Manual')),
+                  DropdownMenuItem(value: 'recurring', child: Text('🔄 Recurring')),
+                  DropdownMenuItem(value: 'import', child: Text('📁 Imported')),
+                ],
+                onChanged: (v) => setLocal(() => _filterSourceType = v),
+              ),
+              const SizedBox(height: 16),
+              const Text('Review Status', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  FilterChip(
+                    label: const Text('All'),
+                    selected: _filterNeedsReview == null,
+                    onSelected: (v) => setLocal(() => _filterNeedsReview = null),
+                  ),
+                  FilterChip(
+                    label: const Text('⚠️ Needs Review'),
+                    selected: _filterNeedsReview == true,
+                    onSelected: (v) => setLocal(() => _filterNeedsReview = v ? true : null),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -223,6 +313,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         setLocal(() {
                           _filterType = null;
                           _filterAccountId = null;
+                          _filterSourceType = null;
+                          _filterNeedsReview = null;
                         });
                       },
                       child: const Text('Clear All'),
@@ -332,6 +424,58 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     icon: Icons.receipt_long_rounded,
                     subtitle: 'All income and expenses',
                   ),
+                  // -- Search bar (visible when toggled) --
+                  if (_searchVisible)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        onChanged: (v) => setState(() => _searchQuery = v),
+                        decoration: InputDecoration(
+                          hintText: 'Search by category, note, merchant…',
+                          prefixIcon: const Icon(Icons.search, size: 20),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  onPressed: () => setState(() {
+                                    _searchQuery = '';
+                                    _searchController.clear();
+                                  }),
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  onPressed: () => setState(() {
+                                    _searchVisible = false;
+                                    _searchQuery = '';
+                                    _searchController.clear();
+                                  }),
+                                ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ),
+                  // -- Pending actions banner --
+                  if (_pendingActionsCount > 0)
+                    _PendingActionsBanner(
+                      count: _pendingActionsCount,
+                      onTap: () async {
+                        // Load all transactions (no date filter) then show needs-review
+                        await _loadAllForReview();
+                        if (mounted) {
+                          setState(() {
+                            _filterNeedsReview = true;
+                            _filterSourceType = null; // Don't restrict to SMS only
+                          });
+                        }
+                      },
+                    ),
                   // -- Account Carousel --
                   if (_accounts.isNotEmpty)
                     Padding(
@@ -360,12 +504,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       ),
                     ),
                   // -- Active filter chips (type only) --
-                  if (_filterType != null)
+                  if (_filterType != null || _filterNeedsReview == true)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                       child: Wrap(
                         spacing: 8,
                         children: [
+                          if (_filterNeedsReview == true)
+                            Chip(
+                              label: const Text('⚠️ Needs Review',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                              onDeleted: _clearAllFilters,
+                              deleteIcon: const Icon(Icons.close, size: 14),
+                              backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                              side: BorderSide.none,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                            ),
+                          if (_filterType != null)
                           Chip(
                             label: Text(_filterType == 'income' ? '? Income' : '? Expense',
                                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
@@ -381,7 +536,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   // -- Grouped Transaction List --
                   Expanded(
                     child: filtered.isEmpty
-                        ? EmptyStates.transactions(context, onAdd: _showAddTransactionForm)
+                        ? (_transactions.isEmpty
+                            ? EmptyStates.transactions(context, onAdd: _showAddTransactionForm)
+                            : _NoFilterResultsState(
+                                searchQuery: _searchQuery,
+                                hasFilters: _hasActiveFilters,
+                                onClearFilters: _clearAllFilters,
+                              ))
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView.builder(
@@ -419,6 +580,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     icon: Icons.add,
                     label: 'Add Transaction',
                     onPressed: _showAddTransactionForm,
+                  ),
+                  SpeedDialAction(
+                    icon: Icons.search_rounded,
+                    label: 'Search',
+                    onPressed: () => setState(() {
+                      _searchVisible = !_searchVisible;
+                      if (!_searchVisible) {
+                        _searchQuery = '';
+                        _searchController.clear();
+                      }
+                    }),
                   ),
                   SpeedDialAction(
                     icon: Icons.filter_list_rounded,
@@ -599,7 +771,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 ? null
                                 : noteCtrl.text.trim(),
                             date: selectedDate,
-                            accountId: accountId,
+                            accountId: accountId!,
                           ),
                         );
                         notifyDataChanged();
@@ -617,117 +789,734 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
-  void _showEditTransaction(model.Transaction transaction) {
+  Future<void> _showEditTransaction(model.Transaction transaction) async {
+    // Navigate to comprehensive transaction detail screen
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TransactionDetailScreen(transaction: transaction),
+      ),
+    );
+    
+    // Reload data after returning from detail screen
+    await _load();
+  }
+  
+  // Legacy modal edit (keep for quick edits if needed)
+  void _showQuickEditModal(model.Transaction transaction) {
     final amtCtrl = TextEditingController(text: transaction.amount.toStringAsFixed(2));
     final catCtrl = TextEditingController(text: transaction.category);
     final noteCtrl = TextEditingController(text: transaction.note ?? '');
+    
+    // Feedback state
+    bool feedbackSubmitted = false;
+    bool? userFeedback; // true = correct, false = disputed
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Edit ${transaction.type[0].toUpperCase()}${transaction.type.substring(1)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                      onPressed: () async {
+                        await AppDatabase.deleteTransaction(transaction.id!);
+                        notifyDataChanged();
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      },
+                    ),
+                  ],
+                ),
+                
+                // Feedback section (only for SMS transactions)
+                if (transaction.smsSource != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Is this classification correct?',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (!feedbackSubmitted)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    // Mark as correct
+                                    await SmsCorrectionService.markAsCorrect(
+                                      transactionId: transaction.id!,
+                                      smsText: transaction.smsSource!,
+                                      category: transaction.category,
+                                      transactionType: transaction.type,
+                                    );
+                                    setModalState(() {
+                                      feedbackSubmitted = true;
+                                      userFeedback = true;
+                                    });
+                                    if (ctx.mounted) {
+                                      ScaffoldMessenger.of(ctx).showSnackBar(
+                                        SnackBar(
+                                          content: const Row(
+                                            children: [
+                                              Icon(Icons.check_circle, color: Colors.white),
+                                              SizedBox(width: 8),
+                                              Text('Thanks! This helps improve accuracy'),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.green[700],
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(Icons.thumb_up_outlined),
+                                  label: const Text('Correct'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    // Mark as disputed
+                                    await SmsCorrectionService.markAsDisputed(transaction.id!);
+                                    setModalState(() {
+                                      feedbackSubmitted = true;
+                                      userFeedback = false;
+                                    });
+                                    if (ctx.mounted) {
+                                      Navigator.pop(ctx);
+                                      _showDisputeActionSheet(transaction);
+                                    }
+                                  },
+                                  icon: const Icon(Icons.thumb_down_outlined),
+                                  label: const Text('Wrong'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (feedbackSubmitted && userFeedback == true)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green[200]!),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.green[700], size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Marked as correct - Thanks!',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.green[900],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (feedbackSubmitted && userFeedback == false && transaction.userDisputed)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange[200]!),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline, color: Colors.orange[700], size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Marked as disputed - Choose action below',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.orange[900],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                
+                const SizedBox(height: 12),
+                TextField(
+                  controller: amtCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Amount', prefixText: '\$', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: catCtrl,
+                  decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteCtrl,
+                  decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder()),
+                ),
+                if (transaction.smsSource != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.sms_outlined, 
+                              size: 16, 
+                              color: Theme.of(context).colorScheme.primary),
+                            const SizedBox(width: 6),
+                            Text(
+                              'SMS Source',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          transaction.smsSource!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                
+                // Display extracted bank and account identifier
+                if (transaction.extractedBank != null || transaction.extractedAccountIdentifier != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.account_balance_outlined, 
+                              size: 16, 
+                              color: Theme.of(context).colorScheme.primary),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Extracted Account Info',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (transaction.extractedBank != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              children: [
+                                Icon(Icons.account_balance,
+                                    size: 14,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Bank: ${transaction.extractedBank}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (transaction.extractedAccountIdentifier != null)
+                          Row(
+                            children: [
+                              Icon(Icons.tag,
+                                  size: 14,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Account #: ${transaction.extractedAccountIdentifier}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: () async {
+                      final amount = double.tryParse(amtCtrl.text);
+                      final category = catCtrl.text.trim();
+                      if (amount == null || amount <= 0 || category.isEmpty) return;
+                      
+                      // Check if user edited the category (for SMS transactions)
+                      final categoryChanged = transaction.smsSource != null && 
+                                            category != transaction.category;
+                      
+                      await AppDatabase.updateTransaction(model.Transaction(
+                        id: transaction.id,
+                        type: transaction.type,
+                        amount: amount,
+                        category: category,
+                        note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
+                        date: transaction.date,
+                        accountId: transaction.accountId,
+                      ));
+                      
+                      // If category was changed on SMS transaction, record as edit feedback
+                      if (categoryChanged) {
+                        await SmsCorrectionService.recordEdit(
+                          transactionId: transaction.id!,
+                          smsText: transaction.smsSource!,
+                          originalCategory: transaction.category,
+                          newCategory: category,
+                          transactionType: transaction.type,
+                        );
+                      }
+                      
+                      notifyDataChanged();
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ]),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDisputeActionSheet(model.Transaction transaction) {
+    showModalBottomSheet(
+      context: context,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Edit ${transaction.type[0].toUpperCase()}${transaction.type.substring(1)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                IconButton(
-                  icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                  onPressed: () async {
-                    await AppDatabase.deleteTransaction(transaction.id!);
-                    notifyDataChanged();
-                    if (ctx.mounted) Navigator.pop(ctx);
-                  },
+                Icon(Icons.flag_outlined, color: Theme.of(context).colorScheme.error),
+                const SizedBox(width: 12),
+                const Text(
+                  'What\'s wrong with this transaction?',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: amtCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Amount', prefixText: '\$', border: OutlineInputBorder()),
+            const SizedBox(height: 4),
+            Text(
+              'Choose an action to help improve future classifications',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: catCtrl,
-              decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+            const SizedBox(height: 20),
+            
+            // Edit Category
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Edit Category'),
+              subtitle: const Text('Change to correct category'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditTransaction(transaction);
+              },
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: noteCtrl,
-              decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder()),
+            const Divider(height: 1),
+            
+            // Not a Transaction
+            ListTile(
+              leading: Icon(Icons.block, color: Theme.of(context).colorScheme.error),
+              title: const Text('Not a Transaction'),
+              subtitle: const Text('Block this type of SMS'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogCtx) => AlertDialog(
+                    title: const Text('Block this SMS type?'),
+                    content: const Text(
+                      'This will:\n'
+                      '• Delete this transaction\n'
+                      '• Block similar SMS in the future\n\n'
+                      'Are you sure?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogCtx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(dialogCtx, true),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                        child: const Text('Block'),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (confirmed == true && transaction.smsSource != null) {
+                  await SmsCorrectionService.markAsNotTransaction(
+                    transactionId: transaction.id!,
+                    smsText: transaction.smsSource!,
+                  );
+                  
+                  // Close the action sheet
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  
+                  // Refresh data
+                  notifyDataChanged();
+                  
+                  // Show confirmation
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Row(
+                          children: [
+                            Icon(Icons.block, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text('Transaction blocked and deleted'),
+                          ],
+                        ),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                }
+              },
             ),
-            if (transaction.smsSource != null) ...[
+            const Divider(height: 1),
+            
+            // Block All Similar - NEW
+            ListTile(
+              leading: Icon(Icons.delete_sweep, color: Theme.of(context).colorScheme.error),
+              title: const Text('Block All Similar'),
+              subtitle: const Text('Find and delete similar transactions'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await _blockAllSimilar(transaction);
+              },
+            ),
+            const Divider(height: 1),
+            
+            // Undo Dispute
+            ListTile(
+              leading: const Icon(Icons.undo),
+              title: const Text('Undo Dispute'),
+              subtitle: const Text('Actually, it\'s correct'),
+              onTap: () async {
+                await SmsCorrectionService.undoDispute(transaction.id!);
+                Navigator.pop(ctx);
+                notifyDataChanged();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Dispute removed'),
+                        ],
+                      ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+            const Divider(height: 1),
+            
+            // Dismiss
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: const Text('Dismiss'),
+              subtitle: const Text('I\'ll decide later'),
+              onTap: () => Navigator.pop(ctx),
+            ),
+            
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Future<void> _blockAllSimilar(model.Transaction transaction) async {
+    if (transaction.smsSource == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This transaction doesn\'t have SMS source')),
+      );
+      return;
+    }
+    
+    // Find similar transactions
+    final similarTransactions = await SmsCorrectionService.findSimilarTransactions(
+      transaction.smsSource!,
+    );
+    
+    // Remove the current transaction from the list (we'll delete it separately)
+    final otherSimilar = similarTransactions.where((t) => t.id != transaction.id).toList();
+    final totalCount = otherSimilar.length + 1; // +1 for current transaction
+    
+    if (totalCount == 1) {
+      // No similar transactions found, just show regular block dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No similar transactions found. Use "Not a Transaction" instead.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
+    // Show confirmation dialog with preview
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text('Block $totalCount Transactions?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This will delete:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text('• Current transaction'),
+              Text('• ${otherSimilar.length} similar SMS transaction${otherSimilar.length != 1 ? 's' : ''}'),
               const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant,
+              const Text(
+                'Preview:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              // Show current transaction first
+              _buildTransactionPreview(transaction),
+              // Show up to 4 similar transactions
+              ...otherSimilar.take(4).map((t) => _buildTransactionPreview(t)),
+              if (otherSimilar.length > 4)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    '... and ${otherSimilar.length - 4} more',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.sms_outlined, 
-                          size: 16, 
-                          color: Theme.of(context).colorScheme.primary),
-                        const SizedBox(width: 6),
-                        Text(
-                          'SMS Source',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      transaction.smsSource!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
-            const SizedBox(height: 16),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: () async {
-                  final amount = double.tryParse(amtCtrl.text);
-                  final category = catCtrl.text.trim();
-                  if (amount == null || amount <= 0 || category.isEmpty) return;
-                  await AppDatabase.updateTransaction(model.Transaction(
-                    id: transaction.id,
-                    type: transaction.type,
-                    amount: amount,
-                    category: category,
-                    note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
-                    date: transaction.date,
-                    accountId: transaction.accountId,
-                  ));
-                  notifyDataChanged();
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-                child: const Text('Save'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text('Delete $totalCount Transaction${totalCount != 1 ? 's' : ''}'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      // Delete all similar transactions
+      final deletedCount = await SmsCorrectionService.markAllSimilarAsNotTransaction(
+        smsText: transaction.smsSource!,
+      );
+      
+      // Refresh data
+      notifyDataChanged();
+      
+      // Show confirmation
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Deleted $deletedCount transaction${deletedCount != 1 ? 's' : ''} and blocked pattern'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green[700],
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+  
+  Widget _buildTransactionPreview(model.Transaction t) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Text(
+        '${DateFormat.MMMd().format(t.date)} - ${t.category} - ₹${t.amount.toStringAsFixed(2)}',
+        style: const TextStyle(
+          fontSize: 12,
+          fontFamily: 'monospace',
+        ),
+      ),
+    );
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper widgets for TransactionsScreen
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Banner shown at the top of the transactions list when pending SMS actions exist.
+class _PendingActionsBanner extends StatelessWidget {
+  const _PendingActionsBanner({required this.count, required this.onTap});
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.tertiaryContainer,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
               ),
-            ]),
+              child: Icon(
+                Icons.sms_outlined,
+                size: 16,
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$count SMS ${count == 1 ? 'transaction needs' : 'transactions need'} review',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onTertiaryContainer,
+                    ),
+                  ),
+                  Text(
+                    'Tap to review and confirm',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onTertiaryContainer.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: Theme.of(context).colorScheme.tertiary,
+            ),
           ],
         ),
       ),
@@ -735,3 +1524,69 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 }
 
+/// Empty state shown when filters/search return no results but transactions exist.
+class _NoFilterResultsState extends StatelessWidget {
+  const _NoFilterResultsState({
+    required this.hasFilters,
+    required this.onClearFilters,
+    this.searchQuery = '',
+  });
+  final String searchQuery;
+  final bool hasFilters;
+  final VoidCallback onClearFilters;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSearch = searchQuery.isNotEmpty;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSearch ? Icons.search_off_rounded : Icons.filter_list_off_rounded,
+                size: 40,
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              isSearch ? 'No results for "$searchQuery"' : 'No transactions match',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isSearch
+                  ? 'Try a different search term or clear the search.'
+                  : 'Try adjusting or clearing your active filters.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onClearFilters,
+              icon: const Icon(Icons.clear_all_rounded, size: 18),
+              label: const Text('Clear Filters'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

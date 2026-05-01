@@ -5,7 +5,14 @@ import 'components/settings_components.dart';
 // -- Settings Screen -----------------------------------------------------------
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({
+    super.key,
+    this.initialTab = 0,
+    this.autoStartSmsScan = false,
+  });
+
+  final int initialTab;
+  final bool autoStartSmsScan;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -18,7 +25,11 @@ class _SettingsScreenState extends State<SettingsScreen>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    _tab = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTab,
+    );
   }
 
   @override
@@ -140,10 +151,10 @@ class _SettingsScreenState extends State<SettingsScreen>
             Expanded(
               child: TabBarView(
                 controller: _tab,
-                children: const [
-                  BackupTab(),
-                  AITab(),
-                  PreferencesTab(),
+                children: [
+                  const BackupTab(),
+                  const AITab(),
+                  PreferencesTab(autoStartSmsScan: widget.autoStartSmsScan),
                 ],
               ),
             ),

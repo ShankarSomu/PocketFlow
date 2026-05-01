@@ -9,6 +9,7 @@ class Account {
     this.accountIdentifier,
     this.smsKeywords,
     this.accountAlias,
+    this.accessType,
     this.deletedAt,
   });
 
@@ -26,11 +27,12 @@ class Account {
             ? (m['sms_keywords'] as String).split(',').where((s) => s.isNotEmpty).toList()
             : null,
         accountAlias: m['account_alias'],
+        accessType: m['access_type'],
         deletedAt: m['deleted_at'],
       );
   final int? id;
   final String name;
-  final String type; // 'checking' | 'savings' | 'credit' | 'cash' | 'other'
+  final String type; // 'checking' | 'savings' | 'credit_card' | 'loan' | 'cash' | 'investment' | 'other'
   final double balance; // opening balance
   final String? last4;
   final int? dueDateDay;    // credit card due date (day of month 1-31)
@@ -42,15 +44,27 @@ class Account {
   final List<String>? smsKeywords;  // SMS parsing fallback: ["CHASE", "JP MORGAN"]
   final String? accountAlias;       // User-friendly label for manual selection
   
+  // ── Access Type (Critical for SMS Parsing) ──
+  final String? accessType;         // How transactions are made: 'debit_card', 'credit_card', 
+                                    // 'bank_transfer', 'upi', 'cash', 'ach', 'unknown'
+  
   final int? deletedAt;
 
-  static const types = ['checking', 'debit', 'savings', 'credit', 'loan', 'cash', 'investment', 'other'];
+  static const types = ['checking', 'savings', 'credit_card', 'loan', 'cash', 'investment', 'unidentified', 'other'];
+  static const accessTypes = ['debit_card', 'credit_card', 'bank_transfer', 'upi', 'cash', 'ach', 'unknown'];
 
-  bool get isCredit => type == 'credit' || type == 'loan';
+  /// Check if account is a liability (debt) vs asset
+  /// Liabilities: credit_card, loan
+  /// Assets: checking, savings, cash, investment, unidentified, other
+  bool get isLiability => type == 'credit_card' || type == 'credit' || type == 'loan';
+  
+  /// Legacy helper - use isLiability instead
+  @Deprecated('Use isLiability for clarity')
+  bool get isCredit => isLiability;
 
   /// Next due date based on dueDateDay
   DateTime? get nextDueDate {
-    if (!isCredit || dueDateDay == null) return null;
+    if (!isLiability || dueDateDay == null) return null;
     final now = DateTime.now();
     var due = DateTime(now.year, now.month, dueDateDay!);
     if (due.isBefore(now)) {
@@ -77,6 +91,7 @@ class Account {
         'account_identifier': accountIdentifier,
         'sms_keywords': smsKeywords?.join(','),
         'account_alias': accountAlias,
+        'access_type': accessType,
         'deleted_at': deletedAt,
       };
   

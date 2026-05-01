@@ -51,11 +51,12 @@ class AccountsQuickView extends StatelessWidget {
           else
             ...accounts.map((a) {
               final type = a['type'] as String;
+              final isLiability = (type == 'credit_card' || type == 'loan');
               final color = type == 'checking'
                   ? AppTheme.blue
                   : type == 'savings'
                       ? AppTheme.emerald
-                      : type == 'credit'
+                      : isLiability
                           ? AppTheme.error
                           : Theme.of(context).colorScheme.secondary;
               return Padding(
@@ -86,7 +87,7 @@ class AccountsQuickView extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: type == 'credit' ? AppTheme.error : AppTheme.slate900,
+                        color: isLiability ? AppTheme.error : AppTheme.slate900,
                       ),
                     ),
                   ],

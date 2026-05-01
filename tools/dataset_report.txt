@@ -1,0 +1,10 @@
+Data Cleaning Agent Report
+========================
+
+Initial counts: train=80000, dev=10000, test=10000
+Final counts: train=91573, dev=6419, test=6066
+Train txn ratio: 0.649
+Dev txn ratio (pre): 0.997
+Test txn ratio (pre): 0.998
+
+Cross-split leak check: ensured no normalized template present in more than one split (by construction)

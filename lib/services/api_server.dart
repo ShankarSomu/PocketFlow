@@ -117,6 +117,7 @@ class ApiServer {
       type: type,
       amount: amount,
       category: category,
+      accountId: 1,
       note: body['note'] as String?,
       date: body['date'] != null ? DateTime.parse(body['date']) : DateTime.now(),
     ));

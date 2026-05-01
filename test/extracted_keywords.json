@@ -1,0 +1,81 @@
+{
+  "debit": [
+    "charged",
+    "debited",
+    "paid",
+    "purchase",
+    "spent",
+    "transferred",
+    "withdrawal",
+    "withdrawn"
+  ],
+  "credit": [
+    "cashback",
+    "credited",
+    "deposit",
+    "deposited",
+    "incoming",
+    "received",
+    "refund",
+    "reward"
+  ],
+  "future_scheduled": [
+    "amount due",
+    "are due",
+    "autopay scheduled",
+    "due by",
+    "due on",
+    "is due",
+    "payment due",
+    "payment is due",
+    "payment reminder",
+    "reminder:",
+    "scheduled for",
+    "scheduled on",
+    "upcoming payment",
+    "will be charged",
+    "will be debited",
+    "will be processed",
+    "you owe"
+  ],
+  "balance_reporting": [
+    "available balance",
+    "bal at",
+    "bal is",
+    "balance at",
+    "balance is",
+    "current balance",
+    "outstanding balance"
+  ],
+  "statement_patterns": [
+    "bill available",
+    "bill for",
+    "invoice available",
+    "invoice for",
+    "new bill",
+    "new invoice",
+    "new statement",
+    "statement available",
+    "statement for"
+  ],
+  "debit_phrases": [
+    "charged at",
+    "electronic draft",
+    "has been deducted",
+    "payment posted",
+    "purchase at",
+    "transaction at",
+    "transaction was made",
+    "was deducted"
+  ],
+  "credit_phrases": [
+    "credit of",
+    "deposit of",
+    "direct deposit",
+    "payment received",
+    "refund of",
+    "sent to you",
+    "sent you",
+    "transferred to you"
+  ]
+}

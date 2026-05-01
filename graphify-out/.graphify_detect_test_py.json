@@ -1,0 +1,24 @@
+{
+  "files": {
+    "code": [
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\analyze_sms_patterns.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\convert_to_tflite.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\extract_keywords_for_training.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\generate_extraction_training_data.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\generate_synthetic_sms.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\merge_corrections.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\prepare_training_data.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\setup_continuous_learning.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_tflite_model.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\train_sms_classifier.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\train_sms_ner_model.py",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\validate_parser.py"
+    ],
+    "document": [],
+    "paper": [],
+    "image": [],
+    "video": []
+  },
+  "total_files": 12,
+  "total_words": 66726
+}

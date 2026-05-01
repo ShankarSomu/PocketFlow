@@ -47,7 +47,8 @@ class RecurringPatternEngine {
   // Interval tolerance (±3 days)
   static const int intervalToleranceDays = 3;
 
-  /// Detect all recurring patterns in transactions
+  /// Detect all recurring patterns in transactions.
+  /// Optimized for responsiveness.
   static Future<List<PatternDetection>> detectPatterns({
     DateTime? since,
     int minOccurrences = minOccurrences,
@@ -79,7 +80,11 @@ class RecurringPatternEngine {
     // Analyze each merchant group
     final patterns = <PatternDetection>[];
     
+    int groupCount = 0;
     for (final entry in merchantGroups.entries) {
+      // Yield to UI periodically if there are many merchants
+      if (groupCount++ % 20 == 0) await Future.delayed(Duration.zero);
+
       final merchant = entry.key;
       final txnList = entry.value;
       
@@ -397,6 +402,9 @@ class RecurringPatternEngine {
     int skipped = 0;
     
     for (final detection in detections) {
+      // Yield periodically during creation loop
+      if (created % 10 == 0) await Future.delayed(Duration.zero);
+
       // Check if pattern already exists for this merchant
       final db = await AppDatabase.db();
       final existing = await db.query(

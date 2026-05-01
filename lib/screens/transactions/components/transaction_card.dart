@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../models/account.dart';
 import '../../../../models/transaction.dart' as model;
+import '../../../../widgets/confidence_badge.dart';
 import 'transaction_helpers.dart';
 
 class TransactionCard extends StatelessWidget {
@@ -54,16 +55,63 @@ class TransactionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        displayCategory,
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              displayCategory,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface),
+                            ),
+                          ),
+                        ],
                       ),
-                      if (transaction.note != null &&
-                          transaction.note!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      // SMS metadata badges
+                      if (transaction.isFromSms ||
+                          transaction.merchant != null ||
+                          transaction.confidenceScore != null) ...[
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            // Source badge
+                            if (transaction.isFromSms)
+                              SourceBadge(
+                                sourceType: transaction.sourceType,
+                                needsReview: transaction.needsReview,
+                              ),
+                            // Confidence badge - only show if needs review (as info)
+                            if (transaction.confidenceScore != null && transaction.needsReview)
+                              ConfidenceBadge(score: transaction.confidenceScore!),
+                            // Region badge
+                            if (transaction.note != null &&
+                                transaction.note!.contains('[INDIA]'))
+                              const RegionBadge(region: 'INDIA'),
+                            if (transaction.note != null &&
+                                transaction.note!.contains('[US]'))
+                              const RegionBadge(region: 'US'),
+                          ],
+                        ),
                         const SizedBox(height: 3),
+                      ],
+                      // Merchant name
+                      if (transaction.merchant != null &&
+                          transaction.merchant!.isNotEmpty) ...[
+                        Text(
+                          '@ ${transaction.merchant}',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.6)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ] else if (transaction.note != null &&
+                          transaction.note!.isNotEmpty) ...[
                         Text(
                           transaction.note!,
                           style: TextStyle(
@@ -73,8 +121,9 @@ class TransactionCard extends StatelessWidget {
                                   .onSurface
                                   .withValues(alpha: 0.5)),
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                      ]
+                      ],
                     ],
                   ),
                 ),

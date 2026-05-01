@@ -1,0 +1,16 @@
+{
+  "initial_counts": {
+    "train": 80000,
+    "dev": 10000,
+    "test": 10000
+  },
+  "final_counts": {
+    "train": 91573,
+    "dev": 6419,
+    "test": 6066
+  },
+  "train_txn_ratio": 0.6488266191999825,
+  "dev_txn_ratio": 0.9973516124006855,
+  "test_txn_ratio": 0.997692054071876,
+  "total_template_groups": 72208
+}

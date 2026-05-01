@@ -22,11 +22,26 @@ class TransferDetection {
   bool get isMediumConfidence => confidence >= 0.60 && confidence < 0.85;
 }
 
-/// Transfer Detection Engine
-/// Detects debit-credit pairs that represent transfers between accounts
+/// Transfer Detection Engine (Rule-Based)
+/// Detects expense-income pairs that represent transfers between accounts
+/// 
+/// Detection Rules:
+/// - Same amount (within tolerance)
+/// - Opposite types (expense + income)
+/// - Within 24-48 hours
+/// - Different accounts
+/// 
+/// Confidence Scoring:
+/// - Amount match = 0.4
+/// - Time match = 0.3 (better for closer times)
+/// - Account pattern = 0.3 (transfer keywords, account history)
+/// - Threshold > 0.7 → auto-link
 class TransferDetectionEngine {
-  // Time window for transfer matching (±2 hours)
-  static const Duration maxTimeDifference = Duration(hours: 2);
+  // Time window for transfer matching (24-48 hours)
+  static const Duration maxTimeDifference = Duration(hours: 48);
+
+  // Auto-link confidence threshold
+  static const double autoLinkThreshold = 0.7;
 
   // Amount tolerance (0.1%)
   static const double amountTolerance = 0.001;
@@ -52,15 +67,16 @@ class TransferDetectionEngine {
     final txns = transactions.map(Transaction.fromMap).toList();
 
     // Split by type for efficiency
-    final debitTxns = txns.where((t) => t.type == 'debit').toList();
-    final creditTxns = txns.where((t) => t.type == 'credit').toList();
+    // Expense = money leaving account, Income = money entering account
+    final expenseTxns = txns.where((t) => t.type == 'expense').toList();
+    final incomeTxns = txns.where((t) => t.type == 'income').toList();
 
     final detections = <TransferDetection>[];
 
-    // For each debit, find matching credit
-    for (final debit in debitTxns) {
-      // Find potential credit matches
-      final matches = await _findCreditMatches(debit, creditTxns);
+    // For each expense, find matching income (transfer out → transfer in)
+    for (final expense in expenseTxns) {
+      // Find potential income matches
+      final matches = await _findIncomeMatches(expense, incomeTxns);
 
       if (matches.isNotEmpty) {
         // Take the best match
@@ -71,38 +87,39 @@ class TransferDetectionEngine {
     return detections;
   }
 
-  /// Find credit transactions matching a debit
-  static Future<List<TransferDetection>> _findCreditMatches(
-    Transaction debit,
-    List<Transaction> creditTxns,
+  /// Find income transactions matching an expense (transfer detection)
+  static Future<List<TransferDetection>> _findIncomeMatches(
+    Transaction expense,
+    List<Transaction> incomeTxns,
   ) async {
     final matches = <TransferDetection>[];
 
-    for (final credit in creditTxns) {
-      // Skip if same account (not a transfer)
-      if (credit.accountId == debit.accountId) continue;
+    for (final income in incomeTxns) {
+      // Rule 1: Different accounts (required for transfer)
+      if (income.accountId == expense.accountId) continue;
 
-      // Check amount match
-      final amountMatch = _checkAmountMatch(debit.amount, credit.amount);
+      // Rule 2: Same amount (within tolerance)
+      final amountMatch = _checkAmountMatch(expense.amount, income.amount);
       if (!amountMatch) continue;
 
-      // Check time proximity
-      final timeDiff = credit.date.difference(debit.date).abs();
+      // Rule 3: Within 24-48 hours
+      final timeDiff = income.date.difference(expense.date).abs();
       if (timeDiff > maxTimeDifference) continue;
 
-      // Calculate confidence
+      // Calculate confidence score
       final confidence = _calculateTransferConfidence(
-        debit: debit,
-        credit: credit,
+        expense: expense,
+        income: income,
         timeDiff: timeDiff,
       );
 
+      // Only consider if confidence meets minimum threshold (0.5)
       if (confidence >= 0.50) {
         matches.add(TransferDetection(
-          debitTransaction: debit,
-          creditTransaction: credit,
+          debitTransaction: expense,
+          creditTransaction: income,
           confidence: confidence,
-          matchReason: _buildMatchReason(debit, credit, timeDiff),
+          matchReason: _buildMatchReason(expense, income, timeDiff),
           timeDifference: timeDiff,
         ));
       }
@@ -121,40 +138,58 @@ class TransferDetectionEngine {
     return diff <= tolerance || diff <= 0.01; // Allow 1 cent difference
   }
 
-  /// Calculate transfer detection confidence
+  /// Calculate transfer detection confidence (Rule-Based)
+  /// 
+  /// Scoring breakdown:
+  /// - Amount match = 0.4 (base score for matching amount)
+  /// - Time match = 0.3 (better for closer transactions)
+  /// - Account pattern = 0.3 (transfer keywords, patterns)
+  /// 
+  /// Threshold: > 0.7 for auto-link
   static double _calculateTransferConfidence({
-    required Transaction debit,
-    required Transaction credit,
+    required Transaction expense,
+    required Transaction income,
     required Duration timeDiff,
   }) {
     double confidence = 0.0;
 
-    // Base confidence from amount match
+    // ── Component 1: Amount Match (0.4) ──
     confidence += 0.40;
 
-    // Time proximity bonus (max 0.30)
-    final minutes = timeDiff.inMinutes;
-    if (minutes == 0) {
-      confidence += 0.30; // Same minute
-    } else if (minutes <= 5) {
-      confidence += 0.25; // Within 5 minutes
-    } else if (minutes <= 30) {
-      confidence += 0.20; // Within 30 minutes
-    } else if (minutes <= 60) {
-      confidence += 0.15; // Within 1 hour
+    // ── Component 2: Time Match (0.3) ──
+    // Better score for closer transactions
+    final hours = timeDiff.inHours;
+    if (hours == 0) {
+      confidence += 0.30; // Same hour (instant transfer)
+    } else if (hours <= 1) {
+      confidence += 0.28; // Within 1 hour
+    } else if (hours <= 6) {
+      confidence += 0.25; // Within 6 hours
+    } else if (hours <= 24) {
+      confidence += 0.20; // Within 24 hours (same day)
+    } else if (hours <= 48) {
+      confidence += 0.15; // Within 48 hours
     } else {
-      confidence += 0.10; // Within 2 hours
+      confidence += 0.10; // Within max window
     }
 
-    // Transfer type indicator bonus
-    final debitIsTransfer = _isTransferType(debit);
-    final creditIsTransfer = _isTransferType(credit);
-    if (debitIsTransfer && creditIsTransfer) {
+    // ── Component 3: Account Pattern (0.3) ──
+    final expenseIsTransfer = _isTransferType(expense);
+    final incomeIsTransfer = _isTransferType(income);
+    
+    if (expenseIsTransfer && incomeIsTransfer) {
+      // Both transactions have transfer keywords → high confidence
+      confidence += 0.30;
+    } else if (expenseIsTransfer || incomeIsTransfer) {
+      // One transaction has transfer keywords → medium confidence
+      confidence += 0.20;
+    } else {
+      // No transfer keywords → low account pattern confidence
       confidence += 0.10;
     }
 
-    // Exact same amount (not just within tolerance)
-    if ((debit.amount - credit.amount).abs() < 0.01) {
+    // Bonus: Exact same amount (perfect match)
+    if ((expense.amount - income.amount).abs() < 0.01) {
       confidence += 0.05;
     }
 
@@ -196,28 +231,28 @@ class TransferDetectionEngine {
 
   /// Build human-readable match reason
   static String _buildMatchReason(
-    Transaction debit,
-    Transaction credit,
+    Transaction expense,
+    Transaction income,
     Duration timeDiff,
   ) {
     final parts = <String>[];
 
     // Amount
-    parts.add('Same amount (\$${debit.amount.toStringAsFixed(2)})');
+    parts.add('Same amount (₹${expense.amount.toStringAsFixed(2)})');
 
     // Time
-    final minutes = timeDiff.inMinutes;
-    if (minutes == 0) {
-      parts.add('same minute');
-    } else if (minutes < 60) {
-      parts.add('$minutes min apart');
-    } else {
-      final hours = (minutes / 60).toStringAsFixed(1);
+    final hours = timeDiff.inHours;
+    if (hours == 0) {
+      parts.add('same hour');
+    } else if (hours < 24) {
       parts.add('$hours hr apart');
+    } else {
+      final days = (hours / 24).toStringAsFixed(1);
+      parts.add('$days days apart');
     }
 
     // Type
-    if (_isTransferType(debit) && _isTransferType(credit)) {
+    if (_isTransferType(expense) && _isTransferType(income)) {
       parts.add('both marked as transfer');
     }
 
@@ -238,24 +273,32 @@ class TransferDetectionEngine {
       confidenceScore: detection.confidence,
       detectionMethod:
           _getDetectionMethod(detection.debitTransaction, detection.creditTransaction),
-      status: detection.isHighConfidence ? 'confirmed' : 'detected',
+      status: detection.confidence >= autoLinkThreshold ? 'confirmed' : 'detected',
       createdAt: DateTime.now(),
     );
 
     final pairId = await db.insert('transfer_pairs', pair.toMap());
 
-    // Auto-categorize if high confidence
-    if (detection.isHighConfidence) {
+    // Auto-categorize if confidence meets auto-link threshold (> 0.7)
+    if (detection.confidence >= autoLinkThreshold) {
       await db.update(
         'transactions',
-        {'category': 'Transfer'},
+        {
+          'category': 'Transfer',
+          'from_account_id': detection.debitTransaction.accountId,
+          'to_account_id': detection.creditTransaction.accountId,
+        },
         where: 'id = ?',
         whereArgs: [detection.debitTransaction.id],
       );
 
       await db.update(
         'transactions',
-        {'category': 'Transfer'},
+        {
+          'category': 'Transfer',
+          'from_account_id': detection.debitTransaction.accountId,
+          'to_account_id': detection.creditTransaction.accountId,
+        },
         where: 'id = ?',
         whereArgs: [detection.creditTransaction.id],
       );
@@ -297,17 +340,25 @@ class TransferDetectionEngine {
     if (pairMap.isNotEmpty) {
       final pair = TransferPair.fromMap(pairMap.first);
 
-      // Categorize transactions as Transfer
+      // Categorize transactions as Transfer and set from/to accounts
       await db.update(
         'transactions',
-        {'category': 'Transfer'},
+        {
+          'category': 'Transfer',
+          'from_account_id': pair.sourceAccountId,
+          'to_account_id': pair.destinationAccountId,
+        },
         where: 'id = ?',
         whereArgs: [pair.debitTransactionId],
       );
 
       await db.update(
         'transactions',
-        {'category': 'Transfer'},
+        {
+          'category': 'Transfer',
+          'from_account_id': pair.sourceAccountId,
+          'to_account_id': pair.destinationAccountId,
+        },
         where: 'id = ?',
         whereArgs: [pair.creditTransactionId],
       );

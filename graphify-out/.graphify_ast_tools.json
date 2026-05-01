@@ -1,0 +1,1141 @@
+{
+  "nodes": [
+    {
+      "id": "add_transfer_labels_py",
+      "label": "add_transfer_labels.py",
+      "file_type": "code",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_add_transfer_labels_is_transfer",
+      "label": "is_transfer()",
+      "file_type": "code",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L58"
+    },
+    {
+      "id": "tools_add_transfer_labels_is_non_transaction",
+      "label": "is_non_transaction()",
+      "file_type": "code",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "tools_add_transfer_labels_relabel_record",
+      "label": "relabel_record()",
+      "file_type": "code",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L74"
+    },
+    {
+      "id": "tools_add_transfer_labels_process_file",
+      "label": "process_file()",
+      "file_type": "code",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L103"
+    },
+    {
+      "id": "tools_add_transfer_labels_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L143"
+    },
+    {
+      "id": "tools_add_transfer_labels_rationale_1",
+      "label": "Add transfer labels (label=2) to existing training data.  This script identifi",
+      "file_type": "rationale",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_add_transfer_labels_rationale_59",
+      "label": "Check if SMS text matches transfer patterns.",
+      "file_type": "rationale",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L59"
+    },
+    {
+      "id": "tools_add_transfer_labels_rationale_67",
+      "label": "Check if SMS text matches non-transaction patterns.",
+      "file_type": "rationale",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L67"
+    },
+    {
+      "id": "tools_add_transfer_labels_rationale_75",
+      "label": "Relabel record to 3-class system.",
+      "file_type": "rationale",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L75"
+    },
+    {
+      "id": "tools_add_transfer_labels_rationale_104",
+      "label": "Process a training file and relabel records.",
+      "file_type": "rationale",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L104"
+    },
+    {
+      "id": "tools_add_transfer_labels_rationale_144",
+      "label": "Process all training files.",
+      "file_type": "rationale",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L144"
+    },
+    {
+      "id": "check_data_leakage_py",
+      "label": "check_data_leakage.py",
+      "file_type": "code",
+      "source_file": "check_data_leakage.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "create_smoke_dataset_py",
+      "label": "create_smoke_dataset.py",
+      "file_type": "code",
+      "source_file": "create_smoke_dataset.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "data_cleaning_agent_py",
+      "label": "data_cleaning_agent.py",
+      "file_type": "code",
+      "source_file": "data_cleaning_agent.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "dedup_and_resplit_py",
+      "label": "dedup_and_resplit.py",
+      "file_type": "code",
+      "source_file": "dedup_and_resplit.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "format_training_data_py",
+      "label": "format_training_data.py",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter",
+      "label": "SmsTrainingDataFormatter",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L47"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_init",
+      "label": ".__init__()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L76"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_format_all",
+      "label": ".format_all()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L80"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "label": ".format_record()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L118"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_is_transaction",
+      "label": "._is_transaction()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L171"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_determine_type",
+      "label": "._determine_type()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L189"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_normalize_amount",
+      "label": "._normalize_amount()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L208"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_detect_currency",
+      "label": "._detect_currency()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L223"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_detect_region",
+      "label": "._detect_region()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L236"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_extract_sender",
+      "label": "._extract_sender()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L254"
+    },
+    {
+      "id": "tools_format_training_data_smstrainingdataformatter_generate_reasoning",
+      "label": "._generate_reasoning()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L270"
+    },
+    {
+      "id": "tools_format_training_data_main",
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "format_training_data.py",
+      "source_location": "L296"
+    },
+    {
+      "id": "tools_format_training_data_rationale_48",
+      "label": "Format SMS data for LLM training",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L48"
+    },
+    {
+      "id": "tools_format_training_data_rationale_81",
+      "label": "Format all records in the input file",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L81"
+    },
+    {
+      "id": "tools_format_training_data_rationale_119",
+      "label": "Format a single record",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L119"
+    },
+    {
+      "id": "tools_format_training_data_rationale_172",
+      "label": "Determine if record is a transaction",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L172"
+    },
+    {
+      "id": "tools_format_training_data_rationale_190",
+      "label": "Determine transaction type",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L190"
+    },
+    {
+      "id": "tools_format_training_data_rationale_209",
+      "label": "Normalize amount to decimal format",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L209"
+    },
+    {
+      "id": "tools_format_training_data_rationale_224",
+      "label": "Detect currency from text",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L224"
+    },
+    {
+      "id": "tools_format_training_data_rationale_237",
+      "label": "Detect region from SMS content",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L237"
+    },
+    {
+      "id": "tools_format_training_data_rationale_255",
+      "label": "Extract sender from SMS header or assume from bank name",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L255"
+    },
+    {
+      "id": "tools_format_training_data_rationale_271",
+      "label": "Generate explanation for the classification",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L271"
+    },
+    {
+      "id": "tools_format_training_data_rationale_297",
+      "label": "Process all training files",
+      "file_type": "rationale",
+      "source_file": "format_training_data.py",
+      "source_location": "L297"
+    },
+    {
+      "id": "generate_improved_negatives_py",
+      "label": "generate_improved_negatives.py",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tools_generate_improved_negatives_tracking_code",
+      "label": "tracking_code()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "tools_generate_improved_negatives_short_link",
+      "label": "short_link()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "tools_generate_improved_negatives_gen_delivery",
+      "label": "gen_delivery()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L42"
+    },
+    {
+      "id": "tools_generate_improved_negatives_gen_login_security",
+      "label": "gen_login_security()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L57"
+    },
+    {
+      "id": "tools_generate_improved_negatives_gen_receipt",
+      "label": "gen_receipt()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "tools_generate_improved_negatives_gen_app_notification",
+      "label": "gen_app_notification()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L81"
+    },
+    {
+      "id": "tools_generate_improved_negatives_gen_misc",
+      "label": "gen_misc()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "tools_generate_improved_negatives_maybe_multiline",
+      "label": "maybe_multiline()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L102"
+    },
+    {
+      "id": "tools_generate_improved_negatives_maybe_sender_prefix",
+      "label": "maybe_sender_prefix()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "tools_generate_improved_negatives_maybe_typo",
+      "label": "maybe_typo()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L114"
+    },
+    {
+      "id": "tools_generate_improved_negatives_family_key",
+      "label": "family_key()",
+      "file_type": "code",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L141"
+    },
+    {
+      "id": "tools_generate_improved_negatives_rationale_1",
+      "label": "Generate realistic non-financial SMS negatives across multiple categories for re",
+      "file_type": "rationale",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "generate_sms_training_py",
+      "label": "generate_sms_training.py",
+      "file_type": "code",
+      "source_file": "generate_sms_training.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "prepare_classifier_dataset_py",
+      "label": "prepare_classifier_dataset.py",
+      "file_type": "code",
+      "source_file": "prepare_classifier_dataset.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "sample_non_financial_py",
+      "label": "sample_non_financial.py",
+      "file_type": "code",
+      "source_file": "sample_non_financial.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "smoke_train_py",
+      "label": "smoke_train.py",
+      "file_type": "code",
+      "source_file": "smoke_train.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "train_sms_extractor_py",
+      "label": "train_sms_extractor.py",
+      "file_type": "code",
+      "source_file": "train_sms_extractor.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "validate_dataset_py",
+      "label": "validate_dataset.py",
+      "file_type": "code",
+      "source_file": "validate_dataset.py",
+      "source_location": "L1"
+    }
+  ],
+  "edges": [
+    {
+      "source": "add_transfer_labels_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "add_transfer_labels_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "add_transfer_labels_py",
+      "target": "re",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "add_transfer_labels_py",
+      "target": "tools_add_transfer_labels_is_transfer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "add_transfer_labels_py",
+      "target": "tools_add_transfer_labels_is_non_transaction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L66",
+      "weight": 1.0
+    },
+    {
+      "source": "add_transfer_labels_py",
+      "target": "tools_add_transfer_labels_relabel_record",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L74",
+      "weight": 1.0
+    },
+    {
+      "source": "add_transfer_labels_py",
+      "target": "tools_add_transfer_labels_process_file",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L103",
+      "weight": 1.0
+    },
+    {
+      "source": "add_transfer_labels_py",
+      "target": "tools_add_transfer_labels_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L143",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_relabel_record",
+      "target": "tools_add_transfer_labels_is_non_transaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_relabel_record",
+      "target": "tools_add_transfer_labels_is_transfer",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_process_file",
+      "target": "tools_add_transfer_labels_relabel_record",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_main",
+      "target": "tools_add_transfer_labels_process_file",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L162",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_rationale_1",
+      "target": "add_transfer_labels_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_rationale_59",
+      "target": "tools_add_transfer_labels_is_transfer",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_rationale_67",
+      "target": "tools_add_transfer_labels_is_non_transaction",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_rationale_75",
+      "target": "tools_add_transfer_labels_relabel_record",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_rationale_104",
+      "target": "tools_add_transfer_labels_process_file",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L104",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_add_transfer_labels_rationale_144",
+      "target": "tools_add_transfer_labels_main",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "add_transfer_labels.py",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "format_training_data_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "format_training_data_py",
+      "target": "re",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "format_training_data_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "format_training_data_py",
+      "target": "typing",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "format_training_data_py",
+      "target": "datetime",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "format_training_data_py",
+      "target": "tools_format_training_data_smstrainingdataformatter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_init",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_format_all",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L118",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_is_transaction",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_determine_type",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L189",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_normalize_amount",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L208",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_detect_currency",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L223",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_detect_region",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_extract_sender",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L254",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter",
+      "target": "tools_format_training_data_smstrainingdataformatter_generate_reasoning",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L270",
+      "weight": 1.0
+    },
+    {
+      "source": "format_training_data_py",
+      "target": "tools_format_training_data_main",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L296",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_all",
+      "target": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "target": "tools_format_training_data_smstrainingdataformatter_extract_sender",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "target": "tools_format_training_data_smstrainingdataformatter_is_transaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L124",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "target": "tools_format_training_data_smstrainingdataformatter_detect_region",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L139",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "target": "tools_format_training_data_smstrainingdataformatter_determine_type",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L146",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "target": "tools_format_training_data_smstrainingdataformatter_normalize_amount",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L147",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "target": "tools_format_training_data_smstrainingdataformatter_detect_currency",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L148",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "target": "tools_format_training_data_smstrainingdataformatter_generate_reasoning",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L152",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_main",
+      "target": "tools_format_training_data_smstrainingdataformatter",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L319",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_main",
+      "target": "tools_format_training_data_smstrainingdataformatter_format_all",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L320",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_48",
+      "target": "tools_format_training_data_smstrainingdataformatter",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_81",
+      "target": "tools_format_training_data_smstrainingdataformatter_format_all",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_119",
+      "target": "tools_format_training_data_smstrainingdataformatter_format_record",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L119",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_172",
+      "target": "tools_format_training_data_smstrainingdataformatter_is_transaction",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L172",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_190",
+      "target": "tools_format_training_data_smstrainingdataformatter_determine_type",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_209",
+      "target": "tools_format_training_data_smstrainingdataformatter_normalize_amount",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L209",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_224",
+      "target": "tools_format_training_data_smstrainingdataformatter_detect_currency",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L224",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_237",
+      "target": "tools_format_training_data_smstrainingdataformatter_detect_region",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L237",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_255",
+      "target": "tools_format_training_data_smstrainingdataformatter_extract_sender",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_271",
+      "target": "tools_format_training_data_smstrainingdataformatter_generate_reasoning",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L271",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_format_training_data_rationale_297",
+      "target": "tools_format_training_data_main",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "format_training_data.py",
+      "source_location": "L297",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "random",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "datetime",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "re",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "collections",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_tracking_code",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_short_link",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_gen_delivery",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_gen_login_security",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_gen_receipt",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_gen_app_notification",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_gen_misc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_maybe_multiline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_maybe_sender_prefix",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_maybe_typo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "generate_improved_negatives_py",
+      "target": "tools_generate_improved_negatives_family_key",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_generate_improved_negatives_gen_delivery",
+      "target": "tools_generate_improved_negatives_tracking_code",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_generate_improved_negatives_gen_delivery",
+      "target": "tools_generate_improved_negatives_short_link",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_generate_improved_negatives_gen_login_security",
+      "target": "tools_generate_improved_negatives_short_link",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_generate_improved_negatives_gen_receipt",
+      "target": "tools_generate_improved_negatives_short_link",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L75",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_generate_improved_negatives_gen_app_notification",
+      "target": "tools_generate_improved_negatives_short_link",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L86",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_generate_improved_negatives_gen_misc",
+      "target": "tools_generate_improved_negatives_short_link",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_generate_improved_negatives_rationale_1",
+      "target": "generate_improved_negatives_py",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "generate_improved_negatives.py",
+      "source_location": "L1",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

@@ -1,0 +1,30 @@
+{
+  "files": {
+    "code": [],
+    "document": [
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\accounting\\system-overview.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\machine-learning\\overview.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\account-resolution.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\classification.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\entity-extraction.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\overview.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\recurring-patterns.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\transfer-detection.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\architecture\\overview.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\IMPROVED_SMS_WORKFLOW_PROPOSAL.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\PENDING_ACTIONS_FIXES.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS Debugging.txt",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_DEBUGGING_CHANGES.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_DEBUG_QUICK_REFERENCE.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_HANG_DEBUGGING_GUIDE.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_ISSUES_RESOLVED.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\TRANSACTION_TYPE_HANDLING.md",
+      "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\development\\developer-guide.md"
+    ],
+    "paper": [],
+    "image": [],
+    "video": []
+  },
+  "total_files": 18,
+  "total_words": 24525
+}

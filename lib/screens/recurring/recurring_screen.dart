@@ -271,21 +271,21 @@ class _RecurringScreenState extends State<RecurringScreen> {
   }
 
   String _emojiForCategory(String category, bool isActive) {
-    if (!isActive) return '??';
+    if (!isActive) return '⏸️';
     final cat = category.toLowerCase();
-    if (cat.contains('food') || cat.contains('dining') || cat.contains('restaurant')) return '??';
-    if (cat.contains('transport') || cat.contains('car') || cat.contains('gas')) return '??';
-    if (cat.contains('shopping')) return '???';
-    if (cat.contains('entertainment') || cat.contains('subscription') || cat.contains('streaming')) return '??';
-    if (cat.contains('utilities') || cat.contains('electric') || cat.contains('water') || cat.contains('internet')) return '?';
-    if (cat.contains('health') || cat.contains('gym') || cat.contains('fitness')) return '??';
-    if (cat.contains('home') || cat.contains('rent') || cat.contains('mortgage')) return '??';
-    if (cat.contains('education')) return '??';
-    if (cat.contains('insurance')) return '???';
-    if (cat.contains('transfer')) return '??';
-    if (cat.contains('goal') || cat.contains('saving')) return '??';
-    if (cat.contains('income') || cat.contains('salary')) return '??';
-    return '??';
+    if (cat.contains('food') || cat.contains('dining') || cat.contains('restaurant')) return '🍔';
+    if (cat.contains('transport') || cat.contains('car') || cat.contains('gas')) return '🚗';
+    if (cat.contains('shopping')) return '🛍️';
+    if (cat.contains('entertainment') || cat.contains('subscription') || cat.contains('streaming')) return '🎬';
+    if (cat.contains('utilities') || cat.contains('electric') || cat.contains('water') || cat.contains('internet')) return '⚡';
+    if (cat.contains('health') || cat.contains('gym') || cat.contains('fitness')) return '💊';
+    if (cat.contains('home') || cat.contains('rent') || cat.contains('mortgage')) return '🏠';
+    if (cat.contains('education')) return '📚';
+    if (cat.contains('insurance')) return '🛡️';
+    if (cat.contains('transfer')) return '🔄';
+    if (cat.contains('goal') || cat.contains('saving')) return '🎯';
+    if (cat.contains('income') || cat.contains('salary')) return '💰';
+    return '📦';
   }
 
   void _toggleActive(RecurringTransaction item) {

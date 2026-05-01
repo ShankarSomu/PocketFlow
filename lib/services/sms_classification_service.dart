@@ -1,207 +1,239 @@
+import '../db/database.dart';
 import '../models/sms_types.dart';
+import 'app_logger.dart';
 
 /// SMS Classification Service
-/// Classifies SMS messages into financial categories
+///
+/// Responsibilities:
+///   1. Sender gate - decide whether this SMS is from a known/learnable
+///      financial sender (DB lookup -> body signal fallback).
+///   2. ML hand-off - accept an ML label and confidence and convert it to an
+///      [SmsClassification].
 class SmsClassificationService {
-  // ── Keywords for classification ────────────────────────────────────────────
-  
-  static const _debitKeywords = [
-    'debited', 'deducted', 'spent', 'paid', 'payment of', 'purchase',
-    'withdrawn', 'charged', 'transaction of', 'used at', 'txn of',
-    'amount of rs', 'amt rs', 'transaction amt', 'payment done',
-    'debit', 'withdraw', 'used for', 'bill payment',
-  ];
-  
-  static const _creditKeywords = [
-    'credited', 'received', 'deposited', 'refund', 'cashback',
-    'salary', 'credit of', 'amount credited', 'added to',
-    'deposit', 'incoming', 'transferred to you',
-  ];
-  
-  static const _transferKeywords = [
-    'transferred to', 'transfer from', 'sent to', 'received from',
-    'upi transfer', 'imps transfer', 'neft transfer', 'rtgs transfer',
-    'fund transfer', 'money sent', 'money received',
-  ];
-  
-  static const _balanceKeywords = [
-    'available balance', 'total balance', 'current balance',
-    'avl bal', 'total bal', 'closing balance', 'balance is',
-    'credit limit', 'available limit', 'outstanding balance',
-  ];
-  
-  static const _reminderKeywords = [
-    'due date', 'payment due', 'bill due', 'minimum amount due',
-    'pay by', 'overdue', 'late fee', 'reminder', 'please pay',
-  ];
+  static final Map<String, bool> _senderCache = {};
+  static DateTime _senderCacheBuiltAt = DateTime.fromMillisecondsSinceEpoch(0);
+  static const Duration _senderCacheTtl = Duration(minutes: 30);
 
-  // Amount pattern to validate financial SMS
+  /// Clear the sender cache (call on app restart or after DB seed changes).
+  static void clearSenderCache() {
+    _senderCache.clear();
+    _senderCacheBuiltAt = DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  // Matches real amounts ($1,234.56) and masked amounts ($X.XX, $XX.XX).
+  // Also matches Indian currency formats (₹500, Rs.100, INR 500).
   static final _amountPattern = RegExp(
-    r'(?:USD|INR|Rs\.?|₹|RM|AED|GBP|EUR|SGD|\$)\s*[\d,]+(?:\.\d{1,2})?|'
-    r'[\d,]+(?:\.\d{1,2})?\s*(?:USD|INR|Rs|₹)',
+    r'(?:\$\s*[\dX,]+(?:\.[\dX]{1,2})?|(?:Rs\.?|INR|₹)\s*[\d,]+(?:\.\d{1,2})?|[\d,]+(?:\.\d{1,2})?\s*(?:Rs\.?|INR))',
     caseSensitive: false,
   );
 
-  // Financial institution sender patterns
-  static final _financialSenderPattern = RegExp(
-    '(?:HDFCBK|ICICIBK|SBIINB|AXISBK|KOTAKB|PNBSMS|BOBIMT|CITIBK|'
-    'SCBANK|HSBCIN|RBLBK|YESBK|IDFCBK|AUBANK|FEDERAL|INDUSIND|'
-    'CANBNK|BOIIND|UNIONBK|JPBANK|DBANK|AMEXIN|CHASE|BOFA|WELLSFARGO|'
-    'PAYTM|GPAY|PHONEPE|AMAZONP|VENMO|CASHAPP|ZELLE)',
-    caseSensitive: false,
-  );
-
-  // ── Main Classification Method ─────────────────────────────────────────────
-
-  /// Classify an SMS message into a financial category
-  static SmsClassification classify(RawSmsMessage sms) {
-    final body = sms.body.toLowerCase();
+  /// Classify an SMS using an ML-provided label.
+  ///
+  /// ML is the primary signal. Sender/body heuristics are used to soften false
+  /// negatives and only hard-drop when both heuristics and ML are weak.
+  static Future<SmsClassification> classifyWithMl({
+    required RawSmsMessage sms,
+    required String mlLabel,
+    required double mlConfidence,
+  }) async {
     final sender = sms.sender.toLowerCase();
-    
-    // Priority 1: Must be from financial sender OR contain financial keywords
-    if (!_isFinancialSender(sender, body)) {
+    final body = sms.body.toLowerCase();
+    final type = _mlLabelToType(mlLabel);
+    final senderKnown = await _isKnownSender(sender);
+    final hasBodySignal = _hasFinancialBodySignal(body);
+
+    AppLogger.sms(
+      'classifyWithMl',
+      detail:
+          'sender=$sender senderKnown=$senderKnown bodySignal=$hasBodySignal mlLabel=$mlLabel mlConf=${mlConfidence.toStringAsFixed(2)}',
+    );
+
+    if (type != SmsType.nonFinancial && mlConfidence >= 0.75) {
+      AppLogger.sms(
+        'CLASSIFIED',
+        detail:
+            'sender=$sender type=${type.name} conf=${mlConfidence.toStringAsFixed(2)} reason=ml_override',
+      );
       return SmsClassification(
-        type: SmsType.nonFinancial,
-        confidence: 0.95,
-        reason: 'Not from financial institution',
+        type: type,
+        confidence: mlConfidence,
+        reason:
+            'ML override: $mlLabel (${(mlConfidence * 100).toStringAsFixed(0)}%)',
       );
     }
-    
-    // Priority 2: Check for specific message types
-    final hasAmount = _amountPattern.hasMatch(sms.body);
-    final hasDebit = _containsAny(body, _debitKeywords);
-    final hasCredit = _containsAny(body, _creditKeywords);
-    final hasTransfer = _containsAny(body, _transferKeywords);
-    final hasBalance = _containsAny(body, _balanceKeywords);
-    final hasReminder = _containsAny(body, _reminderKeywords);
-    
-    // Payment reminder (high priority to avoid misclassification)
-    if (hasReminder && !hasDebit && !hasCredit) {
-      return SmsClassification(
-        type: SmsType.paymentReminder,
-        confidence: 0.85,
-        reason: 'Contains reminder keywords',
+
+    if (type == SmsType.nonFinancial && (senderKnown || hasBodySignal)) {
+      AppLogger.sms(
+        'CLASSIFIED',
+        detail:
+            'sender=$sender type=${SmsType.unknownFinancial.name} conf=${mlConfidence.toStringAsFixed(2)} reason=heuristic_review',
       );
-    }
-    
-    // Transfer detection (specific patterns)
-    if (hasTransfer && hasAmount) {
-      return SmsClassification(
-        type: SmsType.transfer,
-        confidence: 0.90,
-        reason: 'Contains transfer keywords and amount',
-      );
-    }
-    
-    // Transaction - Debit
-    if (hasDebit && hasAmount) {
-      return SmsClassification(
-        type: SmsType.transactionDebit,
-        confidence: 0.95,
-        reason: 'Contains debit keywords and amount',
-      );
-    }
-    
-    // Transaction - Credit
-    if (hasCredit && hasAmount) {
-      return SmsClassification(
-        type: SmsType.transactionCredit,
-        confidence: 0.95,
-        reason: 'Contains credit keywords and amount',
-      );
-    }
-    
-    // Balance update (without debit/credit action)
-    if (hasBalance && hasAmount && !hasDebit && !hasCredit) {
-      return SmsClassification(
-        type: SmsType.accountUpdate,
-        confidence: 0.85,
-        reason: 'Contains balance keywords and amount',
-      );
-    }
-    
-    // Has amount but unclear type
-    if (hasAmount) {
       return SmsClassification(
         type: SmsType.unknownFinancial,
-        reason: 'Has amount but unclear transaction type',
+        confidence: mlConfidence.clamp(0.35, 0.65),
+        reason: 'Financial heuristics present despite non-financial ML result',
       );
     }
-    
-    // From financial sender but no clear classification
+
+    if (!senderKnown && !hasBodySignal && type == SmsType.nonFinancial) {
+      AppLogger.sms(
+        'DROPPED',
+        detail: 'sender=$sender reason=unknown_sender_weak_ml',
+      );
+      return SmsClassification(
+        type: SmsType.nonFinancial,
+        confidence: mlConfidence >= 0.80 ? mlConfidence : 0.95,
+        reason: 'Unknown sender, no financial body signal, weak ML result',
+      );
+    }
+
+    AppLogger.sms(
+      'CLASSIFIED',
+      detail:
+          'sender=$sender type=${type.name} conf=${mlConfidence.toStringAsFixed(2)}',
+    );
     return SmsClassification(
-      type: SmsType.unknownFinancial,
-      confidence: 0.40,
-      reason: 'From financial sender but no clear indicators',
+      type: type,
+      confidence: mlConfidence,
+      reason: 'ML: $mlLabel (${(mlConfidence * 100).toStringAsFixed(0)}%)',
     );
   }
 
-  // ── Helper Methods ──────────────────────────────────────────────────────────
+  /// Fallback classify - used when no ML model is available yet.
+  static Future<SmsClassification> classify(RawSmsMessage sms) async {
+    final sender = sms.sender.toLowerCase();
+    final body = sms.body.toLowerCase();
 
-  /// Check if sender is from a financial institution
-  static bool _isFinancialSender(String sender, String body) {
-    // Check sender ID pattern
-    if (_financialSenderPattern.hasMatch(sender)) return true;
-    
-    // Check for bank/financial keywords in message
-    final financialInstitutions = [
-      'bank', 'credit card', 'debit card', 'wallet', 'paytm',
-      'phonepe', 'google pay', 'gpay', 'upi', 'visa', 'mastercard',
-      'amex', 'american express', 'discover', 'capital one',
-    ];
-    
-    for (final inst in financialInstitutions) {
-      if (body.contains(inst)) return true;
+    final senderKnown = await _isKnownSender(sender);
+    AppLogger.sms(
+      'classify (fallback)',
+      detail: 'sender=$sender senderKnown=$senderKnown bodyLen=${body.length}',
+    );
+    if (!senderKnown && !_hasFinancialBodySignal(body)) {
+      AppLogger.sms(
+        'DROPPED',
+        detail: 'sender=$sender reason=unknown_sender_no_signal',
+      );
+      return SmsClassification(
+        type: SmsType.nonFinancial,
+        confidence: 0.95,
+        reason: 'Unknown sender, no financial body signal',
+      );
     }
-    
-    return false;
+
+    return SmsClassification(
+      type: SmsType.unknownFinancial,
+      confidence: senderKnown ? 0.60 : 0.40,
+      reason: senderKnown
+          ? 'Known sender - awaiting ML classification'
+          : 'Body signal only - awaiting ML classification',
+    );
   }
 
-  /// Check if text contains any of the given keywords
-  static bool _containsAny(String text, List<String> keywords) {
-    for (final keyword in keywords) {
-      if (text.contains(keyword)) return true;
+  static Future<bool> _isKnownSender(String sender) async {
+    // Expire the entire cache every 30 minutes so newly-added sender patterns
+    // are picked up without requiring an app restart.
+    final now = DateTime.now();
+    if (now.difference(_senderCacheBuiltAt) > _senderCacheTtl) {
+      _senderCache.clear();
+      _senderCacheBuiltAt = now;
     }
-    return false;
+
+    if (_senderCache.containsKey(sender)) return _senderCache[sender]!;
+
+    try {
+      final db = await AppDatabase.db();
+      final rows = await db.query(
+        'sms_keywords',
+        where:
+            'keyword = ? AND type = ? AND (is_active IS NULL OR is_active = 1)',
+        whereArgs: [sender, 'sender_pattern'],
+        limit: 1,
+      );
+      final known = rows.isNotEmpty;
+      _senderCache[sender] = known;
+      return known;
+    } catch (_) {
+      return false;
+    }
   }
 
-  /// Get human-readable label for SMS type
+  static bool _hasFinancialBodySignal(String body) {
+    // Currency amount patterns (USD, INR, etc.)
+    if (_amountPattern.hasMatch(body)) return true;
+    // Transaction verb keywords common in Indian bank SMS
+    final lower = body.toLowerCase();
+    return lower.contains('debited') ||
+        lower.contains('credited') ||
+        lower.contains('deducted') ||
+        lower.contains('withdrawn') ||
+        lower.contains('transferred') ||
+        lower.contains('transaction') ||
+        lower.contains('payment') ||
+        lower.contains('balance') ||
+        lower.contains('a/c') ||
+        lower.contains('acct') ||
+        lower.contains('upi') ||
+        lower.contains('neft') ||
+        lower.contains('imps') ||
+        lower.contains('rtgs');
+  }
+
+  static SmsType _mlLabelToType(String label) {
+    switch (label.toLowerCase().trim()) {
+      case 'debit':
+        return SmsType.transactionDebit;
+      case 'credit':
+        return SmsType.transactionCredit;
+      case 'transfer':
+        return SmsType.transfer;
+      case 'balance':
+        return SmsType.accountUpdate;
+      case 'reminder':
+        return SmsType.paymentReminder;
+      case 'non_financial':
+      case 'nonfinancial':
+        return SmsType.nonFinancial;
+      default:
+        return SmsType.unknownFinancial;
+    }
+  }
+
   static String getTypeLabel(SmsType type) {
     switch (type) {
       case SmsType.transactionDebit:
-        return '💳 Debit Transaction';
+        return 'Debit';
       case SmsType.transactionCredit:
-        return '💰 Credit Transaction';
+        return 'Credit';
       case SmsType.transfer:
-        return '↔️ Transfer';
+        return 'Transfer';
       case SmsType.accountUpdate:
-        return '📊 Account Update';
+        return 'Balance';
       case SmsType.paymentReminder:
-        return '🔔 Payment Reminder';
+        return 'Reminder';
       case SmsType.unknownFinancial:
-        return '❓ Unknown Financial';
+        return 'Unknown';
       case SmsType.nonFinancial:
-        return '📱 Non-Financial';
+        return 'Non-Financial';
     }
   }
 
-  /// Get color for SMS type (for UI)
   static String getTypeColor(SmsType type) {
     switch (type) {
       case SmsType.transactionDebit:
-        return '#FF5252'; // Red
+        return '#FF5252';
       case SmsType.transactionCredit:
-        return '#4CAF50'; // Green
+        return '#4CAF50';
       case SmsType.transfer:
-        return '#2196F3'; // Blue
+        return '#2196F3';
       case SmsType.accountUpdate:
-        return '#9C27B0'; // Purple
+        return '#9C27B0';
       case SmsType.paymentReminder:
-        return '#FF9800'; // Orange
+        return '#FF9800';
       case SmsType.unknownFinancial:
-        return '#FFC107'; // Amber
+        return '#FFC107';
       case SmsType.nonFinancial:
-        return '#9E9E9E'; // Gray
+        return '#9E9E9E';
     }
   }
 }

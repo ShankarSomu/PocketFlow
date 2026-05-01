@@ -80,19 +80,22 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   String _emojiForCategory(String category) {
     final cat = category.toLowerCase();
-    if (cat.contains('food')) return '??';
-    if (cat.contains('transport')) return '??';
-    if (cat.contains('shopping')) return '???';
-    if (cat.contains('entertainment')) return '??';
-    if (cat.contains('utilities')) return '?';
-    if (cat.contains('health')) return '??';
-    if (cat.contains('home')) return '??';
-    if (cat.contains('education')) return '??';
-    if (cat.contains('insurance')) return '???';
-    if (cat.contains('travel')) return '??';
-    if (cat.contains('gift')) return '??';
-    if (cat.contains('phone')) return '??';
-    return '??';
+    if (cat.contains('food') || cat.contains('dining') || cat.contains('restaurant') || cat.contains('grocery')) return '🍔';
+    if (cat.contains('transport') || cat.contains('car') || cat.contains('uber') || cat.contains('fuel')) return '🚗';
+    if (cat.contains('shopping') || cat.contains('clothes') || cat.contains('amazon')) return '🛍️';
+    if (cat.contains('entertainment') || cat.contains('netflix') || cat.contains('streaming')) return '🎬';
+    if (cat.contains('utilities') || cat.contains('electric') || cat.contains('water') || cat.contains('internet')) return '⚡';
+    if (cat.contains('health') || cat.contains('medical') || cat.contains('doctor') || cat.contains('pharmacy')) return '💊';
+    if (cat.contains('home') || cat.contains('rent') || cat.contains('mortgage')) return '🏠';
+    if (cat.contains('education') || cat.contains('school') || cat.contains('book')) return '📚';
+    if (cat.contains('insurance')) return '🛡️';
+    if (cat.contains('travel') || cat.contains('flight') || cat.contains('hotel')) return '✈️';
+    if (cat.contains('gift') || cat.contains('donation')) return '🎁';
+    if (cat.contains('phone') || cat.contains('mobile')) return '📱';
+    if (cat.contains('coffee') || cat.contains('cafe')) return '☕';
+    if (cat.contains('gym') || cat.contains('fitness') || cat.contains('sport')) return '💪';
+    if (cat.contains('income') || cat.contains('salary')) return '💰';
+    return '📦';
   }
 
   Future<void> _showEditDialog(Budget? existing) async {

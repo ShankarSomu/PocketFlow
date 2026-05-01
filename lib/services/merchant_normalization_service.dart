@@ -1,5 +1,17 @@
 import '../db/database.dart';
 
+/// Result of a merchant normalization lookup.
+class NormalizationResult {
+  const NormalizationResult({
+    required this.normalizedName,
+    this.ruleConfidence,
+    this.fromLearnedRule = false,
+  });
+  final String normalizedName;
+  final double? ruleConfidence; // null if no DB rule was applied
+  final bool fromLearnedRule;
+}
+
 /// Merchant Normalization Service
 /// Standardizes merchant names across transactions for better grouping and analysis
 class MerchantNormalizationService {
@@ -211,7 +223,7 @@ class MerchantNormalizationService {
     if (norm1.contains(norm2) || norm2.contains(norm1)) return true;
     
     // Calculate Levenshtein distance
-    final distance = _levenshteinDistance(norm1, norm2);
+    final distance = levenshteinDistance(norm1, norm2);
     final maxLength = norm1.length > norm2.length ? norm1.length : norm2.length;
     
     // Similar if distance is less than 20% of max length
@@ -219,7 +231,7 @@ class MerchantNormalizationService {
   }
 
   /// Calculate Levenshtein distance between two strings
-  static int _levenshteinDistance(String s1, String s2) {
+  static int levenshteinDistance(String s1, String s2) {
     if (s1 == s2) return 0;
     if (s1.isEmpty) return s2.length;
     if (s2.isEmpty) return s1.length;
@@ -245,6 +257,97 @@ class MerchantNormalizationService {
     }
     
     return prev[len2];
+  }
+
+  /// Full lookup pipeline: DB exact → DB fuzzy → static alias → raw.
+  /// Returns a [NormalizationResult] with the normalized name and metadata.
+  static Future<NormalizationResult> lookupWithResult(String rawMerchant) async {
+    // Short-string guard: skip DB lookup for very short strings
+    final trimmed = rawMerchant.trim();
+    if (trimmed.isEmpty) {
+      return NormalizationResult(normalizedName: rawMerchant);
+    }
+
+    final lower = trimmed.toLowerCase();
+
+    try {
+      final db = await AppDatabase.db();
+
+      // Step 1: Exact DB match
+      final exact = await db.query(
+        'merchant_normalization_rules',
+        where: 'raw_pattern = ? AND confidence >= 0.6',
+        whereArgs: [lower],
+        limit: 1,
+      );
+      if (exact.isNotEmpty) {
+        return NormalizationResult(
+          normalizedName: exact.first['normalized_name']! as String,
+          ruleConfidence: (exact.first['confidence']! as num).toDouble(),
+          fromLearnedRule: true,
+        );
+      }
+
+      // Step 2: Fuzzy DB scan (only if trimmed length >= 3)
+      if (trimmed.length >= 3) {
+        final candidates = await db.query(
+          'merchant_normalization_rules',
+          where: 'confidence >= 0.6',
+          orderBy: 'confidence DESC, usage_count DESC',
+        );
+
+        NormalizationResult? bestFuzzy;
+        int bestDistance = 3; // exclusive upper bound
+
+        for (final row in candidates) {
+          final pattern = row['raw_pattern']! as String;
+          final distance = levenshteinDistance(lower, pattern);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestFuzzy = NormalizationResult(
+              normalizedName: row['normalized_name']! as String,
+              ruleConfidence: (row['confidence']! as num).toDouble(),
+              fromLearnedRule: true,
+            );
+          } else if (distance == bestDistance && bestFuzzy != null) {
+            // Tie-break: higher confidence wins (already sorted), then usage_count
+            final currentConf = (row['confidence']! as num).toDouble();
+            final bestConf = bestFuzzy.ruleConfidence ?? 0.0;
+            if (currentConf > bestConf) {
+              bestFuzzy = NormalizationResult(
+                normalizedName: row['normalized_name']! as String,
+                ruleConfidence: currentConf,
+                fromLearnedRule: true,
+              );
+            }
+          }
+        }
+
+        if (bestFuzzy != null) return bestFuzzy;
+      }
+    } catch (e) {
+      // DB unavailable — fall through to static alias map
+    }
+
+    // Step 3: Static alias map
+    if (_merchantAliases.containsKey(lower)) {
+      return NormalizationResult(normalizedName: _merchantAliases[lower]!);
+    }
+    for (final entry in _merchantAliases.entries) {
+      if (lower.contains(entry.key)) {
+        return NormalizationResult(normalizedName: entry.value);
+      }
+    }
+
+    // Step 4: Raw fallback
+    return NormalizationResult(normalizedName: rawMerchant);
+  }
+
+  /// Convenience wrapper returning just the normalized name.
+  /// Backward-compatible replacement for the old [normalize] DB path.
+  static Future<String> lookupNormalized(String rawMerchant) async {
+    final result = await lookupWithResult(rawMerchant);
+    return result.normalizedName;
   }
 
   /// Group transactions by normalized merchant

@@ -12,7 +12,7 @@ class AlertsInsights extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeCount = accounts.length;
-    final creditCount = accounts.where((a) => a.type == 'credit').length;
+    final creditCount = accounts.where((a) => a.isLiability).length;
 
     return GlassCard(
       padding: const EdgeInsets.all(20),

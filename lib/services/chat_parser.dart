@@ -131,7 +131,7 @@ class ChatParser {
             category: category,
             note: note,
             date: DateTime.now(),
-            accountId: accountId,
+            accountId: accountId!,
           ));
           notifyDataChanged();
           final acctSuffix = accountName != null ? ' → $accountName' : '';

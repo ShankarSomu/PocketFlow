@@ -103,6 +103,7 @@ void main() {
         amount: 100.50,
         category: 'Food',
         date: DateTime(2024, 1, 15),
+        accountId: 1,
       );
 
       final account = Account(

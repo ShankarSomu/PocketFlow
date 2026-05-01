@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../db/database.dart';
 import '../models/transaction.dart' as model;
+import 'app_logger.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
@@ -139,53 +140,13 @@ class NotificationService {
 
   /// Schedule weekly summary notification
   static Future<void> scheduleWeeklySummary() async {
-    await initialize();
-    
-    final prefs = await _getPreferences();
-    if (prefs['weekly'] != true) {
-      // Cancel if preference is disabled
-      await _notifications.cancel(999);
-      return;
-    }
-
-    const androidDetails = AndroidNotificationDetails(
-      'weekly_summary',
-      'Weekly Summary',
-      channelDescription: 'Weekly spending summary',
-      icon: '@mipmap/ic_launcher',
-    );
-
-    const details = NotificationDetails(android: androidDetails);
-
-    // Get last week's data for the notification content
-    final now = DateTime.now();
-    final weekAgo = now.subtract(const Duration(days: 7));
-    final transactions = await AppDatabase.getTransactions(
-      from: weekAgo,
-      to: now,
-    );
-
-    final expenses = transactions.where((t) => t.type == 'expense');
-    final income = transactions.where((t) => t.type == 'income');
-    
-    final totalExpense = expenses.fold(0.0, (sum, t) => sum + t.amount);
-    final totalIncome = income.fold(0.0, (sum, t) => sum + t.amount);
-    
-    final expenseStr = NumberFormat.currency(symbol: '\$').format(totalExpense);
-    final incomeStr = NumberFormat.currency(symbol: '\$').format(totalIncome);
-
-    // Schedule weekly notification
-    // Note: This shows a summary based on current data, repeating weekly
-    await _notifications.periodicallyShow(
-      999, // Fixed ID for weekly summary
-      '📊 Your Weekly Summary',
-      'Last 7 days: Spent $expenseStr • Earned $incomeStr • ${transactions.length} transactions',
-      RepeatInterval.weekly,
-      details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    AppLogger.log(
+      LogLevel.warning,
+      LogCategory.system,
+      'weekly_summary_disabled',
+      detail: 'Skipping weekly summary scheduling to avoid plugin crash',
     );
   }
-
   /// Cancel all notifications
   static Future<void> cancelAll() async {
     await _notifications.cancelAll();
@@ -203,3 +164,5 @@ class NotificationService {
     return result ?? true;
   }
 }
+
+

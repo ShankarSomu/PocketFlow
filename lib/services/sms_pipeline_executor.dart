@@ -1,24 +1,29 @@
 import '../db/database.dart';
 import '../models/pending_action.dart';
 import '../models/sms_types.dart';
-import '../models/transaction.dart';
+import '../models/transaction.dart' as model;
+import '../repositories/signal_weight_repository.dart';
 import 'account_resolution_engine.dart';
+import 'app_logger.dart';
+import 'confidence_scoring.dart';
 import 'entity_extraction_service.dart';
+import 'pending_action_service.dart';
 import 'privacy_guard.dart';
 import 'sms_classification_service.dart';
-import 'transfer_detection_engine.dart';
+import 'sms_classifier_service.dart';
+import 'sms_correction_service.dart';
 
-/// SMS Processing Result
 class SmsProcessingResult {
-
   SmsProcessingResult({
     required this.success,
     required this.message,
-    required this.smsType, this.transactionId,
+    required this.smsType,
+    this.transactionId,
     this.pendingActionId,
     this.requiresUserAction = false,
     this.confidence = 0.0,
   });
+
   final bool success;
   final String message;
   final int? transactionId;
@@ -31,435 +36,441 @@ class SmsProcessingResult {
   bool get isPending => pendingActionId != null;
 }
 
-/// SMS Intelligence Pipeline Executor
-/// Orchestrates the complete SMS processing pipeline
 class SmsPipelineExecutor {
-  /// Process a single SMS message through the complete pipeline
+  static final _signalWeightRepo = SignalWeightRepository();
+
   static Future<SmsProcessingResult> processSms({
     required String senderAddress,
     required String messageBody,
     required DateTime receivedAt,
   }) async {
+    final startTime = DateTime.now();
     try {
-      // === LAYER 1: PRIVACY FILTER ===
-      // Block sensitive SMS from being stored
+      AppLogger.sms('Pipeline: Privacy check', detail: 'sender=$senderAddress');
       if (PrivacyGuard.isSensitive(messageBody)) {
         return SmsProcessingResult(
           success: true,
-          message: 'SMS blocked: contains sensitive data (OTP/password)',
+          message: 'Blocked sensitive SMS',
           smsType: SmsType.nonFinancial,
         );
       }
-      
-      // Sanitize content
+
       final sanitizedBody = PrivacyGuard.sanitize(messageBody);
       if (sanitizedBody == null) {
         return SmsProcessingResult(
           success: true,
-          message: 'SMS blocked: entirely sensitive',
+          message: 'Fully sensitive SMS',
           smsType: SmsType.nonFinancial,
         );
       }
-      
-      // === LAYER 2: CLASSIFICATION ===
+
       final rawSms = RawSmsMessage(
-        id: 0, // Temporary ID
+        id: 0,
         sender: senderAddress,
         body: sanitizedBody,
         timestamp: receivedAt,
       );
-      final classificationResult = SmsClassificationService.classify(rawSms);
-      
-      // Skip non-financial SMS
-      if (classificationResult.type == SmsType.nonFinancial) {
+
+      AppLogger.sms('Pipeline: ML classification', detail: 'sender=$senderAddress');
+      final mlStartTime = DateTime.now();
+      final mlResult = await SmsClassifierService.classify(sanitizedBody);
+      final mlDuration = DateTime.now().difference(mlStartTime);
+      if (mlDuration.inMilliseconds > 200) {
+        AppLogger.sms('SLOW: ML classify took ${mlDuration.inMilliseconds}ms', level: LogLevel.warning);
+      }
+
+      // Check structural negative samples using ML label for accurate pattern matching
+      // If user previously marked a structurally similar SMS as "not a transaction", skip it
+      final isBlocked = await SmsCorrectionService.isBlocked(
+        sanitizedBody, senderAddress, mlLabel: mlResult.label);
+      if (isBlocked) {
+        AppLogger.sms('BLOCKED by structural similarity', detail: 'sender=$senderAddress mlLabel=${mlResult.label}');
         return SmsProcessingResult(
           success: true,
-          message: 'SMS ignored: not financial',
-          smsType: classificationResult.type,
+          message: 'Blocked by learned rule',
+          smsType: SmsType.nonFinancial,
         );
       }
       
-      // Handle account update SMS
-      if (classificationResult.type == SmsType.accountUpdate) {
-        return await _processBalanceInquiry(
-          rawSms,
-          classificationResult,
-        );
-      }
-      
-      // Handle payment reminder SMS (non-transactional)
-      if (classificationResult.type == SmsType.paymentReminder) {
-        return await _processPaymentSms(
-          rawSms,
-          classificationResult,
-        );
-      }
-      
-      // === LAYER 3: ENTITY EXTRACTION ===
-      final extractedEntities = EntityExtractionService.extract(rawSms, classificationResult);
-      
-      // Validate required data
-      if (extractedEntities.amount == null) {
-        return await _createPendingAction(
-          rawSms.body,
-          classificationResult.type,
-          'missing_amount',
-          {},
-        );
-      }
-      
-      // === LAYER 4: ACCOUNT RESOLUTION ===
-      final accountResolution = await AccountResolutionEngine.resolve(extractedEntities);
-      
-      // === LAYER 5: TRANSACTION CREATION ===
-      if (classificationResult.type == SmsType.transactionDebit || 
-          classificationResult.type == SmsType.transactionCredit) {
-        return await _processTransaction(
-          rawSms,
-          classificationResult,
-          extractedEntities,
-          accountResolution,
-        );
-      }
-      
-      // Transfer SMS
-      if (classificationResult.type == SmsType.transfer) {
-        return await _processTransfer(
-          rawSms,
-          classificationResult,
-          extractedEntities,
-          accountResolution,
-        );
-      }
-      
-      // Fallback
-      return SmsProcessingResult(
-        success: false,
-        message: 'Unhandled SMS type: ${classificationResult.type}',
-        smsType: classificationResult.type,
+      AppLogger.sms('Pipeline: Rule-based classification', detail: 'mlLabel=${mlResult.label}');
+      final classifyStartTime = DateTime.now();
+      final classification = await SmsClassificationService.classifyWithMl(
+        sms: rawSms,
+        mlLabel: mlResult.label,
+        mlConfidence: mlResult.confidence,
       );
-      
+      final classifyDuration = DateTime.now().difference(classifyStartTime);
+      if (classifyDuration.inMilliseconds > 100) {
+        AppLogger.sms('SLOW: Classification took ${classifyDuration.inMilliseconds}ms', level: LogLevel.warning);
+      }
+
+      if (classification.type == SmsType.nonFinancial) {
+        return SmsProcessingResult(
+          success: true,
+          message: 'Non-financial SMS ignored',
+          smsType: classification.type,
+        );
+      }
+
+      if (classification.type == SmsType.paymentReminder) {
+        return SmsProcessingResult(
+          success: true,
+          message: 'Reminder SMS logged',
+          smsType: classification.type,
+        );
+      }
+
+      if (classification.type == SmsType.accountUpdate) {
+        // accountUpdate can be a real credit transaction (e.g. "Direct deposit credited")
+        // Try to extract entities - if there's an amount, treat as a credit transaction
+        final entities = await EntityExtractionService.extract(rawSms, classification);
+        if (entities.amount != null) {
+          // Reclassify as credit transaction so it gets saved
+          final creditClassification = SmsClassification(
+            type: SmsType.transactionCredit,
+            confidence: classification.confidence,
+            reason: 'Reclassified from accountUpdate (has amount)',
+          );
+          final resolution = await AccountResolutionEngine.resolve(entities);
+          return _processTransaction(rawSms, creditClassification, entities, resolution);
+        }
+        // No amount - just a balance notification, skip
+        return SmsProcessingResult(
+          success: true,
+          message: 'Balance SMS logged',
+          smsType: SmsType.accountUpdate,
+        );
+      }
+
+      AppLogger.sms('Pipeline: Entity extraction', detail: 'type=${classification.type.name}');
+      final extractStartTime = DateTime.now();
+      final entities = await EntityExtractionService.extract(rawSms, classification);
+      final extractDuration = DateTime.now().difference(extractStartTime);
+      if (extractDuration.inMilliseconds > 100) {
+        AppLogger.sms('SLOW: Entity extraction took ${extractDuration.inMilliseconds}ms', level: LogLevel.warning);
+      }
+
+      if (entities.amount == null) {
+        return _createPending(rawSms, classification.type, 'missing_amount');
+      }
+
+      AppLogger.sms('Pipeline: Account resolution', detail: 'amount=${entities.amount}');
+      final resolveStartTime = DateTime.now();
+      final resolution = await AccountResolutionEngine.resolve(entities);
+      final resolveDuration = DateTime.now().difference(resolveStartTime);
+      if (resolveDuration.inMilliseconds > 100) {
+        AppLogger.sms('SLOW: Account resolution took ${resolveDuration.inMilliseconds}ms', level: LogLevel.warning);
+      }
+
+      AppLogger.sms('Pipeline: Processing type ${classification.type.name}');
+      switch (classification.type) {
+        case SmsType.transactionDebit:
+        case SmsType.transactionCredit:
+          return _processTransaction(
+            rawSms,
+            classification,
+            entities,
+            resolution,
+          );
+        case SmsType.transfer:
+          return _processTransfer(rawSms, entities, resolution);
+        case SmsType.unknownFinancial:
+          return _processUnknownFinancial(
+            rawSms,
+            classification,
+            entities,
+            resolution,
+          );
+        default:
+          return SmsProcessingResult(
+            success: false,
+            message: 'Unhandled type',
+            smsType: classification.type,
+          );
+      }
     } catch (e) {
-      // Log error and create pending action
-      print('ERROR in SMS pipeline: $e');
+      AppLogger.sms('pipeline_error', detail: e.toString(), level: LogLevel.error);
       return SmsProcessingResult(
         success: false,
         message: 'Pipeline error: $e',
         smsType: SmsType.nonFinancial,
       );
-    }
-  }
-  
-  /// Process balance inquiry SMS
-  static Future<SmsProcessingResult> _processBalanceInquiry(
-    RawSmsMessage rawSms,
-    SmsClassification classification,
-  ) async {
-    // Extract balance and update account if possible
-    final entities = EntityExtractionService.extract(rawSms, classification);
-    
-    if (entities.institutionName != null && entities.amount != null) {
-      final resolution = await AccountResolutionEngine.resolve(entities);
-      
-      if (resolution.hasMatch && resolution.isHighConfidence) {
-        // Update account balance
-        final db = await AppDatabase.db();
-        await db.update(
-          'accounts',
-          {
-            'balance': entities.amount,
-            'last_synced': rawSms.timestamp.toIso8601String(),
-          },
-          where: 'id = ?',
-          whereArgs: [resolution.accountId],
-        );
-        
-        return SmsProcessingResult(
-          success: true,
-          message: 'Balance updated for account',
-          smsType: SmsType.accountUpdate,
-          confidence: resolution.confidence,
-        );
+    } finally {
+      final totalDuration = DateTime.now().difference(startTime);
+      if (totalDuration.inMilliseconds > 500) {
+        AppLogger.sms('SLOW: Total pipeline took ${totalDuration.inMilliseconds}ms', 
+          detail: 'sender=$senderAddress', level: LogLevel.warning);
       }
     }
-    
-    // Create pending action if no account match
-    return _createPendingAction(
-      rawSms.body,
-      SmsType.accountUpdate,
-      'no_account_match',
-      {},
-    );
   }
-  
-  /// Process payment confirmation SMS
-  static Future<SmsProcessingResult> _processPaymentSms(
-    RawSmsMessage rawSms,
-    SmsClassification classification,
-  ) async {
-    // Payment confirmations often don't need transactions
-    // Just log for now
-    return SmsProcessingResult(
-      success: true,
-      message: 'Payment SMS logged',
-      smsType: SmsType.paymentReminder,
-    );
-  }
-  
-  /// Process transaction SMS
+
   static Future<SmsProcessingResult> _processTransaction(
-    RawSmsMessage rawSms,
+    RawSmsMessage sms,
     SmsClassification classification,
     ExtractedEntities entities,
     AccountResolution resolution,
   ) async {
+    final weights = await _signalWeightRepo.getWeights();
+
+    final signalScore =
+        (entities.amount != null ? weights['has_amount'] ?? 0.4 : 0) +
+        (entities.accountIdentifier != null ? weights['has_account'] ?? 0.2 : 0) +
+        (entities.institutionName != null ? weights['has_bank'] ?? 0.1 : 0) +
+        (entities.merchant != null ? weights['has_merchant'] ?? 0.1 : 0) +
+        (classification.confidence > 0.8
+            ? weights['strong_classification'] ?? 0.2
+            : 0);
+
+    final blendedConfidence =
+        (signalScore * 0.6 + resolution.confidence * 0.4).clamp(0.0, 1.0);
+
+    final needsReview =
+        blendedConfidence < ConfidenceScoring.thresholdMedium ||
+        resolution.accountId == null; // Needs review only if no account resolved
+
+    // IMPROVED: Create transaction even without account (use placeholder)
+    // User can review and assign account later in Transactions screen
+    int accountId = resolution.accountId ?? await _getOrCreatePlaceholderAccount();
+
+    final tx = model.Transaction(
+      accountId: accountId,
+      amount: entities.amount!,
+      date: entities.timestamp,
+      merchant: entities.merchant,
+      note: entities.merchant ?? 'SMS Transaction',
+      category:
+          entities.learnedCategory ?? _defaultCategory(classification.type, entities.merchant),
+      type: classification.type == SmsType.transactionDebit ? 'expense' : 'income',
+      smsSource: sms.body,
+      sourceType: 'sms',
+      confidenceScore: blendedConfidence,
+      needsReview: needsReview,
+      extractedBank: entities.institutionName,
+      extractedAccountIdentifier: entities.accountIdentifier,
+    );
+
+    final id = await AppDatabase.insertTransaction(tx);
+
+    return SmsProcessingResult(
+      success: true,
+      message: needsReview ? 'Transaction created (review needed)' : 'Transaction created',
+      transactionId: id,
+      smsType: classification.type,
+      requiresUserAction: needsReview,
+      confidence: blendedConfidence,
+    );
+  }
+
+  /// Get or create a placeholder account for unresolved SMS transactions
+  static Future<int> _getOrCreatePlaceholderAccount() async {
     final db = await AppDatabase.db();
     
-    // Determine transaction type based on classification
-    final transactionType = classification.type == SmsType.transactionDebit ? 'expense' : 'income';
+    // Check if placeholder account exists
+    final existing = await db.query(
+      'accounts',
+      where: 'name = ? AND deleted_at IS NULL',
+      whereArgs: ['SMS - Needs Review'],
+      limit: 1,
+    );
     
-    // High confidence account match - create transaction directly
-    if (resolution.hasMatch && resolution.isHighConfidence) {
-      final transaction = Transaction(
-        accountId: resolution.accountId,
-        amount: entities.amount!,
-        date: entities.timestamp,
-        note: entities.merchant ?? 'SMS Transaction',
-        merchant: entities.merchant,
-        category: _getDefaultCategory(classification.type, entities.merchant),
-        type: transactionType,
-        smsSource: rawSms.body,
-        sourceType: 'sms',
-        confidenceScore: resolution.confidence,
-        needsReview: false,
-      );
-      
-      final transactionId = await AppDatabase.insertTransaction(transaction);
-      
-      return SmsProcessingResult(
-        success: true,
-        message: 'Transaction created',
-        transactionId: transactionId,
-        smsType: classification.type,
-        confidence: resolution.confidence,
-      );
+    if (existing.isNotEmpty) {
+      return existing.first['id'] as int;
     }
     
-    // Medium confidence - create transaction but mark for review
-    if (resolution.hasMatch && resolution.confidence >= 0.60) {
-      final transaction = Transaction(
-        accountId: resolution.accountId,
+    // Create placeholder account
+    final accountId = await db.insert('accounts', {
+      'name': 'SMS - Needs Review',
+      'type': 'unidentified',
+      'balance': 0.0,
+    });
+    
+    AppLogger.log(
+      LogLevel.info,
+      LogCategory.system,
+      'Created placeholder account for SMS transactions',
+      detail: 'accountId=$accountId',
+    );
+    
+    return accountId;
+  }
+
+  static Future<SmsProcessingResult> _processTransfer(
+    RawSmsMessage sms,
+    ExtractedEntities entities,
+    AccountResolution resolution,
+  ) async {
+    final pendingId = await PendingActionService.createAction(
+      actionType: 'confirm_transfer',
+      priority: 'medium',
+      title: 'Transfer detected',
+      description:
+          'Transfer of ${entities.amount?.toStringAsFixed(2) ?? "unknown"} detected. Confirm accounts.',
+      smsSource: sms.body,
+      metadata: {
+        'amount': entities.amount,
+        'merchant': entities.merchant,
+        'sms': sms.body,
+      },
+      accountCandidateId: resolution.accountCandidateId,
+      confidence: resolution.confidence,
+    );
+
+    return SmsProcessingResult(
+      success: true,
+      message: 'Transfer queued for confirmation',
+      pendingActionId: pendingId,
+      smsType: SmsType.transfer,
+      requiresUserAction: true,
+      confidence: resolution.confidence,
+    );
+  }
+
+  static Future<SmsProcessingResult> _processUnknownFinancial(
+    RawSmsMessage sms,
+    SmsClassification classification,
+    ExtractedEntities entities,
+    AccountResolution resolution,
+  ) async {
+    // If we have an amount, create a transaction with needs_review=true
+    // rather than a pending action. The user can review it in the Transactions screen.
+    if (entities.amount != null) {
+      final accountId = resolution.accountId ?? await _getOrCreatePlaceholderAccount();
+
+      final tx = model.Transaction(
+        accountId: accountId,
         amount: entities.amount!,
         date: entities.timestamp,
-        note: entities.merchant ?? 'SMS Transaction (Review)',
         merchant: entities.merchant,
-        category: _getDefaultCategory(classification.type, entities.merchant),
-        type: transactionType,
-        smsSource: rawSms.body,
+        note: entities.merchant ?? 'SMS Transaction (unclassified)',
+        category: 'uncategorized',
+        type: 'expense', // Default to expense; user can correct during review
+        smsSource: sms.body,
         sourceType: 'sms',
-        confidenceScore: resolution.confidence,
-        needsReview: true,
+        confidenceScore: classification.confidence,
+        needsReview: true, // Always needs review for unknown financial
+        extractedBank: entities.institutionName,
+        extractedAccountIdentifier: entities.accountIdentifier,
       );
-      
-      final transactionId = await AppDatabase.insertTransaction(transaction);
-      
+
+      final id = await AppDatabase.insertTransaction(tx);
+
       return SmsProcessingResult(
         success: true,
-        message: 'Transaction created (needs review)',
-        transactionId: transactionId,
+        message: 'Transaction created (review needed - unclassified)',
+        transactionId: id,
         smsType: classification.type,
         requiresUserAction: true,
-        confidence: resolution.confidence,
+        confidence: classification.confidence,
       );
     }
-    
-    // Low confidence or new candidate - create pending action
-    return _createPendingAction(
-      rawSms.body,
-      classification.type,
-      'account_unresolved',
-      {},
-    );
+
+    // No amount found - fall back to pending action
+    return _createPending(sms, classification.type, 'ambiguous_transaction');
   }
-  
-  /// Process transfer SMS
-  static Future<SmsProcessingResult> _processTransfer(
-    RawSmsMessage rawSms,
+
+  static Future<SmsProcessingResult> _processBalance(
+    RawSmsMessage sms,
     SmsClassification classification,
-    ExtractedEntities entities,
-    AccountResolution resolution,
   ) async {
-    // Similar to transaction but mark as transfer
-    if (resolution.hasMatch && resolution.isHighConfidence) {
-      final transaction = Transaction(
-        accountId: resolution.accountId,
-        amount: entities.amount!,
-        date: entities.timestamp,
-        note: entities.merchant ?? 'Transfer',
-        merchant: entities.merchant,
-        category: 'Transfer',
-        type: 'expense', // Transfers are typically outgoing by default
-        smsSource: rawSms.body,
-        sourceType: 'sms',
-        confidenceScore: resolution.confidence,
-        needsReview: false,
-      );
-      
-      final transactionId = await AppDatabase.insertTransaction(transaction);
-      
-      // Queue for transfer pair detection (run async in background)
-      TransferDetectionEngine.runDetection(sinceDays: 7).catchError((e) {
-        print('Transfer detection failed: $e');
-      });
-      
-      return SmsProcessingResult(
-        success: true,
-        message: 'Transfer transaction created',
-        transactionId: transactionId,
-        smsType: SmsType.transfer,
-        confidence: resolution.confidence,
-      );
+    final entities = await EntityExtractionService.extract(sms, classification);
+
+    if (entities.amount == null) {
+      return _createPending(sms, classification.type, 'missing_balance');
     }
-    
-    // Create pending action
-    return _createPendingAction(
-      rawSms.body,
-      SmsType.transfer,
-      'account_unresolved',
-      {},
-    );
-  }
-  
-  /// Create pending action for user review
-  static Future<SmsProcessingResult> _createPendingAction(
-    String smsBody,
-    SmsType smsType,
-    String actionType,
-    Map<String, dynamic> extractedData,
-  ) async {
-    final db = await AppDatabase.db();
-    
-    // Generate title and description based on action type
-    final title = _generateTitle(actionType, smsType);
-    final description = _generateDescription(actionType, smsType);
-    final priority = _getPriority(smsType);
-    
-    final pendingAction = PendingAction(
-      title: title,
-      description: description,
-      priority: priority,
-      smsSource: smsBody,
-      metadata: extractedData,
-      actionType: actionType,
-      createdAt: DateTime.now(),
-    );
-    
-    final pendingId = await db.insert('pending_actions', pendingAction.toMap());
-    
+
     return SmsProcessingResult(
       success: true,
-      message: 'Created pending action for user review',
-      pendingActionId: pendingId,
-      smsType: smsType,
+      message: 'Balance SMS logged',
+      smsType: SmsType.accountUpdate,
+    );
+  }
+
+  static Future<SmsProcessingResult> _createPending(
+    RawSmsMessage sms,
+    SmsType type,
+    String reason,
+  ) async {
+    final id = await PendingActionService.createAction(
+      actionType: 'review_sms',
+      priority: 'medium',
+      title: 'Review required',
+      description: reason,
+      smsSource: sms.body,
+      metadata: {
+        'sms_type': type.name,
+        'reason': reason,
+      },
+      confidence: 0.5,
+    );
+
+    return SmsProcessingResult(
+      success: true,
+      message: 'Pending action created',
+      pendingActionId: id,
+      smsType: type,
       requiresUserAction: true,
       confidence: 0.5,
     );
   }
-  
-  /// Generate title for pending action
-  static String _generateTitle(String actionType, SmsType smsType) {
-    switch (actionType) {
-      case 'missing_amount':
-        return 'Review SMS Transaction';
-      case 'no_account_match':
-        return 'Confirm Account';
-      case 'account_unresolved':
-        return 'Link Transaction to Account';
-      default:
-        return 'Review ${smsType.toString().split('.').last}';
-    }
+
+  static String _defaultCategory(SmsType type, String? merchant) {
+    final m = merchant?.toLowerCase() ?? '';
+
+    if (m.contains('uber') || m.contains('ola')) return 'Transport';
+    if (m.contains('zomato') || m.contains('swiggy')) return 'Food';
+    if (m.contains('amazon')) return 'Shopping';
+
+    return type == SmsType.transactionDebit ? 'Expense' : 'Income';
   }
-  
-  /// Generate description for pending action
-  static String _generateDescription(String actionType, SmsType smsType) {
-    switch (actionType) {
-      case 'missing_amount':
-        return 'Could not extract transaction amount from SMS';
-      case 'no_account_match':
-        return 'Unable to match SMS to an existing account';
-      case 'account_unresolved':
-        return 'Please confirm which account this transaction belongs to';
-      default:
-        return 'Please review and confirm this ${smsType.toString().split('.').last} SMS';
-    }
-  }
-  
-  /// Get priority for pending action
-  static String _getPriority(SmsType smsType) {
-    switch (smsType) {
-      case SmsType.transactionDebit:
-      case SmsType.transactionCredit:
-        return 'high';
-      case SmsType.transfer:
-        return 'medium';
-      default:
-        return 'low';
-    }
-  }
-  
-  /// Get default category based on SMS classification and merchant
-  static String _getDefaultCategory(SmsType smsType, String? merchant) {
-    // Use merchant-based categorization if available
-    if (merchant != null) {
-      final merchantLower = merchant.toLowerCase();
-      if (merchantLower.contains('restaurant') || merchantLower.contains('food')) {
-        return 'Food & Dining';
-      }
-      if (merchantLower.contains('fuel') || merchantLower.contains('petrol')) {
-        return 'Transportation';
-      }
-      if (merchantLower.contains('supermarket') || merchantLower.contains('grocery')) {
-        return 'Groceries';
-      }
-    }
-    
-    // Default based on transaction type
-    return smsType == SmsType.transactionDebit ? 'Other Expense' : 'Other Income';
-  }
-  
-  /// Batch process multiple SMS messages
-  static Future<List<SmsProcessingResult>> processBatch(
-    List<Map<String, dynamic>> smsList,
-  ) async {
-    final results = <SmsProcessingResult>[];
-    
-    for (final sms in smsList) {
-      final result = await processSms(
-        senderAddress: sms['sender'] as String,
-        messageBody: sms['body'] as String,
-        receivedAt: sms['date'] as DateTime,
-      );
-      results.add(result);
-      
-      // Add small delay to avoid overwhelming DB
-      await Future.delayed(const Duration(milliseconds: 10));
-    }
-    
-    return results;
-  }
-  
-  /// Get processing statistics
+
   static Future<Map<String, dynamic>> getStatistics() async {
-    final db = await AppDatabase.db();
-    
-    final transactionCount = await db.rawQuery('SELECT COUNT(*) as count FROM transactions WHERE sms_source IS NOT NULL');
-    final pendingCount = await db.rawQuery('SELECT COUNT(*) as count FROM pending_actions WHERE status = ?', ['pending']);
-    final candidateCount = await db.rawQuery('SELECT COUNT(*) as count FROM account_candidates WHERE status = ?', ['pending']);
-    
-    return {
-      'sms_transactions': transactionCount.first['count'],
-      'pending_actions': pendingCount.first['count'],
-      'account_candidates': candidateCount.first['count'],
-    };
+    try {
+      final db = await AppDatabase.db();
+
+      final txnResult = await db.rawQuery(
+        "SELECT COUNT(*) AS cnt FROM transactions WHERE source_type = 'sms'",
+      );
+      final pendingResult = await db.rawQuery(
+        "SELECT COUNT(*) AS cnt FROM pending_actions WHERE status = 'pending'",
+      );
+      final candidateResult = await db.rawQuery(
+        "SELECT COUNT(*) AS cnt FROM accounts WHERE type = 'unidentified'",
+      );
+
+      return {
+        'sms_transactions': (txnResult.first['cnt'] as int?) ?? 0,
+        'pending_actions': (pendingResult.first['cnt'] as int?) ?? 0,
+        'account_candidates': (candidateResult.first['cnt'] as int?) ?? 0,
+      };
+    } catch (_) {
+      return {
+        'sms_transactions': 0,
+        'pending_actions': 0,
+        'account_candidates': 0,
+      };
+    }
+  }
+
+  static Future<void> onPositiveFeedback(model.Transaction tx) async {
+    await _signalWeightRepo.applyFeedback(
+      presentSignals: _signalsFromTransaction(tx).toSet(),
+      positive: true,
+    );
+  }
+
+  static Future<void> onNegativeFeedback(model.Transaction tx) async {
+    await _signalWeightRepo.applyFeedback(
+      presentSignals: _signalsFromTransaction(tx).toSet(),
+      positive: false,
+    );
+  }
+
+  static List<String> _signalsFromTransaction(model.Transaction tx) {
+    final signals = <String>['has_amount'];
+    if (tx.merchant != null) signals.add('has_merchant');
+    if (tx.extractedBank != null) signals.add('has_bank');
+    if (tx.extractedAccountIdentifier != null) signals.add('has_account');
+    if (tx.sourceType == 'sms') signals.add('has_transaction_verb');
+    return signals;
   }
 }

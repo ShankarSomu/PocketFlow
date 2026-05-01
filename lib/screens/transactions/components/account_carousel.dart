@@ -42,7 +42,7 @@ class TransactionAccountCarousel extends StatelessWidget {
     double totalBalance = 0;
     for (final a in accounts) {
       final bal = balances[a.id] ?? 0;
-      totalBalance += a.type == 'credit' ? -bal : bal;
+      totalBalance += a.isLiability ? -bal : bal;
     }
 
     Widget cardContent;
@@ -323,7 +323,7 @@ class TransactionAccountCarousel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            account.type == 'credit' ? 'Outstanding' : 'Balance',
+            account.isLiability ? 'Outstanding' : 'Balance',
             style: TextStyle(
                 color: Theme.of(context)
                     .colorScheme

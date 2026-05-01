@@ -36,7 +36,7 @@ class AccountsViewModel extends ChangeNotifier {
     double total = 0;
     for (final account in _accounts) {
       final balance = _balances[account.id] ?? 0;
-      if (account.type == 'credit') {
+      if (account.isLiability) {
         total += balance;
       }
     }

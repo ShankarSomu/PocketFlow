@@ -4,7 +4,6 @@ import '../core/formatters.dart';
 import '../models/app_notification.dart';
 import '../services/notification_manager.dart';
 import '../theme/app_color_scheme.dart';
-import 'pending_actions_screen.dart';
 import 'transactions/transactions_screen.dart';
 import 'accounts/accounts_screen.dart';
 import 'intelligence/intelligence_dashboard_screen.dart';
@@ -148,7 +147,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       // Parse route and determine destination
       if (route.contains('pending')) {
-        screen = const PendingActionsScreen();
+        // Pending actions now live in the Transactions screen as needs-review filter
+        screen = const TransactionsScreen(initialFilterNeedsReview: true);
       } else if (route.contains('transaction')) {
         screen = const TransactionsScreen();
       } else if (route.contains('account')) {

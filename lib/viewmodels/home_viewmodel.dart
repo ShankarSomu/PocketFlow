@@ -102,7 +102,7 @@ class HomeViewModel extends ChangeNotifier with RetryMixin {
       for (final account in _accounts) {
         final balance = await _accountRepo.getBalance(account.id!, account);
         balances[account.id!] = balance;
-        if (account.type == 'credit') {
+        if (account.isLiability) {
           totalBalance -= balance;
         } else {
           totalBalance += balance;

@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:pocket_flow/services/advanced_sms_parser.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_advanced_parser.dart';
 
 void main() {
   test('Test Citi Alert Message Processing', () {

@@ -1,4 +1,4 @@
-// Unit tests for TransactionFeedbackService.
+﻿// Unit tests for TransactionFeedbackService.
 //
 // Uses sqflite_common_ffi to open a fresh in-memory database for each test,
 // injected into AppDatabase via setDatabaseForTesting().
@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:pocket_flow/db/database.dart';
 import 'package:pocket_flow/models/transaction.dart' as model;
-import 'package:pocket_flow/services/transaction_feedback_service.dart';
+import 'package:pocket_flow/sms_engine/feedback/sms_feedback_service.dart';
 
 // ---------------------------------------------------------------------------
 // Helpers

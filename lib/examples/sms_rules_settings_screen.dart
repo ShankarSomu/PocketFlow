@@ -1,7 +1,7 @@
-// Example Settings screen for viewing and managing SMS classification rules
+﻿// Example Settings screen for viewing and managing SMS classification rules
 
 import 'package:flutter/material.dart';
-import '../services/sms_rule_engine.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_rule_engine.dart';
 import '../services/merchant_normalizer.dart';
 
 class SmsRulesSettingsScreen extends StatefulWidget {

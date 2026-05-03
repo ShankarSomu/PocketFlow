@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,9 +17,9 @@ import 'package:pocket_flow/services/app_logger.dart';
 import 'package:pocket_flow/services/auth_service.dart';
 import 'package:pocket_flow/services/deep_link_service.dart';
 import 'package:pocket_flow/services/image_cache_service.dart';
-import 'package:pocket_flow/services/ml_sms_classifier.dart';
+import 'package:pocket_flow/sms_engine/_ml_deprecated/sms_ml_classifier.dart';
 import 'package:pocket_flow/services/navigation_state.dart';
-import 'package:pocket_flow/services/sms_keyword_service.dart';
+import 'package:pocket_flow/sms_engine/ingestion/sms_keyword_service.dart';
 import 'services/notification_manager.dart';
 import 'services/notification_service.dart';
 import 'services/refresh_notifier.dart' as refreshNotifier;

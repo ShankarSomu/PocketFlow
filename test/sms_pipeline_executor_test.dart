@@ -1,4 +1,4 @@
-// Unit tests for SmsPipelineExecutor.
+﻿// Unit tests for SmsPipelineExecutor.
 //
 // The full pipeline requires a complete DB setup. These tests focus on:
 //   1. The helper method _signalsFromTransaction (tested via onPositiveFeedback /
@@ -15,13 +15,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:pocket_flow/db/database.dart';
-import 'package:pocket_flow/models/sms_types.dart';
+import 'package:pocket_flow/sms_engine/models/sms_types.dart';
 import 'package:pocket_flow/models/transaction.dart' as model;
 import 'package:pocket_flow/repositories/signal_weight_repository.dart';
 import 'package:pocket_flow/services/confidence_scoring.dart';
-import 'package:pocket_flow/services/entity_extraction_service.dart';
-import 'package:pocket_flow/services/sms_pipeline_executor.dart';
-import 'package:pocket_flow/services/transaction_feedback_service.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_entity_extractor.dart';
+import 'package:pocket_flow/sms_engine/pipeline/sms_pipeline_executor.dart';
+import 'package:pocket_flow/sms_engine/feedback/sms_feedback_service.dart';
 
 // ---------------------------------------------------------------------------
 // Helpers

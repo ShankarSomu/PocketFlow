@@ -1,4 +1,4 @@
-import '../lib/services/advanced_sms_parser.dart';
+﻿import 'package:pocket_flow/sms_engine/parsing/sms_advanced_parser.dart';
 
 void main() {
   // Test the BofA SMS that's not extracting account number

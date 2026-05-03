@@ -1,5 +1,5 @@
-import 'package:pocket_flow/services/sms_service.dart';
-import 'package:pocket_flow/services/advanced_sms_parser.dart';
+﻿import 'package:pocket_flow/sms_engine/ingestion/sms_service.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_advanced_parser.dart';
 
 /// Example demonstrating SMS integration with AdvancedSmsParser
 /// 

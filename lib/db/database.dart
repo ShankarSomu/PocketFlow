@@ -13,7 +13,7 @@ import '../models/transaction.dart' as model;
 import '../services/data_integrity_service.dart';
 import '../services/notification_service.dart';
 import 'seeds/account_extraction_seed.dart';
-import 'seeds/sms_keywords_seed.dart';
+import 'package:pocket_flow/sms_engine/ingestion/sms_keywords_seed.dart';
 
 part 'database_schema.dart';
 part 'database_migrations.dart';

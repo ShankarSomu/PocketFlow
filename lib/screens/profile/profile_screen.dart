@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +11,7 @@ import '../../services/app_logger.dart';
 import '../../services/auth_service.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/seed_data.dart';
-import '../../services/sms_service.dart';
+import 'package:pocket_flow/sms_engine/ingestion/sms_service.dart';
 import '../../services/theme_service.dart';
 import '../../theme/app_color_scheme.dart';
 import '../export_screen.dart';

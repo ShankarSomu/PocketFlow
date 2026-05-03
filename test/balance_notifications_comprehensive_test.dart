@@ -1,4 +1,4 @@
-import 'package:pocket_flow/services/advanced_sms_parser.dart';
+﻿import 'package:pocket_flow/sms_engine/parsing/sms_advanced_parser.dart';
 
 /// Comprehensive test for balance notification handling
 /// Ensures we don't create ghost transactions from non-transaction SMS

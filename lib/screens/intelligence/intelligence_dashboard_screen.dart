@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../db/database.dart';
 import '../../services/merchant_normalization_service.dart';
 import '../../services/recurring_pattern_engine.dart';
 import '../../services/refresh_notifier.dart';
-import '../../services/sms_correction_service.dart';
-import '../../services/sms_service.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_correction_service.dart';
+import 'package:pocket_flow/sms_engine/ingestion/sms_service.dart';
 import '../../services/transfer_detection_engine.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/error_state_widget.dart';

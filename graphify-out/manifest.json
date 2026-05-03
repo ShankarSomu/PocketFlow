@@ -1,252 +1,1806 @@
 {
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\main.dart": 1777235006.8764036,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\accessibility.dart": 1776576720.068339,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\app_constants.dart": 1776576720.0703554,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\app_dependencies.dart": 1776576720.0703554,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\app_state.dart": 1776576720.0703554,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\color_extensions.dart": 1776576720.0796454,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\database_optimizer.dart": 1776576720.0831807,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\debounce.dart": 1776576720.0867858,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\formatters.dart": 1776576720.0888002,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\form_validation.dart": 1776576720.0888002,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\haptic_feedback.dart": 1776576720.09392,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\image_optimizer.dart": 1776576720.09392,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\input_sanitizer.dart": 1776576720.09392,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\memoization.dart": 1776576720.1034553,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\navigation_guard.dart": 1776576720.1075,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\retry_helper.dart": 1776576720.1105247,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\sanitization_rules.dart": 1776576720.1125543,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\state_persistence.dart": 1776576720.114841,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\undo_manager.dart": 1776576720.1189039,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\widget_optimizer.dart": 1776576720.1213753,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database.dart": 1777263872.1502905,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\seeds\\account_extraction_seed.dart": 1776738372.7021298,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\seeds\\sms_keywords_seed.dart": 1777174520.3365967,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\debug\\sms_scan_debugger.dart": 1777168492.3378253,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\advanced_parser_example.dart": 1776735293.7087216,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\edit_transaction_with_blocking.dart": 1776735293.741008,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\hybrid_parser_usage.dart": 1776735293.726761,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\refactored_widget_example.dart": 1776576720.1269174,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\sms_integration_example.dart": 1776735293.7106788,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\sms_rules_settings_screen.dart": 1776735293.743878,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\transaction_detail_with_feedback.dart": 1776735293.7463841,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\account.dart": 1777169562.8936577,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\account_candidate.dart": 1776576720.1311586,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\app_notification.dart": 1776576720.1343243,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\budget.dart": 1776576720.1373546,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\category.dart": 1776576720.140679,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\deletable_entity.dart": 1776576720.1436708,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\export_models.dart": 1776576720.148674,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\pending_action.dart": 1776576720.1516788,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\recurring_pattern.dart": 1776576720.1556776,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\recurring_transaction.dart": 1776576720.1586754,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\savings_goal.dart": 1776576720.1622462,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\sms_template.dart": 1776576720.1652453,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\sms_transaction_result.dart": 1776735293.7087216,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\sms_types.dart": 1776576720.168248,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\time_range.dart": 1776576720.1722493,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\transaction.dart": 1777247163.9710894,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\transfer_pair.dart": 1776576720.1752484,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\account_repository.dart": 1776576720.177344,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\budget_repository.dart": 1776576720.177344,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\category_repository.dart": 1776576720.177344,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\recurring_repository.dart": 1776576720.186543,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\savings_repository.dart": 1776576720.186543,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\signal_weight_repository.dart": 1777166359.6322749,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\transaction_repository.dart": 1776576720.186543,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\account_repository_impl.dart": 1776954214.9866774,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\budget_repository_impl.dart": 1776576720.186543,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\category_repository_impl.dart": 1776576720.186543,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\recurring_repository_impl.dart": 1776576720.203619,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\savings_repository_impl.dart": 1776576720.203619,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\transaction_repository_impl.dart": 1776576720.203619,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\deleted_items_screen.dart": 1776576720.203619,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\export_screen.dart": 1776735293.7190676,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\notifications_screen.dart": 1777243961.1584785,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\sms_training_export_screen.dart": 1776735293.7190676,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\tutorial_overlay.dart": 1776576720.2230616,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\welcome_screen.dart": 1776576720.2230616,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\accounts\\accounts_screen.dart": 1777170370.479154,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\budget\\budget_screen.dart": 1777169480.35641,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\chat_screen.dart": 1776576720.2347212,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\api_key_setup.dart": 1776576720.2347212,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\chat_components.dart": 1776576720.2347212,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\chat_input_bar.dart": 1776576720.2462425,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\chat_suggestions.dart": 1776576720.2531674,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\message_bubble.dart": 1776576720.2583542,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\transaction_tile.dart": 1776576720.2603703,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\typing_indicator.dart": 1776576720.2623863,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\help\\help_screen.dart": 1776576720.268434,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\home_screen.dart": 1776954238.868678,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\accounts_quick_view.dart": 1776954430.9606535,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\alerts_insights.dart": 1776954430.950313,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\balance_card.dart": 1776576720.2850478,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\budget_cards.dart": 1776576720.2850478,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\budget_overview_card.dart": 1776576720.2850478,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\budget_progress_page.dart": 1776579076.401622,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\carousel_arrow.dart": 1776576720.2850478,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_accounts_overview.dart": 1776579076.389131,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_components.dart": 1776576720.2850478,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_header.dart": 1776579068.3089569,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_recent_transactions.dart": 1776576720.307658,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_smart_insights.dart": 1776579076.389131,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_stats_row.dart": 1776576720.313718,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_transaction_item.dart": 1776576720.3203003,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\interactive_donut.dart": 1776579076.389131,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\monthly_summary_card.dart": 1776576720.3318489,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\net_worth_card.dart": 1776576720.3369484,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\quick_actions.dart": 1776576720.340671,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recent_card.dart": 1776576720.340671,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recent_transactions.dart": 1776576720.340671,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recent_transactions_quick.dart": 1776576720.3493834,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recurring_overview_card.dart": 1776576720.3514006,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\savings_overview_card.dart": 1776576720.3514006,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\spending_card.dart": 1776576720.3514006,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\spending_snapshot.dart": 1776576720.3514006,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\stats_grid.dart": 1776576720.3635252,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\stat_card.dart": 1776576720.3680232,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\three_column_layout.dart": 1776576720.3720171,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\top_bar.dart": 1776576720.3760424,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\intelligence_dashboard_screen.dart": 1777264025.4272623,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\intelligence_screens.dart": 1776576720.3847263,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\merchant_insights_screen.dart": 1777170428.3446572,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\recurring_patterns_screen.dart": 1777170442.6247158,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\transfer_pairs_screen.dart": 1776579068.3046405,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\profile_screen.dart": 1777260584.3514624,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\account_health_card.dart": 1776576720.4041793,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\backup_section.dart": 1776576720.4041793,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\data_management_section.dart": 1776576720.4183369,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\preferences_section.dart": 1776576720.4234166,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_components.dart": 1776576720.4234166,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_dialogs.dart": 1776576720.4234166,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_header.dart": 1776576720.4234166,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_hero_card.dart": 1776576720.4350028,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_section_card.dart": 1776576720.4377704,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_tile_row.dart": 1776576720.4452028,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\sms_monitoring_section.dart": 1776576720.446651,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\recurring\\recurring_screen.dart": 1777169496.095179,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\savings\\savings_screen.dart": 1776576720.458541,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\settings_screen.dart": 1776735293.7371914,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\ai_tab.dart": 1776576720.46849,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\appearance_section.dart": 1776576720.46849,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\backup_tab.dart": 1777260569.3245902,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\backup_widgets.dart": 1776576720.46849,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\preferences_tab.dart": 1777239863.3044696,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\settings_card.dart": 1776576720.492335,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\settings_components.dart": 1776576720.498488,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\settings_widgets.dart": 1776576720.5032575,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\shared\\shared.dart": 1776579068.302631,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\sms_review_screen.dart": 1776735293.7131696,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\transactions_screen.dart": 1777246448.8966117,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\transaction_detail_screen.dart": 1777297460.7291863,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\account_carousel.dart": 1776954430.9266438,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\account_chip.dart": 1776576720.5131185,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\intelligence_overview_card.dart": 1776576720.5190465,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transactions_components.dart": 1776576720.522046,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_card.dart": 1777262288.9931278,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_helpers.dart": 1776576720.524588,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_list.dart": 1776576720.524588,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_summary.dart": 1776576720.5336306,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\account_extraction_service.dart": 1776738505.937026,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\account_matching_service.dart": 1776576720.5391462,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\account_resolution_engine.dart": 1776576720.5452156,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\advanced_sms_parser.dart": 1776826254.3224294,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\api_server.dart": 1777005467.6162872,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\app_logger.dart": 1777239729.585889,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\auth_service.dart": 1776576720.553653,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\chat_parser.dart": 1777005374.9889655,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\confidence_scoring.dart": 1776576720.5576875,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\connectivity_service.dart": 1776576720.5617297,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\csv_export_service.dart": 1776576720.5637474,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\database_migration.dart": 1776576720.5657675,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\data_integrity_service.dart": 1777007604.0685704,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\deep_link_service.dart": 1776576720.5680559,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\entity_extraction_service.dart": 1777245579.5638041,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\excel_export_service.dart": 1776576720.5741239,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\groq_service.dart": 1776576720.5781791,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\image_cache_service.dart": 1776576720.5802116,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\json_export_service.dart": 1776576720.5822406,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\merchant_normalization_service.dart": 1777167136.1868958,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\merchant_normalizer.dart": 1776735293.743878,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\ml_model_manager.dart": 1777005374.9889655,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\ml_sms_classifier.dart": 1776735293.726761,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\navigation_state.dart": 1776576720.5894945,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\notification_manager.dart": 1776576720.5915108,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\notification_service.dart": 1777235003.918231,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\pdf_export_service.dart": 1776576720.5915108,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\pending_action_service.dart": 1776576720.5915108,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\privacy_guard.dart": 1776576720.600308,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\recurring_pattern_engine.dart": 1777240539.689272,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\recurring_scheduler.dart": 1777005375.0116327,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\refresh_notifier.dart": 1776576720.6122441,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\reporting_service.dart": 1776956711.83873,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\seed_data.dart": 1777005374.9904509,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_classification_service.dart": 1777244512.810938,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_classifier_service.dart": 1777231676.494924,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_correction_service.dart": 1777299692.336363,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_data_masker.dart": 1776735293.7176964,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_export_service.dart": 1776735293.7176964,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_intelligence_integration.dart": 1777176104.1835911,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_keyword_service.dart": 1776735714.5699375,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_pipeline_executor.dart": 1777299708.666283,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_reevaluation_service.dart": 1777299717.5799193,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_rule_engine.dart": 1776735293.743878,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_service.dart": 1777260545.0920472,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\sms_signature.dart": 1777299657.2336538,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\theme_service.dart": 1776576720.6322546,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\time_filter.dart": 1776576720.6342504,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\transaction_feedback_service.dart": 1777173306.217641,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\transfer_detection_engine.dart": 1776956206.9035604,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_ai_service.dart": 1776576720.6407197,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_auth_service.dart": 1776576720.642718,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_logger_service.dart": 1776576720.64373,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_recurring_scheduler.dart": 1776576720.6457398,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_theme_service.dart": 1776576720.6487217,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\theme\\app_color_scheme.dart": 1776576720.653721,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\theme\\app_theme.dart": 1776576720.6567352,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\theme\\category_colors.dart": 1776576720.6602106,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\utils\\calculation_helpers.dart": 1776576720.6632192,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\utils\\category_seeder.dart": 1776576720.6673832,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\utils\\performance_utils.dart": 1776576720.6709168,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\accounts_viewmodel.dart": 1776954238.868678,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\budget_viewmodel.dart": 1776576720.6769145,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\home_viewmodel.dart": 1776954238.8656907,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\recurring_viewmodel.dart": 1776576720.6808338,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\savings_viewmodel.dart": 1776576720.6846962,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\transactions_viewmodel.dart": 1776576720.6846962,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\animated_blob.dart": 1776576720.6846962,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\base_form_dialog.dart": 1776576720.695181,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\category_picker.dart": 1776576720.7013466,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\common_widgets.dart": 1776576720.7035413,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\confidence_badge.dart": 1776735293.7106788,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\confirmation_dialogs.dart": 1776576720.7035413,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\empty_states.dart": 1776576720.7035413,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\empty_state_widget.dart": 1776576720.7197297,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\error_boundary.dart": 1776576720.7257876,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\error_state_widget.dart": 1776576720.7298229,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\feature_hint.dart": 1776576720.736623,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\glass_card.dart": 1776576720.7429817,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\gradient_text.dart": 1776576720.7490067,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\loading_skeleton.dart": 1776576720.7542684,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\micro_interactions.dart": 1776576720.759294,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\navigable_page_view.dart": 1776576720.7644007,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\pagination.dart": 1776576720.770141,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\performance_settings.dart": 1776576720.77418,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\pull_to_refresh.dart": 1776576720.7803092,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\standard_buttons.dart": 1776576720.7868993,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\stats_card.dart": 1776576720.7919202,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\cards\\cards.dart": 1776576720.7969203,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\cards\\card_variants.dart": 1776576720.8028777,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\badge.dart": 1776579045.1900625,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\calendar_fab.dart": 1776576720.8138945,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\global_filter_button.dart": 1776576720.8295796,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\gradient_card.dart": 1776579045.1900625,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\icon_circle.dart": 1776579045.1900625,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\panel.dart": 1776579045.1900625,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\progress_bar.dart": 1776579045.1900625,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\screen_header.dart": 1776576720.846485,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\section_title.dart": 1776579045.1900625,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\speed_dial_fab.dart": 1776576720.8520064,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\time_filter_bar.dart": 1776576720.8577075,
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\ui_widgets.dart": 1776579045.1920712
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\build.gradle.kts": {
+    "mtime": 1775949250.2902,
+    "hash": "803fe22651fbe96ed401eb0b66a492d1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\gradlew": {
+    "mtime": 1775949250.9701352,
+    "hash": "7f1cd7eb3f75a1dc85cd37753972a6e2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\settings.gradle.kts": {
+    "mtime": 1775956143.4824433,
+    "hash": "d86b4ec0a4ed83f0e2255061523b3160"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\build.gradle.kts": {
+    "mtime": 1777216411.3213582,
+    "hash": "b87c56dc25054ab6da16b511c0cc705b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java": {
+    "mtime": 1776637244.3221753,
+    "hash": "119020a396bb2086dc5b44fd1b8b920a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\kotlin\\com\\pocketflow\\pocket_flow\\MainActivity.kt": {
+    "mtime": 1775949250.2871945,
+    "hash": "cbe566066cb75f2acf5fd6fe85d14298"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Flutter\\ephemeral\\flutter_lldb_helper.py": {
+    "mtime": 1777740932.0901623,
+    "hash": "98fc75412162af387e2e3461e4e58094"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\AppDelegate.swift": {
+    "mtime": 1775948909.979537,
+    "hash": "9e1de9c329a3fe4931876063de95132b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\GeneratedPluginRegistrant.h": {
+    "mtime": 1775950079.420223,
+    "hash": "decb9041b5e91a07e66f4664e5dac408"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\GeneratedPluginRegistrant.m": {
+    "mtime": 1776637244.3423839,
+    "hash": "27ff13217317475c1d65640e90219b72"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Runner-Bridging-Header.h": {
+    "mtime": 1775948910.01108,
+    "hash": "7ad7b5cea096132de13ba526b2b9efbe"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\SceneDelegate.swift": {
+    "mtime": 1775948910.029111,
+    "hash": "0c3e86af131f6a9e547c80b5ed058914"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\RunnerTests\\RunnerTests.swift": {
+    "mtime": 1775949250.5679405,
+    "hash": "24e5d095048eb86c30423f4e04b6e57b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\main.dart": {
+    "mtime": 1777843044.4162743,
+    "hash": "b273377556f437efbcaefe1046e04293"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\accessibility.dart": {
+    "mtime": 1776576720.068339,
+    "hash": "563f4d8e26ad37f50a3960563870d345"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\app_constants.dart": {
+    "mtime": 1776576720.0703554,
+    "hash": "48795242b489a91fbc6232ce6f80027f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\app_dependencies.dart": {
+    "mtime": 1777772814.2234178,
+    "hash": "96d62448ce51436f693654cfd162a7e4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\app_state.dart": {
+    "mtime": 1776576720.0703554,
+    "hash": "47902132d0d1b8be87e056aacd603150"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\color_extensions.dart": {
+    "mtime": 1776576720.0796454,
+    "hash": "a14f97c89c3c73033f506fbdf6732199"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\database_optimizer.dart": {
+    "mtime": 1776576720.0831807,
+    "hash": "5fe7303d56c300440a82165a74b41d40"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\debounce.dart": {
+    "mtime": 1776576720.0867858,
+    "hash": "a183a2d81c541dac8cf80bf84e67c2f3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\formatters.dart": {
+    "mtime": 1776576720.0888002,
+    "hash": "62be5bebb58b3adee744c682781a4a45"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\form_validation.dart": {
+    "mtime": 1776576720.0888002,
+    "hash": "1679c4978b9e29a9fcec0908ddc192c0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\haptic_feedback.dart": {
+    "mtime": 1776576720.09392,
+    "hash": "3667b41c4770dd98aceb224668b50b5c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\image_optimizer.dart": {
+    "mtime": 1776576720.09392,
+    "hash": "a9e2615dcd4c4f9242529f3ff86103ef"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\input_sanitizer.dart": {
+    "mtime": 1776576720.09392,
+    "hash": "f704fbf66a3dde696fbec81c4186c885"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\memoization.dart": {
+    "mtime": 1776576720.1034553,
+    "hash": "c07a7e8c0da9aff236e2ed4d56e6896b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\navigation_guard.dart": {
+    "mtime": 1776576720.1075,
+    "hash": "97f55b9ac19c1af0c4468a82f15f4485"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\retry_helper.dart": {
+    "mtime": 1776576720.1105247,
+    "hash": "1df2a09067a1901d1767614d043ce372"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\sanitization_rules.dart": {
+    "mtime": 1776576720.1125543,
+    "hash": "3974eca70e2b7f06756394d5fc419ec6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\state_persistence.dart": {
+    "mtime": 1776576720.114841,
+    "hash": "802c45fd214561e88ebdeda7938e0821"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\undo_manager.dart": {
+    "mtime": 1776576720.1189039,
+    "hash": "833df3f401dc4d7a4a1d40c2103c4c91"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\widget_optimizer.dart": {
+    "mtime": 1776576720.1213753,
+    "hash": "fccdf46e9375da9fa7790d11b5056f80"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database.dart": {
+    "mtime": 1777843044.4428236,
+    "hash": "38b21bf14b43e96109518bc3c895a0b1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_accounts.dart": {
+    "mtime": 1777819278.43944,
+    "hash": "d104e213a9c9ba716c36223805db0cdf"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_budgets.dart": {
+    "mtime": 1777819278.4414396,
+    "hash": "22b81a43c61204296e0a901044ba3708"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_categories.dart": {
+    "mtime": 1777819278.43944,
+    "hash": "f96f15b3176743d90931bc7c5bb22a20"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_execution_log.dart": {
+    "mtime": 1777819278.442439,
+    "hash": "f28cf15c64dbde5bb93eeec622d73306"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_migrations.dart": {
+    "mtime": 1777819278.4384382,
+    "hash": "350b62c06ae9b1f188b2f4e0ccdf9c09"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_schema.dart": {
+    "mtime": 1777819278.4384382,
+    "hash": "609ed87b6f9072b281069b8c9955145a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_transactions.dart": {
+    "mtime": 1777819278.4404387,
+    "hash": "ab6b403f194b46bbc06eaa7b40ee6316"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\migrations\\add_sms_corrections_table.sql": {
+    "mtime": 1776663312.7564435,
+    "hash": "8a528b09f27d80ca7c16599f59c67ea1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\seeds\\account_extraction_seed.dart": {
+    "mtime": 1776738372.7021298,
+    "hash": "d0cd750ffc830ef3ed34a45f44d7887f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\advanced_parser_example.dart": {
+    "mtime": 1777843044.4571168,
+    "hash": "084d07ea0470bdcfc0a5c5c947f28570"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\edit_transaction_with_blocking.dart": {
+    "mtime": 1777843044.4621575,
+    "hash": "2051dcc548a8744fde8f148e96c6440a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\hybrid_parser_usage.dart": {
+    "mtime": 1777843044.4655342,
+    "hash": "4b9e186e3269ce06496d68875b789906"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\refactored_widget_example.dart": {
+    "mtime": 1776576720.1269174,
+    "hash": "cf9c6ed98b3668c214f1d33885d68947"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\sms_integration_example.dart": {
+    "mtime": 1777843044.4700065,
+    "hash": "7f01366e3e3d37c7a49c1229514b92d1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\sms_rules_settings_screen.dart": {
+    "mtime": 1777843044.4749932,
+    "hash": "881d7d68be7daf7ea48dd493c282165f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\transaction_detail_with_feedback.dart": {
+    "mtime": 1777843044.478992,
+    "hash": "85d5647b4b1a628ab102d37b243fee8a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\account.dart": {
+    "mtime": 1777169562.8936577,
+    "hash": "1d1844782f7666a2baf97817bc10889e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\account_candidate.dart": {
+    "mtime": 1776576720.1311586,
+    "hash": "58a9ffbf435e8aa07c3d79c41ac7afd4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\app_notification.dart": {
+    "mtime": 1776576720.1343243,
+    "hash": "dd91d381a50f9b4e600d3dad5943ce8c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\budget.dart": {
+    "mtime": 1776576720.1373546,
+    "hash": "d0cad2d43801182aa232583bff7f2969"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\category.dart": {
+    "mtime": 1776576720.140679,
+    "hash": "e486382a41f3bf985d94097856b80fa0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\deletable_entity.dart": {
+    "mtime": 1776576720.1436708,
+    "hash": "f7fdf4bf82363f4d98159e0dcecf26a5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\export_models.dart": {
+    "mtime": 1777772814.2281437,
+    "hash": "41db6f3843442d98950154a95a7686cf"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\pending_action.dart": {
+    "mtime": 1776576720.1516788,
+    "hash": "c3b3a39507e08dfadcd3fc75033f4e12"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\recurring_pattern.dart": {
+    "mtime": 1776576720.1556776,
+    "hash": "aa2307b6b3643bd7b82fc9b4f590f572"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\recurring_transaction.dart": {
+    "mtime": 1777734754.9293869,
+    "hash": "cba7790dc18097eb1b7cd8aa8072ea38"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\savings_goal.dart": {
+    "mtime": 1777772814.2187102,
+    "hash": "bff7caadb2365e4a40cf24d2fcc0c24f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\time_range.dart": {
+    "mtime": 1776576720.1722493,
+    "hash": "979eb1bf128d27f8c76c74188b11bce7"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\transaction.dart": {
+    "mtime": 1777745841.444594,
+    "hash": "d7fb948d22be30463abc3f664be1d556"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\models\\transfer_pair.dart": {
+    "mtime": 1776576720.1752484,
+    "hash": "c376e624e57fc0916e98c73be12aa228"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\onboarding\\onboarding_analytics.dart": {
+    "mtime": 1777839183.838735,
+    "hash": "ce0b5d8a34d07cad25c8e4252c52818c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\onboarding\\onboarding_flow_controller.dart": {
+    "mtime": 1777839183.838735,
+    "hash": "aa4a9c327107c29db745c3aea5482729"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\onboarding\\onboarding_step.dart": {
+    "mtime": 1777839183.837292,
+    "hash": "5465d09d9ebf1194031f2436399c288e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\onboarding\\onboarding_storage.dart": {
+    "mtime": 1777839183.838735,
+    "hash": "fdba505f759a0efa58dfb214b33b4cba"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\onboarding\\onboarding_target.dart": {
+    "mtime": 1777839183.837292,
+    "hash": "865d370bff2b2c3c8ab839e54218c387"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\onboarding\\onboarding_target_registry.dart": {
+    "mtime": 1777839183.837292,
+    "hash": "574ebc0385ffcbbe6aee54be73b30934"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\account_repository.dart": {
+    "mtime": 1776576720.177344,
+    "hash": "39a41978cf974e568aa101ac32d54c27"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\budget_repository.dart": {
+    "mtime": 1776576720.177344,
+    "hash": "79b4803dcb6eb9250e34c12130817256"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\category_repository.dart": {
+    "mtime": 1776576720.177344,
+    "hash": "87e04c8cb8bc6282baa43cb538044db1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\recurring_repository.dart": {
+    "mtime": 1776576720.186543,
+    "hash": "74735c4d9934aecca57edbaaa8e14d9a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\savings_repository.dart": {
+    "mtime": 1777772814.2234178,
+    "hash": "ce6071aac539cf0aa2ff785b99f6c267"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\signal_weight_repository.dart": {
+    "mtime": 1777166359.6322749,
+    "hash": "ebcfbd37815f05ae62d84a6adbc52166"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\transaction_repository.dart": {
+    "mtime": 1776576720.186543,
+    "hash": "f15caddde53b611130d78cec869fcb63"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\account_repository_impl.dart": {
+    "mtime": 1777741968.478519,
+    "hash": "c2ebc54a42999eac5bb0a2263e3aeefd"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\budget_repository_impl.dart": {
+    "mtime": 1776576720.186543,
+    "hash": "1406307062b7dd56861177d486d67821"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\category_repository_impl.dart": {
+    "mtime": 1776576720.186543,
+    "hash": "4604aa8f447da3bc6f957269d5f72982"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\recurring_repository_impl.dart": {
+    "mtime": 1776576720.203619,
+    "hash": "24beec2dd7594a61f03586abe3699cb3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\savings_repository_impl.dart": {
+    "mtime": 1777772814.2234178,
+    "hash": "3ee54d6c81de7ba37460feeb1f926b38"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\repositories\\impl\\transaction_repository_impl.dart": {
+    "mtime": 1776576720.203619,
+    "hash": "98cca2350d1e42c77d040736c39c04a5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\deleted_items_screen.dart": {
+    "mtime": 1777772814.2306995,
+    "hash": "cbcb6a37b1a1c23ae095825900c82c38"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\export_screen.dart": {
+    "mtime": 1777843044.514912,
+    "hash": "f95bae87a869d360849cc7a707eede81"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\notifications_screen.dart": {
+    "mtime": 1777243961.1584785,
+    "hash": "f67c4c0e4375493d291abb3229e53c1f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\tutorial_overlay.dart": {
+    "mtime": 1777839183.83498,
+    "hash": "f6cc1ebdedac4ee08bcc09e2b4ddb751"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\welcome_screen.dart": {
+    "mtime": 1776576720.2230616,
+    "hash": "fcb9c311fb3d97b5c893abb3eb4df8c4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\accounts\\accounts_screen.dart": {
+    "mtime": 1777742633.6621625,
+    "hash": "eb9b1150f50ef50d4b84b2480eafb2a2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\accounts\\components\\accounts_section.dart": {
+    "mtime": 1777742506.3221858,
+    "hash": "2e23e04f0409d17dacba8742fb1d955c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\accounts\\components\\accounts_summary_card.dart": {
+    "mtime": 1777742494.2822838,
+    "hash": "0599b91a0aed83eebf5863959d04df68"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\accounts\\components\\account_form_sheet.dart": {
+    "mtime": 1777742528.5870893,
+    "hash": "fe08190abcde99119b193280a7044c6d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\accounts\\components\\account_transfer_sheet.dart": {
+    "mtime": 1777742545.4159493,
+    "hash": "53801c2b4b36432965162a430b028a59"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\accounts\\components\\account_type_style.dart": {
+    "mtime": 1777742484.7997842,
+    "hash": "7ac486c7faf304dd63b19f9120da90f0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\budget\\budget_screen.dart": {
+    "mtime": 1777169480.35641,
+    "hash": "bedc6333ba22778b41a2b53a753e866e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\chat_screen.dart": {
+    "mtime": 1777772814.234485,
+    "hash": "aa871a3aaedf28ac06c529a427f37cf0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\api_key_setup.dart": {
+    "mtime": 1776576720.2347212,
+    "hash": "032a80a322f44e3058be404a053cd34e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\chat_components.dart": {
+    "mtime": 1776576720.2347212,
+    "hash": "1775c0e8d060b57bfd235cca828a9eac"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\chat_input_bar.dart": {
+    "mtime": 1776576720.2462425,
+    "hash": "3fa221d41a72c8ac7b9828e2b6f0404f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\chat_suggestions.dart": {
+    "mtime": 1776576720.2531674,
+    "hash": "8a20e39d0e02f12d0d8666f5f594f42e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\message_bubble.dart": {
+    "mtime": 1776576720.2583542,
+    "hash": "8497046ac1d7aca9147d66074edd1d47"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\transaction_tile.dart": {
+    "mtime": 1776576720.2603703,
+    "hash": "b09e8b23caa103c553d2ba3edc9f4f0d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\chat\\components\\typing_indicator.dart": {
+    "mtime": 1776576720.2623863,
+    "hash": "ca62bb221a656a86f71336e3616b701b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\help\\help_screen.dart": {
+    "mtime": 1776576720.268434,
+    "hash": "d4b8c28a58fd7503fa6f1eab29b071fc"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\home_screen.dart": {
+    "mtime": 1777839183.838735,
+    "hash": "a5bd4558e843d28d8ec48d1193755473"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\accounts_quick_view.dart": {
+    "mtime": 1776954430.9606535,
+    "hash": "83c659ad9ed60624ab9daf2bbf0142a3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\alerts_insights.dart": {
+    "mtime": 1776954430.950313,
+    "hash": "0be29645de1338c153ea78d3964e4f76"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\balance_card.dart": {
+    "mtime": 1776576720.2850478,
+    "hash": "8421934e30baf76e04205bee3ef60f6b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\budget_cards.dart": {
+    "mtime": 1776576720.2850478,
+    "hash": "0afb17b57c34ab06ad309c060e3c77e7"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\budget_overview_card.dart": {
+    "mtime": 1776576720.2850478,
+    "hash": "a28d693c2011f8527c5c4615a220cbc5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\budget_progress_page.dart": {
+    "mtime": 1776579076.401622,
+    "hash": "d185a2cf286e368258dc853a236b638f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\carousel_arrow.dart": {
+    "mtime": 1776576720.2850478,
+    "hash": "c854fdfb8de1bfe487b320ab1d995f3b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_accounts_overview.dart": {
+    "mtime": 1776579076.389131,
+    "hash": "2126fe44ff3cf9f58ad3dd9e9f7160ed"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_components.dart": {
+    "mtime": 1776576720.2850478,
+    "hash": "acabe4ed80f92b94e43c6bd155b83f36"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_header.dart": {
+    "mtime": 1776579068.3089569,
+    "hash": "1efb4bc512c202aeee61e421f61e1ae0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_recent_transactions.dart": {
+    "mtime": 1776576720.307658,
+    "hash": "92ea4e549fac2a96d985f5fb9a241f29"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_smart_insights.dart": {
+    "mtime": 1777772814.2306995,
+    "hash": "287f1ea30920b5291a898baaadcd3008"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_stats_row.dart": {
+    "mtime": 1777772814.2293718,
+    "hash": "11b1cc3a3324ec383332fba5ae61fd55"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\home_transaction_item.dart": {
+    "mtime": 1776576720.3203003,
+    "hash": "c82309883a6d0ec9836acf3640bb4a1c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\interactive_donut.dart": {
+    "mtime": 1776579076.389131,
+    "hash": "670539110debcf5287298b0b9b2e8e55"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\monthly_summary_card.dart": {
+    "mtime": 1776576720.3318489,
+    "hash": "9a915dee60ae9e29083e76a619cbb4ca"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\net_worth_card.dart": {
+    "mtime": 1776576720.3369484,
+    "hash": "bf4cb72b19f6c7551ed5ccdc2340e5bb"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\quick_actions.dart": {
+    "mtime": 1776576720.340671,
+    "hash": "95d751d78c072d5872546593b9e5d393"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recent_card.dart": {
+    "mtime": 1776576720.340671,
+    "hash": "702aed49bb3daa4660a6faaa648a8e69"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recent_transactions.dart": {
+    "mtime": 1776576720.340671,
+    "hash": "742397889548de3dcc8eacdf56a5c89d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recent_transactions_quick.dart": {
+    "mtime": 1776576720.3493834,
+    "hash": "ea4958c646f9ea16ba94b78e511f6c47"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\recurring_overview_card.dart": {
+    "mtime": 1776576720.3514006,
+    "hash": "70a99f0bfea93ea660d56373feca97ec"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\savings_overview_card.dart": {
+    "mtime": 1777772814.2293718,
+    "hash": "e381f08b0a89fd25b3e8cbe5f17c16a1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\spending_card.dart": {
+    "mtime": 1776576720.3514006,
+    "hash": "fad56ffbf82675bdc5cab9352c77c9d2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\spending_snapshot.dart": {
+    "mtime": 1776576720.3514006,
+    "hash": "e4b8781204e5cc22217df94bc8437c4b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\stats_grid.dart": {
+    "mtime": 1776576720.3635252,
+    "hash": "82019a92cf5b39b09138ba99ebdff373"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\stat_card.dart": {
+    "mtime": 1776576720.3680232,
+    "hash": "7f9cf117c94c3c2eabbaed9e633eeb16"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\three_column_layout.dart": {
+    "mtime": 1776576720.3720171,
+    "hash": "6ca77787d34621322e5eadb4b2e80107"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\top_bar.dart": {
+    "mtime": 1776576720.3760424,
+    "hash": "ec15df1f3a62f908ff037367afbde69d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\intelligence_dashboard_screen.dart": {
+    "mtime": 1777843044.5698488,
+    "hash": "1a55f2d9934f4ecc5f0347c6fcc163f1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\intelligence_screens.dart": {
+    "mtime": 1776576720.3847263,
+    "hash": "ba9551e3ce433ea6fc20b268509993aa"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\merchant_insights_screen.dart": {
+    "mtime": 1777170428.3446572,
+    "hash": "b8c14493bc01eebe1b727a662198d74d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\recurring_patterns_screen.dart": {
+    "mtime": 1777170442.6247158,
+    "hash": "aea444f04eb6e85062933a87b7c41d04"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\transfer_pairs_screen.dart": {
+    "mtime": 1776579068.3046405,
+    "hash": "130e34286aac38e7c3a133c911035136"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\profile_screen.dart": {
+    "mtime": 1777843044.5798643,
+    "hash": "fd5ead9a5e8894c0f1008b78b3cadefd"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\account_health_card.dart": {
+    "mtime": 1776576720.4041793,
+    "hash": "71f47a0d4d3e0b5574e24e78d4dab98b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\backup_section.dart": {
+    "mtime": 1776576720.4041793,
+    "hash": "8040fe2f5ed912dc94965a770d8e49c6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\data_management_section.dart": {
+    "mtime": 1776576720.4183369,
+    "hash": "e1f26fa7dbe127d9bcb5da4a3ce59bb4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\preferences_section.dart": {
+    "mtime": 1776576720.4234166,
+    "hash": "5e3bf021915d34c122da6820d40ddd5d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_components.dart": {
+    "mtime": 1776576720.4234166,
+    "hash": "286e9b08aca51e465a3d6cda4e3ee925"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_dialogs.dart": {
+    "mtime": 1776576720.4234166,
+    "hash": "eac8bea6b37dd10cb11c51ee20e650fc"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_header.dart": {
+    "mtime": 1776576720.4234166,
+    "hash": "1e98fb1de393776288eeb04c86acecb1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_hero_card.dart": {
+    "mtime": 1776576720.4350028,
+    "hash": "d8a36e7248ffbb3d51cdb3e099e15b55"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_section_card.dart": {
+    "mtime": 1776576720.4377704,
+    "hash": "8dde752bce8ff2c9fbf3fcf4fcb44b75"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_tile_row.dart": {
+    "mtime": 1776576720.4452028,
+    "hash": "c8f0c0e6110ff2f0815bea7d628703ba"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\recurring\\recurring_screen.dart": {
+    "mtime": 1777772814.2391534,
+    "hash": "312c0fed5b1ce2e9252968d99886f1d2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\recurring\\components\\recurring_form.dart": {
+    "mtime": 1777839183.8362749,
+    "hash": "a3afb47783c9831477e5cd165cffd268"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\recurring\\components\\recurring_history_sheet.dart": {
+    "mtime": 1777732879.3305166,
+    "hash": "81274554460c0d67982cc43e0b6e1218"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\recurring\\components\\recurring_item_tile.dart": {
+    "mtime": 1777772814.234485,
+    "hash": "d90bacb63dcc719016da3aebb778e238"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\recurring\\components\\recurring_summary_card.dart": {
+    "mtime": 1777737753.4726353,
+    "hash": "154e1a1046f1ace5f50f3cfbaab73793"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\savings\\savings_screen.dart": {
+    "mtime": 1777772814.2187102,
+    "hash": "ed733a086d63778a0df207389abec67a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\savings\\components\\goals_section.dart": {
+    "mtime": 1777818720.683625,
+    "hash": "1bbc7be7e0127c4a243425eae1989a95"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\savings\\components\\goals_summary_card.dart": {
+    "mtime": 1777818720.6878018,
+    "hash": "d570081d40d4d543eeacbdc658f33dc0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\savings\\components\\goal_item.dart": {
+    "mtime": 1777818720.6920142,
+    "hash": "1cf98f88f69bc7407831bf300373c3f9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\settings_screen.dart": {
+    "mtime": 1776735293.7371914,
+    "hash": "bd94d4470ece974c0f33dc042f4aaf2e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\ai_tab.dart": {
+    "mtime": 1776576720.46849,
+    "hash": "8b005acaad9ed36ba4aa28762eba835a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\appearance_section.dart": {
+    "mtime": 1776576720.46849,
+    "hash": "929109729bd131a9899304758daea023"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\backup_tab.dart": {
+    "mtime": 1777843044.6087792,
+    "hash": "08cdda2cbfb2fb11400c7c9fa7c856f9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\backup_widgets.dart": {
+    "mtime": 1776576720.46849,
+    "hash": "24ddee8296db743c5984b82658be19f9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\preferences_tab.dart": {
+    "mtime": 1777843044.6146336,
+    "hash": "ffadf538962f47a367f6df423c521a2a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\settings_card.dart": {
+    "mtime": 1776576720.492335,
+    "hash": "7d956f2fb5b2debffd8a758b48303eb9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\settings_components.dart": {
+    "mtime": 1776576720.498488,
+    "hash": "e3f6288ae02fb684fef163db1e89849d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\settings\\components\\settings_widgets.dart": {
+    "mtime": 1776576720.5032575,
+    "hash": "36c66a729bddcdc3687ebd8bf1bf3d9f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\shared\\shared.dart": {
+    "mtime": 1776579068.302631,
+    "hash": "52641be9f855231bda641fe64efe402c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\transactions_screen.dart": {
+    "mtime": 1777843044.6248748,
+    "hash": "623d49c154e0103b924543a84467152c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\transaction_detail_screen.dart": {
+    "mtime": 1777843044.6344564,
+    "hash": "6a1109009bf2651ba601f3b18be765c1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\account_carousel.dart": {
+    "mtime": 1776954430.9266438,
+    "hash": "12f2727259da02658f0e8686759167ec"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\account_chip.dart": {
+    "mtime": 1776576720.5131185,
+    "hash": "5f17d884ec8be85a1a741cce36c619f8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\intelligence_overview_card.dart": {
+    "mtime": 1776576720.5190465,
+    "hash": "385fa767f5723716f7b267bc61a5cb93"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transactions_components.dart": {
+    "mtime": 1776576720.522046,
+    "hash": "fd50c67625530e89ee2b094f788b0b2b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_card.dart": {
+    "mtime": 1777737760.9509761,
+    "hash": "601cc7afca1b435126f9ec9a422938a5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_helpers.dart": {
+    "mtime": 1776576720.524588,
+    "hash": "215b341c0117a6d1ad5889a0b049afa4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_list.dart": {
+    "mtime": 1776576720.524588,
+    "hash": "225befd1b7526da54a4eeba510ca6ea8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transaction_summary.dart": {
+    "mtime": 1776576720.5336306,
+    "hash": "aa2d212bd09b028007e80f53516c4442"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\account_matching_service.dart": {
+    "mtime": 1776576720.5391462,
+    "hash": "676b55da07a8e57993a3c5fc1018c550"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\api_server.dart": {
+    "mtime": 1777772814.2254472,
+    "hash": "8b85442e91a864541bc79cc78cf0c792"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\app_logger.dart": {
+    "mtime": 1777239729.585889,
+    "hash": "7147c1a8daf4a5c59c616004461b14c4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\auth_service.dart": {
+    "mtime": 1777839183.8397522,
+    "hash": "676015bb5e916b3f54b1d6ab3b065f48"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\chat_parser.dart": {
+    "mtime": 1777772814.2254472,
+    "hash": "cf006bb535ce258a2ad409bed0c1c9a0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\confidence_scoring.dart": {
+    "mtime": 1776576720.5576875,
+    "hash": "c432bc53994dba3105d40703fbc621c5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\connectivity_service.dart": {
+    "mtime": 1776576720.5617297,
+    "hash": "e8e9695338b6f081ac0583b2327c8f45"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\csv_export_service.dart": {
+    "mtime": 1776576720.5637474,
+    "hash": "2cf178f4cea85ecda54d91c5ad5a136a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\database_migration.dart": {
+    "mtime": 1776576720.5657675,
+    "hash": "f482487eef9cd8126505cbde54974a8c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\data_integrity_service.dart": {
+    "mtime": 1777007604.0685704,
+    "hash": "1b87bb8536f0e3e1ef70c40b8b0cfc0c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\deep_link_service.dart": {
+    "mtime": 1776576720.5680559,
+    "hash": "066084631af810477e64bf4b13cb0a3c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\excel_export_service.dart": {
+    "mtime": 1777772814.2234178,
+    "hash": "dc94b8c5850d10abbf6fed4819bd5dad"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\groq_service.dart": {
+    "mtime": 1777772814.2293718,
+    "hash": "8f88d3859778fd0033f5871192f01120"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\image_cache_service.dart": {
+    "mtime": 1776576720.5802116,
+    "hash": "72ec285b47230411f3322292e119a0b1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\json_export_service.dart": {
+    "mtime": 1777772814.2234178,
+    "hash": "a95f8a894ff66bb0d101b40421a18a92"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\merchant_normalization_service.dart": {
+    "mtime": 1777167136.1868958,
+    "hash": "b5bee948a1180ae0f9d49e1c12f009bf"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\merchant_normalizer.dart": {
+    "mtime": 1776735293.743878,
+    "hash": "6c3674dbc7defd881d2293a3870a0c6a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\navigation_state.dart": {
+    "mtime": 1776576720.5894945,
+    "hash": "905283c6333bb7aeb73652e6d9b912fa"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\notification_manager.dart": {
+    "mtime": 1776576720.5915108,
+    "hash": "4d877b98ab11c1323ffb6eb3dea1678b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\notification_service.dart": {
+    "mtime": 1777235003.918231,
+    "hash": "1316938aaf847b371d3ccf5ad2a14fd9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\pdf_export_service.dart": {
+    "mtime": 1777772814.2281437,
+    "hash": "2d064103802ff8daa24da72efee33cbd"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\pending_action_service.dart": {
+    "mtime": 1776576720.5915108,
+    "hash": "089d60e01ac153b967e54a6762258494"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\privacy_guard.dart": {
+    "mtime": 1776576720.600308,
+    "hash": "05af3e47f3c80fc4f8411c9b38fe17c2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\recurring_pattern_engine.dart": {
+    "mtime": 1777240539.689272,
+    "hash": "9a9cba16f0969dbc4ba80f34b01f6a37"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\recurring_scheduler.dart": {
+    "mtime": 1777839183.8397522,
+    "hash": "bf1e5e0fcef71f62b7f56dc334ec754a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\refresh_notifier.dart": {
+    "mtime": 1776576720.6122441,
+    "hash": "dc8e8beb1c4c36c067b59fc7df0abbb1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\reporting_service.dart": {
+    "mtime": 1776956711.83873,
+    "hash": "2b7fe73f3c3ff986cd110767415d1653"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\seed_data.dart": {
+    "mtime": 1777772814.2267885,
+    "hash": "e91a372ea14af7662c3be547779d76d7"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\theme_service.dart": {
+    "mtime": 1776576720.6322546,
+    "hash": "c5bd85ca07b97a65f58d6ab093971747"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\time_filter.dart": {
+    "mtime": 1776576720.6342504,
+    "hash": "a81c3bdffd409e54320529f8f0a2baf5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\transfer_detection_engine.dart": {
+    "mtime": 1776956206.9035604,
+    "hash": "6516ffa1ca3e270faf42de76dfa4dd39"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\unified_rule_engine.dart": {
+    "mtime": 1777839183.8397522,
+    "hash": "72ba6e06445ed15e5683e77319d24cc8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_ai_service.dart": {
+    "mtime": 1776576720.6407197,
+    "hash": "76255e386d7bd6d3ecb6bbbe236d0a57"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_auth_service.dart": {
+    "mtime": 1776576720.642718,
+    "hash": "49fcf49da577d1c7ce02313cb6370097"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_logger_service.dart": {
+    "mtime": 1776576720.64373,
+    "hash": "26c02680cb52820f76df6b7b2d7af82e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_recurring_scheduler.dart": {
+    "mtime": 1776576720.6457398,
+    "hash": "c7f557c6a6a1034a6a3e0422a948e507"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\interfaces\\i_theme_service.dart": {
+    "mtime": 1776576720.6487217,
+    "hash": "08dea0cce429dc42e3e7a24e654a8603"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\account\\sms_account_resolver.dart": {
+    "mtime": 1777843044.6866424,
+    "hash": "64e06f970b3bdf0a81c3ece214b86617"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\debug\\sms_scan_debugger.dart": {
+    "mtime": 1777843044.6914563,
+    "hash": "aeeffe9c5e9816b81c84c6d78b57129d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\export\\sms_export_service.dart": {
+    "mtime": 1777843044.6948712,
+    "hash": "2b22d28020ad4c2c0b7101b2105a3526"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\feedback\\sms_feedback_service.dart": {
+    "mtime": 1777561176.581164,
+    "hash": "847a83b7283f5f8747a163b4d25039b5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_data_masker.dart": {
+    "mtime": 1776735293.7176964,
+    "hash": "ea31db98a8bbfc07c664b071b69e67a0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_keywords_seed.dart": {
+    "mtime": 1777174520.3365967,
+    "hash": "3363703fdfb16b7903b295d05ac0cced"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_keyword_service.dart": {
+    "mtime": 1776735714.5699375,
+    "hash": "7b1436a18586256b7f8888229399149d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_service.dart": {
+    "mtime": 1777843044.7043767,
+    "hash": "37b42573a3b96b6dd0f83b4f82eba447"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_signature.dart": {
+    "mtime": 1777299657.2336538,
+    "hash": "da7cf530728e1c54bba3a47b7dfcacd2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\models\\sms_template.dart": {
+    "mtime": 1776576720.1652453,
+    "hash": "2a6338435163e22650858ea5b11b449b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\models\\sms_transaction_result.dart": {
+    "mtime": 1776735293.7087216,
+    "hash": "6946a701d22a3ef07081767f4ff7f371"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\models\\sms_types.dart": {
+    "mtime": 1776576720.168248,
+    "hash": "36b6ae546f1e769c5c2199dfdcd0b826"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_account_extractor.dart": {
+    "mtime": 1777843044.7131734,
+    "hash": "9a543e87cc3ae52b36de08318e784c17"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_advanced_parser.dart": {
+    "mtime": 1777843044.7185726,
+    "hash": "8bafea1245d571422464138875090756"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_classification_service.dart": {
+    "mtime": 1777843044.7225838,
+    "hash": "2c2e85f9974c65f6037a0e32cca382a3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_entity_extractor.dart": {
+    "mtime": 1777843044.726572,
+    "hash": "fa88868966066b46d94043c4f8c34344"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\pipeline\\sms_intelligence_integration.dart": {
+    "mtime": 1777843044.730577,
+    "hash": "3f60c103bf8c075a2061a35efc2be887"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\pipeline\\sms_pipeline_executor.dart": {
+    "mtime": 1777843044.7336166,
+    "hash": "c456f4961f1bb592b3ea934fa292b69b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\rules\\sms_correction_service.dart": {
+    "mtime": 1777843044.7386754,
+    "hash": "8a7ac45a861f76d6fc7522c26f300bd6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\rules\\sms_reevaluation_service.dart": {
+    "mtime": 1777843044.7420783,
+    "hash": "f1d5535f89842a065413b41749fabb2c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\rules\\sms_rule_engine.dart": {
+    "mtime": 1776735293.743878,
+    "hash": "4cb7c86c92a4e2c86a92027c35d4612c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\screens\\sms_review_screen.dart": {
+    "mtime": 1776735293.7131696,
+    "hash": "b1b81266c904c5d57ed3f97a5bdb8229"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\screens\\sms_training_export_screen.dart": {
+    "mtime": 1777843044.7495203,
+    "hash": "74bdb9bf4a8712111f0c5efef68506b9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\screens\\components\\sms_monitoring_section.dart": {
+    "mtime": 1777843044.7531102,
+    "hash": "92f9a437d4457cb33663424a7cee05b1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\_ml_deprecated\\sms_classifier_service.dart": {
+    "mtime": 1777732144.4877572,
+    "hash": "2302cfbc28004a43a7570151b4d93778"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\_ml_deprecated\\sms_ml_classifier.dart": {
+    "mtime": 1777843044.757107,
+    "hash": "1b143f25a82c10816810e9b5af763bd7"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\_ml_deprecated\\sms_ml_model_manager.dart": {
+    "mtime": 1777005374.9889655,
+    "hash": "a181e09375e92cafd6e3a047a5ff74b8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\theme\\app_color_scheme.dart": {
+    "mtime": 1776576720.653721,
+    "hash": "fdacdb79f5cf343b75258b8969bc1a70"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\theme\\app_theme.dart": {
+    "mtime": 1776576720.6567352,
+    "hash": "5884e5500ae4a81ec9448222f3aa956c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\theme\\category_colors.dart": {
+    "mtime": 1776576720.6602106,
+    "hash": "66f0043c66b1f7b5e746cd317a90b57a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\utils\\calculation_helpers.dart": {
+    "mtime": 1776576720.6632192,
+    "hash": "e1d51c774fbea36ef23d37a6abb77742"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\utils\\category_seeder.dart": {
+    "mtime": 1776576720.6673832,
+    "hash": "4814b557bd2fb8e68fc03ff6c0f8e355"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\utils\\performance_utils.dart": {
+    "mtime": 1776576720.6709168,
+    "hash": "b182236686a014d721b5a49f997b5710"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\accounts_screen_viewmodel.dart": {
+    "mtime": 1777742561.407571,
+    "hash": "8bccbe7713e8150a1a39c539a9b6bb9b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\accounts_viewmodel.dart": {
+    "mtime": 1776954238.868678,
+    "hash": "b1f40415edf499186608e727cddbd0f8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\budget_viewmodel.dart": {
+    "mtime": 1776576720.6769145,
+    "hash": "506554aebeb311b33a6501a823a23948"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\home_viewmodel.dart": {
+    "mtime": 1776954238.8656907,
+    "hash": "086bd91066d9af720614932d68d18553"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\recurring_viewmodel.dart": {
+    "mtime": 1777772814.2273142,
+    "hash": "10d6f00449f672f20a7424ab27619ad4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\savings_viewmodel.dart": {
+    "mtime": 1777772814.2198336,
+    "hash": "8f74402311f43ab0ad2fe01b506e98f1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\viewmodels\\transactions_viewmodel.dart": {
+    "mtime": 1776576720.6846962,
+    "hash": "e17800703632be9803f592b655e9bb6f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\animated_blob.dart": {
+    "mtime": 1776576720.6846962,
+    "hash": "8ff1e6fb094b7460b2288fb6c551ed57"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\base_form_dialog.dart": {
+    "mtime": 1776576720.695181,
+    "hash": "6f4b5eb17a7896333d63108fe87c04da"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\category_picker.dart": {
+    "mtime": 1777745032.1869574,
+    "hash": "3118d46f1ef32ddb4f0ab8d6e73cbcd3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\common_widgets.dart": {
+    "mtime": 1776576720.7035413,
+    "hash": "98982eb54092d90700d02400f3c1f8e6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\confidence_badge.dart": {
+    "mtime": 1776735293.7106788,
+    "hash": "59f189aa157b983e229a2f234ed51c46"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\confirmation_dialogs.dart": {
+    "mtime": 1776576720.7035413,
+    "hash": "1630b97963a009e7d3ff2ef64fd91bf4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\empty_states.dart": {
+    "mtime": 1777772814.2223313,
+    "hash": "98fa1a36ea16840562a02a5cb02ac121"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\empty_state_widget.dart": {
+    "mtime": 1776576720.7197297,
+    "hash": "9cf3c6987945fc7a2328b5a26b7a9206"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\error_boundary.dart": {
+    "mtime": 1776576720.7257876,
+    "hash": "c08d8f4b716b75a95325a13587d276d3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\error_state_widget.dart": {
+    "mtime": 1776576720.7298229,
+    "hash": "eac12a8cfa6fa6c115a9da21fdc28d1d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\feature_hint.dart": {
+    "mtime": 1776576720.736623,
+    "hash": "ec85f17e569eab0793a4d5ae9c040349"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\glass_card.dart": {
+    "mtime": 1776576720.7429817,
+    "hash": "e259612d89df3bf0e2c5bbb228c5c78e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\gradient_text.dart": {
+    "mtime": 1776576720.7490067,
+    "hash": "e8508905380634f8ec4ef15f5b0e9e51"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\loading_skeleton.dart": {
+    "mtime": 1776576720.7542684,
+    "hash": "055b56dc85bb0f05792a0a010eeda0d2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\micro_interactions.dart": {
+    "mtime": 1776576720.759294,
+    "hash": "abc5199e5afc66c2eff83ad4fa11fd2c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\navigable_page_view.dart": {
+    "mtime": 1776576720.7644007,
+    "hash": "1fe10bcf9d16d7f8f3101e2db6f27d96"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\pagination.dart": {
+    "mtime": 1776576720.770141,
+    "hash": "5b1c69f962acd3f532d6813e9dc75241"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\performance_settings.dart": {
+    "mtime": 1776576720.77418,
+    "hash": "87272c80bb718b68cc556b78e48d9dfe"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\pull_to_refresh.dart": {
+    "mtime": 1776576720.7803092,
+    "hash": "96db70265299577013743174ad15a5e8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\standard_buttons.dart": {
+    "mtime": 1776576720.7868993,
+    "hash": "80e5072d41240ab55ba8189dd250fcf4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\stats_card.dart": {
+    "mtime": 1776576720.7919202,
+    "hash": "d9f8c8b0eb04b951af2d68ab237a571f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\cards\\cards.dart": {
+    "mtime": 1776576720.7969203,
+    "hash": "0b0bbbcfc90e8db07fc3fc93189b58eb"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\cards\\card_variants.dart": {
+    "mtime": 1776576720.8028777,
+    "hash": "3f1135bc75837f561c78ff5319be1b15"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\badge.dart": {
+    "mtime": 1776579045.1900625,
+    "hash": "dd0dd84082a3e6ac44648ad05b6f7aa7"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\calendar_fab.dart": {
+    "mtime": 1776576720.8138945,
+    "hash": "dcfa97d1095fd972ac2cf96e2af54c7b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\global_filter_button.dart": {
+    "mtime": 1776576720.8295796,
+    "hash": "5ef55ab29220118c91b6b6f5b2663fbe"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\gradient_card.dart": {
+    "mtime": 1776579045.1900625,
+    "hash": "3902961f5d41841c2c77484ff4068656"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\icon_circle.dart": {
+    "mtime": 1776579045.1900625,
+    "hash": "134ac1c1dabf6c513edbe99f74a0a10f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\panel.dart": {
+    "mtime": 1776579045.1900625,
+    "hash": "546d12c3a83a403321e5b22b2fc375b0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\progress_bar.dart": {
+    "mtime": 1776579045.1900625,
+    "hash": "146db9dec7dfc92e8e983d2196443139"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\screen_header.dart": {
+    "mtime": 1776576720.846485,
+    "hash": "6a775aae9bb6197c1bd774341b302abc"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\section_title.dart": {
+    "mtime": 1776579045.1900625,
+    "hash": "b2cc75ffa1795fdf823ffdac37e77f4c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\speed_dial_fab.dart": {
+    "mtime": 1776576720.8520064,
+    "hash": "603167a27accfe1315a41c8e5c93b880"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\time_filter_bar.dart": {
+    "mtime": 1776576720.8577075,
+    "hash": "b3d79cd805aa7befa185bcc55d039579"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\widgets\\ui\\ui_widgets.dart": {
+    "mtime": 1776579045.1920712,
+    "hash": "1ce35a34338886d96bce73c6e20138ef"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\flutter\\generated_plugin_registrant.cc": {
+    "mtime": 1776637244.327217,
+    "hash": "04c4bf361e7b5a78a8f256cfda0a0d69"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\flutter\\generated_plugin_registrant.h": {
+    "mtime": 1775950079.3941774,
+    "hash": "d295462c9da9f7fef22dc86c34492318"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\runner\\main.cc": {
+    "mtime": 1775948910.6038067,
+    "hash": "539395bcd63dba20afed0838d136189f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\runner\\my_application.cc": {
+    "mtime": 1775949250.5886154,
+    "hash": "3b893ceefb3fc7618737ba9070a90b3b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\runner\\my_application.h": {
+    "mtime": 1775948910.6328914,
+    "hash": "ffa1a7c0a2ad45a2c14a921596516ff8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Flutter\\GeneratedPluginRegistrant.swift": {
+    "mtime": 1776637244.3454566,
+    "hash": "93fa7f4850bb6920843b1653c8a1859c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\AppDelegate.swift": {
+    "mtime": 1775948910.7015097,
+    "hash": "4b52e0b89ebfef9baf45b04548c463d6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\MainFlutterWindow.swift": {
+    "mtime": 1775948910.7376318,
+    "hash": "93c22dae2d93f3dc1402e121901f582b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\RunnerTests\\RunnerTests.swift": {
+    "mtime": 1775949250.714662,
+    "hash": "8059f5d27a19c556eeafb49b3f9b7bdd"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\account_extraction_analysis.dart": {
+    "mtime": 1777843044.8074086,
+    "hash": "127628f1a281982b10f4234706b2e308"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\advanced_sms_parser_test.dart": {
+    "mtime": 1777843044.8114014,
+    "hash": "4ec119ca62672af32034fc201ec7362a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\analyze_sms_patterns.py": {
+    "mtime": 1776735293.7211833,
+    "hash": "5a7af59a13a645eb1cc4d87cfa4e0308"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\balance_notifications_comprehensive_test.dart": {
+    "mtime": 1777843044.8154013,
+    "hash": "5ae8d30d970176272a64051e9b277804"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\balance_notification_test.dart": {
+    "mtime": 1777843044.8203247,
+    "hash": "81fb48af491ca7c6efb19394cb761baa"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\bill_statement_test.dart": {
+    "mtime": 1777843044.8253062,
+    "hash": "53bd43131d4a7b020b1f26494f1210ab"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\citi_balance_alert_test.dart": {
+    "mtime": 1777843044.8293016,
+    "hash": "20b65ebd7c91300ba48d02cc50251d8a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\convert_to_tflite.py": {
+    "mtime": 1776825438.227154,
+    "hash": "cbb25e55ec0f63ccbfcc9eed879aac7c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\debug_account_extraction.dart": {
+    "mtime": 1777843044.8327637,
+    "hash": "7fa2c7a9831b164903be7814fd234737"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\entity_extraction_service_test.dart": {
+    "mtime": 1777843044.8372352,
+    "hash": "5ef67d1d6013101744f1db8b6ec2a3a1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\extract_keywords_for_training.py": {
+    "mtime": 1776735293.7386308,
+    "hash": "db370c1e5ce1834f37a09b13cb31943c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\generate_extraction_training_data.py": {
+    "mtime": 1776823428.9139621,
+    "hash": "3b57ae6cfe299771036a741115ec4da0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\generate_synthetic_sms.py": {
+    "mtime": 1776735293.7221022,
+    "hash": "46cd24eb4b876daffa58f0d6c372e4d7"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\merchant_normalization_service_test.dart": {
+    "mtime": 1777167181.2216315,
+    "hash": "9b39a75325beb2e7c56dd801dd41e301"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\merge_corrections.py": {
+    "mtime": 1776663312.758443,
+    "hash": "e689c0606800958965a64cc5db8d70b4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\prepare_training_data.py": {
+    "mtime": 1777175357.6521819,
+    "hash": "bd30e4a3068d77a93996922fef253327"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\profile_signin_test.dart": {
+    "mtime": 1776562409.6989625,
+    "hash": "c4174361a003298cfabe79aa58dc8d2f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\rule_based_parser_verification_test.dart": {
+    "mtime": 1777843044.8455696,
+    "hash": "48a565cbcb5e9f4bb60121f6d5b31dae"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\setup_continuous_learning.py": {
+    "mtime": 1776735293.7386308,
+    "hash": "883c9a74887d6243f8027da5c781f517"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\signal_weight_migration_test.dart": {
+    "mtime": 1777166130.6042345,
+    "hash": "f98f9be9ccf0ecd4fc435c9c77bdc570"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\signal_weight_repository_test.dart": {
+    "mtime": 1777166875.4095168,
+    "hash": "b61966262160544b6701c8e9a04adbd5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_dataset_validator_test.dart": {
+    "mtime": 1776735293.747801,
+    "hash": "599c9c7d5f682ea3aae8facc6b6fa756"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_engine_comprehensive_test.dart": {
+    "mtime": 1777843044.8571026,
+    "hash": "ffc2262f7c3c007be5ba4d2512489f7e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_export_examples_test.dart": {
+    "mtime": 1777843044.8615203,
+    "hash": "bc9cd382effb38282c2972c2c5b7f79e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_masking_test.dart": {
+    "mtime": 1777843044.8653035,
+    "hash": "8899d0fa223af7633ed1abc2d92f3950"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_pipeline_executor_test.dart": {
+    "mtime": 1777843044.8703651,
+    "hash": "4d299a73271fa529f4f5292e233ef0c8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_transfer_detection_test.dart": {
+    "mtime": 1776735293.7371914,
+    "hash": "11a427696a8f3d104e0b936c1abb2465"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_capital_one_message.dart": {
+    "mtime": 1777843044.8773687,
+    "hash": "f548dd8f74fbe737b325f6a15700936f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_citi_message.dart": {
+    "mtime": 1777843044.8818128,
+    "hash": "1ec75abe8b444ff5b79ff1aae9802f06"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_sms_accuracy.dart": {
+    "mtime": 1777843044.895547,
+    "hash": "95a78b2a1a2ef2d23c29509cd798bd70"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_tflite_model.py": {
+    "mtime": 1776735293.726761,
+    "hash": "b4f0881a0f778f41b04982f042d7bc8f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_ucdavis_message.dart": {
+    "mtime": 1777843044.9005752,
+    "hash": "e4137d3f3c5a72da49b8647d8815b85c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_user_sms.dart": {
+    "mtime": 1777843044.9057105,
+    "hash": "e8066182203dbf8525bffa8479d4af59"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\train_sms_classifier.py": {
+    "mtime": 1777217347.958707,
+    "hash": "ef44a8b0cbd585f2571bfec111160b1b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\train_sms_ner_model.py": {
+    "mtime": 1776824902.9352806,
+    "hash": "cb684b3a9a1af414dd6ed3f3af6a5421"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\transaction_feedback_service_test.dart": {
+    "mtime": 1777843044.9123812,
+    "hash": "3f5b0444469f6d0805e08b29fa26c047"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\validate_parser.py": {
+    "mtime": 1776735293.7211833,
+    "hash": "5f42888f6d59f72504daddd6f7f1c9a2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\widget_test.dart": {
+    "mtime": 1775952799.9429793,
+    "hash": "adb845c22f50091a094adbb37965f6c6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\add_transfer_labels.py": {
+    "mtime": 1776830272.0724983,
+    "hash": "1514556f316503b397b1d1762501fcc9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\check_data_leakage.py": {
+    "mtime": 1776953049.1441467,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\create_smoke_dataset.py": {
+    "mtime": 1776953049.3567486,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\data_cleaning_agent.py": {
+    "mtime": 1776953049.6240063,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\dedup_and_resplit.py": {
+    "mtime": 1776953049.7487183,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\format_training_data.py": {
+    "mtime": 1776828063.0716548,
+    "hash": "250006728798e5ceb23b86aeb74f1ee8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\generate_improved_negatives.py": {
+    "mtime": 1776749398.179714,
+    "hash": "207acdd574f3f78374fdf140b385656a"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\generate_sms_training.py": {
+    "mtime": 1776953050.0514512,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\prepare_classifier_dataset.py": {
+    "mtime": 1776953050.0739865,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\reinstall.ps1": {
+    "mtime": 1777839183.837292,
+    "hash": "fa2b4c6000bfaa6d27a0fe16c4e6a668"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\sample_non_financial.py": {
+    "mtime": 1776953050.304641,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\smoke_train.py": {
+    "mtime": 1776953050.3875394,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\train_sms_extractor.py": {
+    "mtime": 1776953050.4908457,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\validate_dataset.py": {
+    "mtime": 1776953050.51468,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\flutter\\generated_plugin_registrant.cc": {
+    "mtime": 1776637244.3352668,
+    "hash": "4033d59c284cdc39dab9d4293b6e9820"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\flutter\\generated_plugin_registrant.h": {
+    "mtime": 1775950079.4081757,
+    "hash": "0ea33875f9f8e118f9c2ded03e2e2835"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\flutter_window.cpp": {
+    "mtime": 1775948911.2321026,
+    "hash": "2f463f9b7da67a2d692a012f9ea85e0c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\flutter_window.h": {
+    "mtime": 1775948911.2380652,
+    "hash": "7defcc89d4a26d56e801241d624d48fb"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\main.cpp": {
+    "mtime": 1775949250.799191,
+    "hash": "63600bb23632c6ef43763aba7aaf01b5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\resource.h": {
+    "mtime": 1775948911.2623584,
+    "hash": "1ade5dd15e613479a15e8832ed276f2b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\utils.cpp": {
+    "mtime": 1775948911.3016763,
+    "hash": "432461b09d862a2f8dadf380ff0e34e5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\utils.h": {
+    "mtime": 1775948911.311162,
+    "hash": "fd81e143f5614eb6fd75efe539002853"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\win32_window.cpp": {
+    "mtime": 1775948911.3181665,
+    "hash": "571eb8234dbc2661be03aa5f2a4d2fca"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\win32_window.h": {
+    "mtime": 1775948911.3260899,
+    "hash": "7569387d58711ab975940f4df3b4bcda"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\analysis_options.yaml": {
+    "mtime": 1776463628.4100766,
+    "hash": "ee8b07d54c05d2e08e50d51085852689"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\CLAUDE.md": {
+    "mtime": 1777612882.7680328,
+    "hash": "2ed67c68f28bc1ef95ac24167431d7e8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\DOCUMENTATION_REFACTORING_SUMMARY.md": {
+    "mtime": 1776958713.370682,
+    "hash": "2d370c628fab1599aeb718ee03612c22"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\errors.txt": {
+    "mtime": 1777819390.5275986,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\pubspec.yaml": {
+    "mtime": 1777645273.096159,
+    "hash": "eeecca0efefbeb48b384c7c5e5430c22"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\README.md": {
+    "mtime": 1776957662.7383158,
+    "hash": "23c13c31ef1f70203c0f65a1056a7758"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\SMS_EXPORT_IMPLEMENTATION.md": {
+    "mtime": 1776735293.7190676,
+    "hash": "6b024c7efcca7063a0143ab83d77c1cf"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\index.md": {
+    "mtime": 1776957662.720613,
+    "hash": "21dd76127068b5baee6202dcee1d1826"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\README.md": {
+    "mtime": 1777007325.0083268,
+    "hash": "367470117362a9de39b69ef4a0c072b5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\SMS_PARSING_FLOW.md": {
+    "mtime": 1776959746.3829727,
+    "hash": "c1262091aadb1597bac1562ce932bf6e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\SMS_RULE_IMPROVEMENTS_PLAN.md": {
+    "mtime": 1776959656.0280714,
+    "hash": "639124de50d7d7a0168afe687c2d9747"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\SMS_SCAN_FLOW_COMPLETE.md": {
+    "mtime": 1777006142.4171655,
+    "hash": "fa6b5135460f4b18b2fa9dcf90bdf9a1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\TRANSACTION_FEEDBACK_SYSTEM.md": {
+    "mtime": 1777006538.6299934,
+    "hash": "f806584413109a5c1b36e95275db8ccf"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\TRANSACTION_SCREEN_UPDATE_COMPLETE.md": {
+    "mtime": 1777007301.2144685,
+    "hash": "2e9acebeb4edc3ff80cb7acc7d68bcdf"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\architecture\\overview.md": {
+    "mtime": 1776958231.2540808,
+    "hash": "9ca5a2708811d1ce4f9c9531683aa3ce"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\archive\\PHASE_2_PROGRESS.md": {
+    "mtime": 1776435248.4593873,
+    "hash": "e2b9db6a8e4ba45f8b7dea67e0fa6b2e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\archive\\RECENT_UPDATES.md": {
+    "mtime": 1776033041.6875832,
+    "hash": "4179ab0beae34702b678b4383ed4a0ae"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\audit\\INVENTORY.md": {
+    "mtime": 1776578526.85353,
+    "hash": "cfbd69bc9086de8ffe29a05e5dbdcf84"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\development\\developer-guide.md": {
+    "mtime": 1776958399.1795769,
+    "hash": "b8a6808451359b807148f22d3a42a111"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\IMPROVED_SMS_WORKFLOW_PROPOSAL.md": {
+    "mtime": 1777242635.7650535,
+    "hash": "fe9032d6afff81fee413f5bed35a783e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\PENDING_ACTIONS_FIXES.md": {
+    "mtime": 1777242177.0716786,
+    "hash": "aa31d94cad33405f6a2c297ae6150509"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS Debugging.txt": {
+    "mtime": 1776583715.6299682,
+    "hash": "8afec5186008e63721751ba9c5bf9358"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_DEBUGGING_CHANGES.md": {
+    "mtime": 1777239896.9968235,
+    "hash": "7735e252ba650fec8b0714b8a150ae97"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_DEBUG_QUICK_REFERENCE.md": {
+    "mtime": 1777239923.868213,
+    "hash": "365f153b52a0fb40e9f3921882473699"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_HANG_DEBUGGING_GUIDE.md": {
+    "mtime": 1777239851.1925817,
+    "hash": "14d4b1f14fd192a905470a3112707c27"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_ISSUES_RESOLVED.md": {
+    "mtime": 1777240718.4817078,
+    "hash": "d8b1d003c4a4f4c8e4d120fb1b91c989"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\TRANSACTION_TYPE_HANDLING.md": {
+    "mtime": 1777242850.1840036,
+    "hash": "0afc674b457e56b2db0b771986348bc5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\accounting\\system-overview.md": {
+    "mtime": 1776958315.3704627,
+    "hash": "edb8dc98d498538e5a0491fca1030380"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\machine-learning\\overview.md": {
+    "mtime": 1776958314.110112,
+    "hash": "c41c633cb6917e9efb0aa57a267183b4"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\account-resolution.md": {
+    "mtime": 1776957998.4797182,
+    "hash": "b525514ffe10caec073051afc52dc1a3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\classification.md": {
+    "mtime": 1776957855.8028173,
+    "hash": "4416ea8774ca773e42323758ab93cd6b"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\entity-extraction.md": {
+    "mtime": 1776957906.526134,
+    "hash": "bcacadced7c2cb35e83d75bb4aecaa92"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\overview.md": {
+    "mtime": 1776957805.0407078,
+    "hash": "bf6b3127c554ab7c06b328b8783733ee"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\recurring-patterns.md": {
+    "mtime": 1776958147.1746273,
+    "hash": "88a8fedb1266540fde3a90b6f617c8db"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\transfer-detection.md": {
+    "mtime": 1776958067.2149012,
+    "hash": "e2e336f5a2004e099128eb51e2ccc0d0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\getting-started\\configuration.md": {
+    "mtime": 1776957733.8728888,
+    "hash": "706d82af93c9d49f3385c26fd66835fd"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\getting-started\\installation.md": {
+    "mtime": 1776957733.6290967,
+    "hash": "0f701ab6aba00a91462fc553602e754c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\getting-started\\quick-start.md": {
+    "mtime": 1776957733.6666307,
+    "hash": "7966f425509a8e6265d28b72244c19b6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\reference\\quick-reference.md": {
+    "mtime": 1776958461.0910585,
+    "hash": "5da75114d921e2b0abf1fa6bf7d48dda"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\templates\\page-template.md": {
+    "mtime": 1776578527.887843,
+    "hash": "37fa4c0a52085354bf369331dec900f3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\README.md": {
+    "mtime": 1775948910.2481368,
+    "hash": "f7ee1b402881509d197f34963e569927"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\CMakeLists.txt": {
+    "mtime": 1775949250.574545,
+    "hash": "a9e9740780ad6532d25238579f461f28"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\flutter\\CMakeLists.txt": {
+    "mtime": 1775948910.5642562,
+    "hash": "2195470ce31675d31db5a37590d011f6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\runner\\CMakeLists.txt": {
+    "mtime": 1775948910.586296,
+    "hash": "30cc1614b16214b66c014af09ba699eb"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\requirements.txt": {
+    "mtime": 1776735293.7221022,
+    "hash": "fd089ccfcdd0c1a1c66c75e01f2a6c27"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms-text-raw.txt": {
+    "mtime": 1776826493.3847353,
+    "hash": "3a2656a801ea7f036aaff9e38724ce27"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\SMS_ENGINE_TEST_GUIDE.md": {
+    "mtime": 1776735293.7463841,
+    "hash": "e7d1f5985e15c6fea89a0070c20c5286"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\SMS_SCENARIOS_ANALYSIS.md": {
+    "mtime": 1776735293.7371914,
+    "hash": "4a3c597defb46b38f4fc7e71ed7851f0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\dataset_report.txt": {
+    "mtime": 1776747701.1497827,
+    "hash": "65ed7b86a2b6ee091413f6fd4a9992c9"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\tools\\requirements.txt": {
+    "mtime": 1776953050.1250064,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\web\\index.html": {
+    "mtime": 1775949250.7386603,
+    "hash": "5c2d441451a7e9885fbf2b6be328779c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\CMakeLists.txt": {
+    "mtime": 1775949250.750665,
+    "hash": "44edd5584ae5b11c036c2bef6a95b5a8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\flutter\\CMakeLists.txt": {
+    "mtime": 1775948911.2074995,
+    "hash": "bbf66fed5180bd9ae8198b8d7c4a0001"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\runner\\CMakeLists.txt": {
+    "mtime": 1775948911.223985,
+    "hash": "028602ab9754bffe716659ada7590d29"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png": {
+    "mtime": 1775948909.6544805,
+    "hash": "13e9c72ec37fac220397aa819fa1ef2d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png": {
+    "mtime": 1775948909.6774182,
+    "hash": "6270344430679711b81476e29878caa7"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png": {
+    "mtime": 1775948909.6994622,
+    "hash": "a0a8db5985280b3679d99a820ae2db79"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png": {
+    "mtime": 1775948909.725472,
+    "hash": "afe1b655b9f32da22f9a4301bb8e6ba8"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png": {
+    "mtime": 1775948909.750242,
+    "hash": "57838d52c318faff743130c3fcfae0c6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-1024x1024@1x.png": {
+    "mtime": 1775949024.9697933,
+    "hash": "c785f8932297af4acd5f5ccb7630f01c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@1x.png": {
+    "mtime": 1775949024.99479,
+    "hash": "a2f8558fb1d42514111fbbb19fb67314"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@2x.png": {
+    "mtime": 1775949024.9142663,
+    "hash": "2247a840b6ee72b8a069208af170e5b1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@3x.png": {
+    "mtime": 1775949025.069895,
+    "hash": "1b3b1538136316263c7092951e923e9d"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@1x.png": {
+    "mtime": 1775949025.2139733,
+    "hash": "be8887071dd7ec39cb754d236aa9584f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@2x.png": {
+    "mtime": 1775949024.788331,
+    "hash": "043119ef4faa026ff82bd03f241e5338"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@3x.png": {
+    "mtime": 1775949025.0408976,
+    "hash": "2b1452c4c1bda6177b4fbbb832df217f"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@1x.png": {
+    "mtime": 1775949024.8163402,
+    "hash": "2247a840b6ee72b8a069208af170e5b1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@2x.png": {
+    "mtime": 1775949025.171961,
+    "hash": "8245359312aea1b0d2412f79a07b0ca5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@3x.png": {
+    "mtime": 1775949024.835869,
+    "hash": "5b3c0902200ce596e9848f22e1f0fe0e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@2x.png": {
+    "mtime": 1775949024.9387934,
+    "hash": "5b3c0902200ce596e9848f22e1f0fe0e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@3x.png": {
+    "mtime": 1775949024.7634182,
+    "hash": "e419d22a37bc40ba185aca1acb6d4ac6"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@1x.png": {
+    "mtime": 1775949024.8712547,
+    "hash": "36c0d7a7132bdde18898ffdfcfcdc4d2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@2x.png": {
+    "mtime": 1775949025.2874947,
+    "hash": "643842917530acf4c5159ae851b0baf2"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-83.5x83.5@2x.png": {
+    "mtime": 1775949025.1104264,
+    "hash": "665cb5e3c5729da6d639d26eff47a503"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage.png": {
+    "mtime": 1775949024.6847155,
+    "hash": "978c1bee49d7ad5fc1a4d81099b13e18"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@2x.png": {
+    "mtime": 1775949024.6667163,
+    "hash": "978c1bee49d7ad5fc1a4d81099b13e18"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@3x.png": {
+    "mtime": 1775949024.6181924,
+    "hash": "978c1bee49d7ad5fc1a4d81099b13e18"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_1024.png": {
+    "mtime": 1775949024.407225,
+    "hash": "c9becc9105f8cabce934d20c7bfb6aac"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_128.png": {
+    "mtime": 1775949024.1862984,
+    "hash": "3ded30823804caaa5ccc944067c54a36"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_16.png": {
+    "mtime": 1775949024.3136995,
+    "hash": "8bf511604bc6ed0a6aeb380c5113fdcf"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_256.png": {
+    "mtime": 1775949024.4377596,
+    "hash": "dfe2c93d1536ae02f085cc63faa3430e"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_32.png": {
+    "mtime": 1775949024.3652225,
+    "hash": "8e0ae58e362a6636bdfccbc04da2c58c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_512.png": {
+    "mtime": 1775949024.2261631,
+    "hash": "0ad44039155424738917502c69667699"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_64.png": {
+    "mtime": 1775949024.1342452,
+    "hash": "04e7b6ef05346c70b663ca1d97de3ad5"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\web\\favicon.png": {
+    "mtime": 1775948911.0697968,
+    "hash": "5dcef449791fa27946b3d35ad8803796"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\web\\icons\\Icon-192.png": {
+    "mtime": 1775948911.1243043,
+    "hash": "ac9a721a12bbc803b44f645561ecb1e1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\web\\icons\\Icon-512.png": {
+    "mtime": 1775948911.1370487,
+    "hash": "96e752610906ba2a93c65f8abe1645f1"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\web\\icons\\Icon-maskable-192.png": {
+    "mtime": 1775949027.6405213,
+    "hash": "c457ef57daa1d16f64b27b786ec2ea3c"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\web\\icons\\Icon-maskable-512.png": {
+    "mtime": 1775949027.6259933,
+    "hash": "301a7604d45b3e739efc881eb04896ea"
+  }
 }

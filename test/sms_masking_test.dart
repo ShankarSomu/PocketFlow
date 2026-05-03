@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:pocket_flow/services/sms_data_masker.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:pocket_flow/sms_engine/ingestion/sms_data_masker.dart';
 
 void main() {
   group('SMS Data Masker', () {

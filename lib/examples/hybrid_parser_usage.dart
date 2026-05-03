@@ -1,5 +1,5 @@
-import 'package:pocket_flow/services/ml_sms_classifier.dart';
-import 'package:pocket_flow/services/advanced_sms_parser.dart';
+﻿import 'package:pocket_flow/sms_engine/_ml_deprecated/sms_ml_classifier.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_advanced_parser.dart';
 
 /// Example: How to use the Hybrid SMS Parser (Rules + ML)
 /// 

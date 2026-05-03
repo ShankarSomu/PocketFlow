@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:pocket_flow/services/advanced_sms_parser.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_advanced_parser.dart';
 
 /// Verification test for rule-based evaluation (no hardcoded patterns)
 /// Ensures Step 3 linguistic analysis drives all classification decisions

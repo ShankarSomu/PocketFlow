@@ -1,13 +1,13 @@
-// Comprehensive SMS Engine Test
+﻿// Comprehensive SMS Engine Test
 // Tests the complete pipeline: Rule Engine → ML Classifier → Parser
 // Uses sms_training_dataset.json (10,000 samples)
 
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocket_flow/services/sms_rule_engine.dart';
-import 'package:pocket_flow/services/ml_sms_classifier.dart';
-import 'package:pocket_flow/services/sms_classification_service.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_rule_engine.dart';
+import 'package:pocket_flow/sms_engine/_ml_deprecated/sms_ml_classifier.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_classification_service.dart';
 import 'package:pocket_flow/services/merchant_normalizer.dart';
 import 'package:pocket_flow/db/database.dart';
 

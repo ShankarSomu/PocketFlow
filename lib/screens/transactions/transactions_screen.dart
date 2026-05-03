@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +8,7 @@ import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
-import '../../services/sms_correction_service.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_correction_service.dart';
 import '../../services/time_filter.dart';
 import '../../widgets/category_picker.dart';
 import '../../widgets/empty_states.dart';

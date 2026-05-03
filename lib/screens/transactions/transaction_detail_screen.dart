@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../db/database.dart';
@@ -7,9 +7,9 @@ import '../../models/recurring_transaction.dart';
 import '../../models/savings_goal.dart'; // Contains Goal
 import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
-import '../../services/sms_correction_service.dart';
-import '../../services/sms_reevaluation_service.dart';
-import '../../services/transaction_feedback_service.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_correction_service.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_reevaluation_service.dart';
+import 'package:pocket_flow/sms_engine/feedback/sms_feedback_service.dart';
 import '../../widgets/category_picker.dart';
 import '../../widgets/confidence_badge.dart';
 import '../recurring/components/recurring_form.dart';

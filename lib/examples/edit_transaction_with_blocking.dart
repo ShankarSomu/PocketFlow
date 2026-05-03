@@ -1,8 +1,8 @@
-// Example UI integration for Edit Transaction screen with Rule Engine
+﻿// Example UI integration for Edit Transaction screen with Rule Engine
 
 import 'package:flutter/material.dart';
-import '../services/sms_correction_service.dart';
-import '../services/sms_rule_engine.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_correction_service.dart';
+import 'package:pocket_flow/sms_engine/rules/sms_rule_engine.dart';
 import '../models/transaction.dart' as model;
 import '../db/database.dart';
 

@@ -11,6 +11,7 @@ import 'app_logger.dart';
 
 class AuthService {
   static const _backupFileName = 'pocketflow_backup.json';
+  static const _defaultBackupFolderName = 'PocketFlow Backups';
   static const _driveScope = 'https://www.googleapis.com/auth/drive.file';
   static const _webClientId =
       '280001122541-auoa81jnfns02ee0r63i3730t72uuh6p.apps.googleusercontent.com';
@@ -144,6 +145,53 @@ class AuthService {
     await prefs.remove(_prefFolderId);
     await prefs.remove(_prefFolderName);
     await prefs.remove(_prefFolderPath);
+  }
+
+  /// Ensures the app's backup folder is selected in prefs.
+  /// If [createIfMissing] is false, returns null when folder does not exist.
+  static Future<DriveFolder?> ensureSelectedBackupFolder({
+    bool createIfMissing = false,
+  }) async {
+    final selected = await getSelectedFolder();
+    if (selected != null) return selected;
+
+    final folders = await listFolders();
+    final existing = folders
+        .where((f) => f.name == _defaultBackupFolderName)
+        .firstOrNull;
+
+    if (existing != null) {
+      await saveSelectedFolder(existing);
+      return existing;
+    }
+
+    if (!createIfMissing) return null;
+
+    final created = await createFolder(_defaultBackupFolderName);
+    await saveSelectedFolder(created);
+    return created;
+  }
+
+  /// Checks whether the selected folder contains a PocketFlow backup file.
+  static Future<bool> hasBackupInSelectedFolder() async {
+    final folder = await getSelectedFolder();
+    if (folder == null) return false;
+
+    final client = await _getClient();
+    if (client == null) return false;
+
+    try {
+      final driveApi = drive.DriveApi(client);
+      final existing = await driveApi.files.list(
+        q: "name='$_backupFileName' and '${folder.id}' in parents and trashed=false",
+        spaces: 'drive',
+        $fields: 'files(id)',
+        pageSize: 1,
+      );
+      return existing.files != null && existing.files!.isNotEmpty;
+    } finally {
+      client.close();
+    }
   }
 
   // ── Backup ────────────────────────────────────────────────────────────────

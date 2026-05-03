@@ -130,9 +130,9 @@ class EmptyStates {
   /// Empty savings goals
   static Widget savingsGoals(BuildContext context, {VoidCallback? onAdd}) {
     return IllustratedEmptyState(
-      title: 'No Savings Goals',
-      subtitle: 'Set savings goals to track your progress and achieve your dreams.',
-      icon: Icons.savings,
+      title: 'No Goals',
+      subtitle: 'Set goals to track your progress and achieve your dreams.',
+      icon: Icons.emoji_events,
       actionText: 'Add Goal',
       onAction: onAdd,
     );

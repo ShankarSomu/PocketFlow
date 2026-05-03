@@ -15,6 +15,8 @@ class Transaction {
     this.extractedAccountIdentifier,
     this.fromAccountId,
     this.toAccountId,
+    this.ruleType,
+    this.referenceRuleId,
     this.deletedAt,
   });
 
@@ -37,6 +39,8 @@ class Transaction {
         extractedAccountIdentifier: m['extracted_identifier'],
         fromAccountId: m['from_account_id'],
         toAccountId: m['to_account_id'],
+        ruleType: m['rule_type'],
+        referenceRuleId: m['reference_rule_id'],
         deletedAt: m['deleted_at'],
       );
   final int? id;
@@ -61,6 +65,8 @@ class Transaction {
   // ── Transfer Fields ──
   final int? fromAccountId;        // Source account for transfers
   final int? toAccountId;          // Destination account for transfers
+  final String? ruleType;          // recurring | loan | transfer_rule
+  final int? referenceRuleId;      // rule id in source table
   
   final int? deletedAt;
 
@@ -83,6 +89,8 @@ class Transaction {
         'extracted_identifier': extractedAccountIdentifier,
         'from_account_id': fromAccountId,
         'to_account_id': toAccountId,
+        'rule_type': ruleType,
+        'reference_rule_id': referenceRuleId,
         'deleted_at': deletedAt,
       };
   

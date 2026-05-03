@@ -4,48 +4,53 @@ import '../models/account.dart';
 import '../models/savings_goal.dart';
 import '../repositories/account_repository.dart';
 import '../repositories/savings_repository.dart';
+import '../repositories/transaction_repository.dart';
 
-/// ViewModel for Savings Screen
-class SavingsViewModel extends ChangeNotifier {
-
-  SavingsViewModel({
-    required SavingsRepository savingsRepo,
+/// ViewModel for Goals Screen
+class GoalsViewModel extends ChangeNotifier {
+  GoalsViewModel({
+    required GoalsRepository goalsRepo,
     required AccountRepository accountRepo,
-  })  : _savingsRepo = savingsRepo,
-        _accountRepo = accountRepo;
-  final SavingsRepository _savingsRepo;
+    required TransactionRepository transactionRepo,
+  })  : _goalsRepo = goalsRepo,
+        _accountRepo = accountRepo,
+        _transactionRepo = transactionRepo;
+  final GoalsRepository _goalsRepo;
   final AccountRepository _accountRepo;
+  final TransactionRepository _transactionRepo;
 
   bool _loading = true;
   String? _error;
-  List<SavingsGoal> _goals = [];
+  List<Goal> _goals = [];
   List<Account> _accounts = [];
   Map<int, double> _accountBalances = {};
+  Map<int, double> _goalSaved = {}; // goalId -> computed saved amount
 
   // Getters
   bool get loading => _loading;
   String? get error => _error;
-  List<SavingsGoal> get goals => List.unmodifiable(_goals);
+  List<Goal> get goals => List.unmodifiable(_goals);
+  double savedForGoal(int goalId) => _goalSaved[goalId] ?? 0.0;
   List<Account> get accounts => List.unmodifiable(_accounts);
   Map<int, double> get accountBalances => Map.unmodifiable(_accountBalances);
 
-  double get totalSaved => _goals.fold(0.0, (sum, g) => sum + g.saved);
+  double get totalSaved => _goals.fold(0.0, (sum, g) => sum + savedForGoal(g.id!));
   double get totalTarget => _goals.fold(0.0, (sum, g) => sum + g.target);
-  
+
   double get totalProgress {
     if (totalTarget <= 0) return 0;
     return (totalSaved / totalTarget).clamp(0.0, 1.0);
   }
 
-  List<SavingsGoal> get completedGoals {
-    return _goals.where((g) => g.isComplete).toList();
+  List<Goal> get completedGoals {
+    return _goals.where((g) => savedForGoal(g.id!) >= g.target).toList();
   }
 
-  List<SavingsGoal> get activeGoals {
-    return _goals.where((g) => !g.isComplete).toList();
+  List<Goal> get activeGoals {
+    return _goals.where((g) => savedForGoal(g.id!) < g.target).toList();
   }
 
-  /// Load savings data
+  /// Load goals data
   Future<void> loadData() async {
     try {
       _loading = true;
@@ -53,32 +58,47 @@ class SavingsViewModel extends ChangeNotifier {
       notifyListeners();
 
       final results = await Future.wait([
-        _savingsRepo.getAll(),
+        _goalsRepo.getAll(),
         _accountRepo.getAll(),
       ]);
 
-      _goals = results[0] as List<SavingsGoal>;
+      _goals = results[0] as List<Goal>;
       _accounts = results[1] as List<Account>;
 
       final balances = <int, double>{};
       for (final account in _accounts) {
         balances[account.id!] = await _accountRepo.getBalance(account.id!, account);
       }
-
       _accountBalances = balances;
+
+      // Compute saved for each goal
+      _goalSaved.clear();
+      for (final goal in _goals) {
+        if (goal.accountId != null) {
+          // Sum all income and transfer_in transactions for this account
+          final txns = await _transactionRepo.getAll(accountId: goal.accountId);
+          final saved = txns
+              .where((t) => t.type == 'income' || t.type == 'transfer_in')
+              .fold(0.0, (sum, t) => sum + t.amount);
+          _goalSaved[goal.id!] = saved;
+        } else {
+          _goalSaved[goal.id!] = 0.0;
+        }
+      }
+
       _loading = false;
       notifyListeners();
     } catch (e) {
-      _error = 'Failed to load savings goals: $e';
+      _error = 'Failed to load goals: $e';
       _loading = false;
       notifyListeners();
     }
   }
 
   /// Add a new goal
-  Future<bool> addGoal(SavingsGoal goal) async {
+  Future<bool> addGoal(Goal goal) async {
     try {
-      await _savingsRepo.insert(goal);
+      await _goalsRepo.insert(goal);
       await loadData();
       return true;
     } catch (e) {
@@ -89,9 +109,9 @@ class SavingsViewModel extends ChangeNotifier {
   }
 
   /// Update an existing goal
-  Future<bool> updateGoal(SavingsGoal goal) async {
+  Future<bool> updateGoal(Goal goal) async {
     try {
-      await _savingsRepo.update(goal);
+      await _goalsRepo.update(goal);
       final index = _goals.indexWhere((g) => g.id == goal.id);
       if (index != -1) {
         _goals[index] = goal;
@@ -105,35 +125,12 @@ class SavingsViewModel extends ChangeNotifier {
     }
   }
 
-  /// Update saved amount
-  Future<bool> updateSaved(int id, double saved) async {
-    try {
-      await _savingsRepo.updateSaved(id, saved);
-      final index = _goals.indexWhere((g) => g.id == id);
-      if (index != -1) {
-        final goal = _goals[index];
-        _goals[index] = SavingsGoal(
-          id: goal.id,
-          name: goal.name,
-          target: goal.target,
-          saved: saved,
-          accountId: goal.accountId,
-          priority: goal.priority,
-        );
-        notifyListeners();
-      }
-      return true;
-    } catch (e) {
-      _error = 'Failed to update saved amount: $e';
-      notifyListeners();
-      return false;
-    }
-  }
+  // No updateSaved method; savings is always computed from transactions
 
   /// Delete a goal
   Future<bool> deleteGoal(int id) async {
     try {
-      await _savingsRepo.delete(id);
+      await _goalsRepo.delete(id);
       _goals.removeWhere((g) => g.id == id);
       notifyListeners();
       return true;

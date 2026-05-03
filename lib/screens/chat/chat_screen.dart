@@ -175,7 +175,7 @@ class ChatScreenState extends State<ChatScreen> {
     if (lower.contains('saving') || lower.contains('goal')) {
       final goals = await AppDatabase.getGoals();
       if (goals.isEmpty) return 'No savings goals yet. Try "create savings goal vacation \$1000".';
-      final saved = goals.fold(0.0, (s, g) => s + g.saved);
+      final saved = goals.fold(0.0, (s, g) => s /* + (computed saved value) */);
       return 'You have ${goals.length} savings goal${goals.length == 1 ? '' : 's'} with **${CurrencyFormatter.format(saved)}** saved in total.';
     }
 

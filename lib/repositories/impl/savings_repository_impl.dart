@@ -2,23 +2,23 @@ import '../../db/database.dart';
 import '../../models/savings_goal.dart';
 import '../savings_repository.dart';
 
-/// SQLite implementation of SavingsRepository
-class SavingsRepositoryImpl implements SavingsRepository {
+/// SQLite implementation of GoalsRepository
+class GoalsRepositoryImpl implements GoalsRepository {
   @override
-  Future<int> insert(SavingsGoal goal) async {
+  Future<int> insert(Goal goal) async {
     final db = await AppDatabase.db();
     return db.insert('savings_goals', goal.toMap()..remove('id'));
   }
 
   @override
-  Future<List<SavingsGoal>> getAll() async {
+  Future<List<Goal>> getAll() async {
     final db = await AppDatabase.db();
     final rows = await db.query('savings_goals', orderBy: 'priority ASC, name ASC');
-    return rows.map(SavingsGoal.fromMap).toList();
+    return rows.map(Goal.fromMap).toList();
   }
 
   @override
-  Future<void> update(SavingsGoal goal) async {
+  Future<void> update(Goal goal) async {
     final db = await AppDatabase.db();
     await db.update('savings_goals', goal.toMap(), 
         where: 'id=?', whereArgs: [goal.id]);

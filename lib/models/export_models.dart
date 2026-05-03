@@ -56,7 +56,7 @@ enum ExportDataType {
   transactions,
   accounts,
   budgets,
-  savingsGoals,
+  goals,
   recurringTransactions;
 
   String get displayName {
@@ -67,8 +67,8 @@ enum ExportDataType {
         return 'Accounts';
       case ExportDataType.budgets:
         return 'Budgets';
-      case ExportDataType.savingsGoals:
-        return 'Savings Goals';
+      case ExportDataType.goals:
+        return 'Goals';
       case ExportDataType.recurringTransactions:
         return 'Recurring Transactions';
     }
@@ -84,7 +84,7 @@ class ExportConfig {
       ExportDataType.transactions,
       ExportDataType.accounts,
       ExportDataType.budgets,
-      ExportDataType.savingsGoals,
+      ExportDataType.goals,
     ],
     this.startDate,
     this.endDate,
@@ -153,13 +153,13 @@ class ExportData {
     required this.metadata, this.transactions = const [],
     this.accounts = const [],
     this.budgets = const [],
-    this.savingsGoals = const [],
+    this.goals = const [],
     this.recurringTransactions = const [],
   });
   final List<Transaction> transactions;
   final List<Account> accounts;
   final List<Budget> budgets;
-  final List<SavingsGoal> savingsGoals;
+  final List<Goal> goals;
   final List<RecurringTransaction> recurringTransactions;
   final ExportMetadata metadata;
 
@@ -169,7 +169,7 @@ class ExportData {
       'transactions': transactions.map((t) => t.toMap()).toList(),
       'accounts': accounts.map((a) => a.toMap()).toList(),
       'budgets': budgets.map((b) => b.toMap()).toList(),
-      'savings_goals': savingsGoals.map((g) => g.toMap()).toList(),
+      'goals': goals.map((g) => g.toMap()).toList(),
       'recurring_transactions': recurringTransactions.map((r) => r.toMap()).toList(),
       'metadata': metadata.toJson(),
     };
@@ -180,7 +180,7 @@ class ExportData {
       transactions.length +
       accounts.length +
       budgets.length +
-      savingsGoals.length +
+      goals.length +
       recurringTransactions.length;
 
   /// Check if export is empty

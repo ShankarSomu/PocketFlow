@@ -1,5 +1,5 @@
-import 'dart:io';
 
+import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -9,6 +9,12 @@ import 'package:pocket_flow/models/account.dart';
 import 'package:pocket_flow/models/budget.dart';
 import 'package:pocket_flow/models/export_models.dart';
 import 'package:pocket_flow/models/transaction.dart';
+
+// Compute saved amount for a goal (replace with actual logic as needed)
+double _getSavedForGoal(goal) {
+  // TODO: Replace with real computation from transactions if needed
+  return goal.saved ?? 0.0;
+}
 
 /// Service for exporting data in PDF format
 class PdfExportService {
@@ -53,10 +59,15 @@ class PdfExportService {
         pdf.addPage(await _buildBudgetsPage());
       }
 
-      // Add savings goals if included
-      if (config.dataTypes.contains(ExportDataType.savingsGoals)) {
+      // Add goals if included
+      if (config.dataTypes.contains(ExportDataType.goals)) {
         pdf.addPage(await _buildSavingsGoalsPage());
       }
+  // Compute saved amount for a goal (replace with actual logic as needed)
+  double _getSavedForGoal(goal) {
+    // TODO: Replace with real computation from transactions if needed
+    return goal.saved ?? 0.0;
+  }
 
       // Save to file
       final filePath = await _savePdfFile(pdf, config);
@@ -511,15 +522,16 @@ class PdfExportService {
               ),
               // Data
               ...goals.map((goal) {
+                final saved = _getSavedForGoal(goal);
                 final progress = goal.target > 0
-                    ? (goal.saved / goal.target * 100)
+                    ? (saved / goal.target * 100)
                     : 0.0;
 
                 return pw.TableRow(
                   children: [
                     _buildTableCell(goal.name),
                     _buildTableCell(_formatCurrency(goal.target)),
-                    _buildTableCell(_formatCurrency(goal.saved)),
+                    _buildTableCell(_formatCurrency(saved)),
                     _buildTableCell(
                       '${progress.toStringAsFixed(1)}%',
                       color: progress >= 100 ? PdfColors.green700 : PdfColors.blue700,

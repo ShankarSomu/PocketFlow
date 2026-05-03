@@ -9,8 +9,8 @@ import '../repositories/impl/account_repository_impl.dart';
 import '../repositories/impl/budget_repository_impl.dart';
 import '../repositories/impl/category_repository_impl.dart';
 import '../repositories/impl/recurring_repository_impl.dart';
-import '../repositories/impl/savings_repository_impl.dart';
 import '../repositories/impl/transaction_repository_impl.dart';
+import '../repositories/impl/savings_repository_impl.dart';
 import '../repositories/recurring_repository.dart';
 import '../repositories/savings_repository.dart';
 import '../repositories/transaction_repository.dart';
@@ -31,14 +31,17 @@ class AppDependencies {
         Provider<BudgetRepository>(
           create: (_) => BudgetRepositoryImpl(),
         ),
-        Provider<SavingsRepository>(
-          create: (_) => SavingsRepositoryImpl(),
+        Provider<GoalsRepository>(
+          create: (_) => GoalsRepositoryImpl(),
         ),
         Provider<CategoryRepository>(
           create: (_) => CategoryRepositoryImpl(),
         ),
         Provider<RecurringRepository>(
           create: (_) => RecurringRepositoryImpl(),
+        ),
+        Provider<GoalsRepository>(
+          create: (_) => GoalsRepositoryImpl(),
         ),
       ];
 

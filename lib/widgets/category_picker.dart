@@ -24,6 +24,7 @@ class _CategoryPickerSheet extends StatefulWidget {
 class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
   List<Category> _topLevel = [];
   List<Category> _subs = [];
+  List<_CategorySearchHit> _searchIndex = [];
   Category? _selected;
   bool _loading = true;
   final _searchCtrl = TextEditingController();
@@ -37,9 +38,20 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
 
   Future<void> _load() async {
     final all = await AppDatabase.getTopLevelCategories();
+    final index = <_CategorySearchHit>[];
+    for (final parent in all) {
+      index.add(_CategorySearchHit(parent: parent));
+      if (parent.id != null) {
+        final subcategories = await AppDatabase.getSubcategories(parent.id!);
+        for (final sub in subcategories) {
+          index.add(_CategorySearchHit(parent: parent, subcategory: sub));
+        }
+      }
+    }
     if (!mounted) return;
     setState(() {
       _topLevel = all;
+      _searchIndex = index;
       _loading = false;
     });
   }
@@ -252,6 +264,44 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
   }
 
   Widget _buildTopLevel(ScrollController scroll) {
+    if (_search.isNotEmpty) {
+      final hits = _searchIndex.where((entry) {
+        final parentName = entry.parent.name.toLowerCase();
+        final subName = entry.subcategory?.name.toLowerCase() ?? '';
+        return parentName.contains(_search) || subName.contains(_search);
+      }).toList();
+
+      return ListView.builder(
+        controller: scroll,
+        itemCount: hits.length,
+        itemBuilder: (_, i) {
+          final hit = hits[i];
+          final parent = hit.parent;
+          final sub = hit.subcategory;
+          final isSubMatch = sub != null;
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundColor: _hexColor(parent.color).withValues(alpha: 0.15),
+              child: Text(parent.icon, style: const TextStyle(fontSize: 18)),
+            ),
+            title: Text(isSubMatch ? sub.name : parent.name),
+            subtitle: isSubMatch ? Text(parent.name) : null,
+            trailing: isSubMatch
+                ? Icon(Icons.north_west, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), size: 16)
+                : Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+            onTap: () async {
+              if (isSubMatch) {
+                _pick(sub.name);
+                return;
+              }
+              await _selectParent(parent);
+            },
+            onLongPress: () => _pick(isSubMatch ? sub.name : parent.name),
+          );
+        },
+      );
+    }
+
     final filtered = _topLevel
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
@@ -317,6 +367,16 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
       ],
     );
   }
+}
+
+class _CategorySearchHit {
+  const _CategorySearchHit({
+    required this.parent,
+    this.subcategory,
+  });
+
+  final Category parent;
+  final Category? subcategory;
 }
 
 class _CustomEntry extends StatefulWidget {

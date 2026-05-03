@@ -13,26 +13,26 @@ class RecurringViewModel extends ChangeNotifier {
   RecurringViewModel({
     required RecurringRepository recurringRepo,
     required AccountRepository accountRepo,
-    required SavingsRepository savingsRepo,
+    required GoalsRepository savingsRepo,
   })  : _recurringRepo = recurringRepo,
         _accountRepo = accountRepo,
         _savingsRepo = savingsRepo;
   final RecurringRepository _recurringRepo;
   final AccountRepository _accountRepo;
-  final SavingsRepository _savingsRepo;
+  final GoalsRepository _savingsRepo;
 
   bool _loading = true;
   String? _error;
   List<RecurringTransaction> _items = [];
   List<Account> _accounts = [];
-  List<SavingsGoal> _goals = [];
+  List<Goal> _goals = [];
 
   // Getters
   bool get loading => _loading;
   String? get error => _error;
   List<RecurringTransaction> get items => List.unmodifiable(_items);
   List<Account> get accounts => List.unmodifiable(_accounts);
-  List<SavingsGoal> get goals => List.unmodifiable(_goals);
+  List<Goal> get goals => List.unmodifiable(_goals);
 
   List<RecurringTransaction> get activeItems {
     return _items.where((i) => i.isActive).toList();
@@ -83,7 +83,7 @@ class RecurringViewModel extends ChangeNotifier {
 
       _items = results[0] as List<RecurringTransaction>;
       _accounts = results[1] as List<Account>;
-      _goals = results[2] as List<SavingsGoal>;
+      _goals = results[2] as List<Goal>;
       _loading = false;
       notifyListeners();
     } catch (e) {

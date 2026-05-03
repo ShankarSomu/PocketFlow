@@ -57,31 +57,27 @@ class SeedData {
     ));
 
     // ── 2. Savings Goals ──────────────────────────────────────────────────────
-    final goalEmergencyId = await AppDatabase.insertGoal(SavingsGoal(
+    final goalEmergencyId = await AppDatabase.insertGoal(Goal(
       name: 'Emergency Fund',
       target: 20000.00,
-      saved: 7600.00,
       accountId: savingsId,
       priority: 1,
     ));
-    final goalCarId = await AppDatabase.insertGoal(SavingsGoal(
+    final goalCarId = await AppDatabase.insertGoal(Goal(
       name: 'New Car',
       target: 28000.00,
-      saved: 9400.00,
       accountId: savingsId,
       priority: 2,
     ));
-    final goalVacationId = await AppDatabase.insertGoal(SavingsGoal(
+    final goalVacationId = await AppDatabase.insertGoal(Goal(
       name: 'Europe Vacation',
       target: 6000.00,
-      saved: 3200.00,
       accountId: savingsId,
       priority: 3,
     ));
-    await AppDatabase.insertGoal(SavingsGoal(
+    await AppDatabase.insertGoal(Goal(
       name: 'Home Down Payment',
       target: 60000.00,
-      saved: 14000.00,
       accountId: savingsId,
       priority: 4,
     ));

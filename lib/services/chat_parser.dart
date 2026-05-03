@@ -164,8 +164,8 @@ class ChatParser {
           final name = parts[1].toLowerCase();
           final target = double.tryParse(parts[2]);
           if (target == null || target <= 0) return ParseError('Invalid target');
-          await AppDatabase.insertGoal(
-              SavingsGoal(name: name, target: target, saved: 0));
+            await AppDatabase.insertGoal(
+              Goal(name: name, target: target));
           notifyDataChanged();
           return ParseSuccess(
               '✓ Goal created: $name = \$${target.toStringAsFixed(2)}');
@@ -180,7 +180,12 @@ class ChatParser {
           final goals = await AppDatabase.getGoals();
           final goal = goals.where((g) => g.name == name).firstOrNull;
           if (goal == null) return ParseError('Goal "$name" not found');
-          await AppDatabase.updateGoalSaved(goal.id!, goal.saved + amount);
+          double _getSavedForGoal(goal) {
+            // TODO: Replace with real computation from transactions if needed
+            return goal.saved ?? 0.0;
+          }
+          final saved = _getSavedForGoal(goal);
+          await AppDatabase.updateGoalSaved(goal.id!, saved + amount);
           notifyDataChanged();
           return ParseSuccess(
               '✓ Added \$${amount.toStringAsFixed(2)} to $name');

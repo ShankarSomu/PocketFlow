@@ -62,9 +62,9 @@ class JsonExportService {
         ? await _getAllBudgets()
         : <Budget>[];
     
-    final savingsGoals = config.dataTypes.contains(ExportDataType.savingsGoals)
-        ? await AppDatabase.getGoals()
-        : <SavingsGoal>[];
+    final goals = config.dataTypes.contains(ExportDataType.goals)
+      ? await AppDatabase.getGoals()
+      : <Goal>[];
     
     final recurringTransactions = config.dataTypes.contains(ExportDataType.recurringTransactions)
         ? await AppDatabase.getRecurring()
@@ -75,7 +75,7 @@ class JsonExportService {
       transactions: transactions,
       accounts: accounts,
       budgets: budgets,
-      savingsGoals: savingsGoals,
+      goals: goals,
       recurringTransactions: recurringTransactions,
       config: config,
     );
@@ -84,7 +84,7 @@ class JsonExportService {
       transactions: transactions,
       accounts: accounts,
       budgets: budgets,
-      savingsGoals: savingsGoals,
+      goals: goals,
       recurringTransactions: recurringTransactions,
       metadata: metadata,
     );
@@ -155,7 +155,7 @@ class JsonExportService {
     required List<Transaction> transactions,
     required List<Account> accounts,
     required List<Budget> budgets,
-    required List<SavingsGoal> savingsGoals,
+    required List<Goal> goals,
     required List<RecurringTransaction> recurringTransactions,
     required ExportConfig config,
   }) async {
@@ -194,7 +194,7 @@ class JsonExportService {
       transactionCount: transactions.length,
       accountCount: accounts.length,
       budgetCount: budgets.length,
-      savingsGoalCount: savingsGoals.length,
+      savingsGoalCount: goals.length,
       recurringTransactionCount: recurringTransactions.length,
       totalIncome: totalIncome,
       totalExpense: totalExpense,
@@ -246,7 +246,7 @@ class JsonExportService {
       totalTransactions: exportData.transactions.length,
       totalAccounts: exportData.accounts.length,
       totalBudgets: exportData.budgets.length,
-      totalSavingsGoals: exportData.savingsGoals.length,
+      totalSavingsGoals: exportData.goals.length,
       totalRecurringTransactions: exportData.recurringTransactions.length,
       estimatedFileSize: _estimateFileSize(exportData),
       dateRange: config.startDate != null && config.endDate != null
@@ -261,7 +261,7 @@ class JsonExportService {
     return (data.transactions.length * 200) +
            (data.accounts.length * 100) +
            (data.budgets.length * 100) +
-           (data.savingsGoals.length * 100) +
+           (data.goals.length * 100) +
            (data.recurringTransactions.length * 150);
   }
 

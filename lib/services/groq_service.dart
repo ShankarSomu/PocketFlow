@@ -307,7 +307,9 @@ class AiService {
     if (goals.isNotEmpty) {
       buf.writeln('\nSavings goals:');
       for (final g in goals) {
-        buf.writeln('  ${g.name}: \$${g.saved.toStringAsFixed(2)} of \$${g.target.toStringAsFixed(2)} (${(g.progress * 100).toStringAsFixed(0)}%)');
+          final saved = _getSavedForGoal(g);
+          final progress = g.target > 0 ? saved / g.target : 0.0;
+          buf.writeln('  ${g.name}: \$${saved.toStringAsFixed(2)} of \$${g.target.toStringAsFixed(2)} (${(progress * 100).toStringAsFixed(0)}%)');
       }
     }
 
@@ -343,6 +345,11 @@ class AiService {
     return buf.toString();
   }
 
+  // Compute saved amount for a goal (replace with actual logic as needed)
+  static double _getSavedForGoal(goal) {
+    // TODO: Replace with real computation from transactions if needed
+    return goal.saved ?? 0.0;
+  }
   static String _systemPrompt(String context) => '''
 You are a smart personal finance assistant for PocketFlow app.
 You understand natural language and can log transactions, answer questions, and give advice.

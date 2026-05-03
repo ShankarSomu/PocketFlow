@@ -67,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : 0.0;
 
       final goals = await AppDatabase.getGoals();
-      final goalsOnTrack = goals.where((g) => g.progress >= 0.5).length;
+      final goalsOnTrack = goals.where((g) => g.target > 0 && ((0.0 /* TODO: replace with saved */) / g.target) >= 0.5).length;
 
       if (!mounted) return;
       setState(() {

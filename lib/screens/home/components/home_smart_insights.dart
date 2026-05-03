@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../models/budget.dart';
 import '../../../../theme/app_color_scheme.dart';
 import '../../../widgets/ui/panel.dart';
-import '../../savings/savings_screen.dart';
+import '../../savings/savings_screen.dart'; // Contains GoalsScreen
 import '../../shared/shared.dart';
 import '../../transactions/transactions_screen.dart';
 
@@ -163,7 +163,7 @@ class HomeSmartInsights extends StatelessWidget {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const SavingsScreen()));
+                                builder: (_) => const GoalsScreen()));
                       } else {
                         Navigator.push(
                             context,

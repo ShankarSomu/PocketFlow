@@ -1,258 +1,366 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/semantics.dart';
+
+import 'package:pocket_flow/onboarding/onboarding_analytics.dart';
+import 'package:pocket_flow/onboarding/onboarding_flow_controller.dart';
+import 'package:pocket_flow/onboarding/onboarding_step.dart';
+import 'package:pocket_flow/onboarding/onboarding_storage.dart';
+import 'package:pocket_flow/onboarding/onboarding_target_registry.dart';
 
 class TutorialOverlay extends StatefulWidget {
-
   const TutorialOverlay({required this.onComplete, super.key});
+
   final VoidCallback onComplete;
 
-  static Future<bool> shouldShow() async {
-    final prefs = await SharedPreferences.getInstance();
-    return !(prefs.getBool('tutorial_completed') ?? false);
+  static const String _flowId = 'main_tour';
+  static const int _flowVersion = 2;
+
+  static OnboardingFlowDefinition _defaultFlow() {
+    return const OnboardingFlowDefinition(
+      id: _flowId,
+      version: _flowVersion,
+      defaultInteractionMode: OnboardingInteractionMode.guided,
+      steps: <OnboardingStep>[
+        OnboardingStep(
+          id: 'welcome',
+          title: 'Welcome to PocketFlow',
+          description: 'A quick guided tour of the key areas.',
+          blocking: false,
+          preferredPlacement: OnboardingCardPlacement.bottom,
+          icon: Icons.waving_hand_rounded,
+        ),
+        OnboardingStep(
+          id: 'overview',
+          title: 'Financial Overview',
+          description: 'Your balance, income, expenses and savings are here.',
+          targetId: 'home.header',
+          optional: true,
+          blocking: false,
+          arrowDirection: OnboardingArrowDirection.up,
+          icon: Icons.dashboard_rounded,
+        ),
+        OnboardingStep(
+          id: 'chart',
+          title: 'Insights Panel',
+          description: 'Charts and progress indicators update with your data.',
+          targetId: 'home.chart',
+          optional: true,
+          blocking: false,
+          arrowDirection: OnboardingArrowDirection.up,
+          icon: Icons.pie_chart_rounded,
+        ),
+        OnboardingStep(
+          id: 'time_filter',
+          title: 'Time Filter',
+          description: 'Use this to switch between week, month and year views.',
+          targetId: 'home.time_filter',
+          optional: true,
+          blocking: false,
+          preferredPlacement: OnboardingCardPlacement.top,
+          arrowDirection: OnboardingArrowDirection.down,
+          spotlightShape: OnboardingSpotlightShape.circle,
+          icon: Icons.date_range_rounded,
+        ),
+      ],
+    );
+  }
+
+  static Future<bool> shouldShow() {
+    return OnboardingStorage().shouldStart(
+      flowId: _flowId,
+      version: _flowVersion,
+    );
   }
 
   static Future<void> markComplete() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('tutorial_completed', true);
+    final flow = _defaultFlow();
+    final stepIds = flow.steps.map((s) => s.id).toSet();
+    await OnboardingStorage().markCompleted(
+      flowId: flow.id,
+      version: flow.version,
+      completedStepIds: stepIds,
+    );
   }
 
   @override
   State<TutorialOverlay> createState() => _TutorialOverlayState();
 }
 
-class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProviderStateMixin {
-  int _step = 0;
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+class _TutorialOverlayState extends State<TutorialOverlay>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
+  late final OnboardingFlowController _controller;
 
-  final List<TutorialStep> _steps = [
-    TutorialStep(
-      title: 'Welcome to PocketFlow!',
-      description: 'Let\'s take a quick tour of the key features.',
-      alignment: Alignment.center,
-    ),
-    TutorialStep(
-      title: 'Your Financial Overview',
-      description: 'See your balance, income, expenses, and savings rate at a glance.',
-      alignment: Alignment.topCenter,
-      spotlightRect: const Rect.fromLTWH(14, 120, 0, 260),
-    ),
-    TutorialStep(
-      title: 'Spending by Category',
-      description: 'Visualize where your money goes with interactive charts.',
-      alignment: Alignment.center,
-      spotlightRect: const Rect.fromLTWH(14, 400, 0, 260),
-    ),
-    TutorialStep(
-      title: 'Quick Actions',
-      description: 'Tap the + button to add transactions, budgets, or goals instantly.',
-      alignment: Alignment.bottomRight,
-      spotlightRect: const Rect.fromLTWH(0, 0, 80, 80),
-      spotlightPosition: SpotlightPosition.bottomRight,
-    ),
-    TutorialStep(
-      title: 'Time Filter',
-      description: 'Tap here to view different time periods (week, month, year).',
-      alignment: Alignment.bottomLeft,
-      spotlightRect: const Rect.fromLTWH(16, 0, 64, 64),
-      spotlightPosition: SpotlightPosition.bottomLeft,
-    ),
-    TutorialStep(
-      title: 'Navigate Tabs',
-      description: 'Swipe left/right or tap the bottom bar to explore Transactions, Budgets, Goals, and more.',
-      alignment: Alignment.bottomCenter,
-      spotlightRect: const Rect.fromLTWH(0, 0, 0, 80),
-      spotlightPosition: SpotlightPosition.bottom,
-    ),
-  ];
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulse;
+
+  late final AnimationController _cardCtrl;
+  late final Animation<double> _cardFade;
+  late final Animation<Offset> _cardSlide;
+
+  late final AnimationController _arrowCtrl;
+  late final Animation<double> _arrowBounce;
+
+  Timer? _targetPoll;
+  bool _reduceMotion = false;
+  bool _bootstrapped = false;
+  bool _resolvingTarget = false;
+  Rect? _spot;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-    // Only animate if device doesn't prefer reduced motion
-    if (!_shouldReduceAnimations()) {
-      _pulseController.repeat(reverse: true);
-    }
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-  }
+    WidgetsBinding.instance.addObserver(this);
 
-  bool _shouldReduceAnimations() {
-    return WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+    _reduceMotion = WidgetsBinding
+        .instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+
+    _controller = OnboardingFlowController(
+      flow: TutorialOverlay._defaultFlow(),
+      storage: OnboardingStorage(),
+      analytics: AppLoggerOnboardingAnalytics(),
+      registry: OnboardingTargetRegistry.instance,
+    );
+
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+
+    _cardCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _cardFade = Tween<double>(begin: 0.0, end: 1.0).animate(_cardCtrl);
+    _cardSlide = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _cardCtrl, curve: Curves.easeOut));
+
+    _arrowCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+    _arrowBounce = Tween<double>(begin: -6.0, end: 6.0).animate(
+      CurvedAnimation(parent: _arrowCtrl, curve: Curves.easeInOut),
+    );
+
+    if (_reduceMotion) {
+      _pulseCtrl.stop();
+      _arrowCtrl.stop();
+    }
+
+    OnboardingTargetRegistry.instance.addListener(_onTargetsChanged);
+    _bootstrap();
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    OnboardingTargetRegistry.instance.removeListener(_onTargetsChanged);
+    _targetPoll?.cancel();
+    _pulseCtrl.dispose();
+    _cardCtrl.dispose();
+    _arrowCtrl.dispose();
     super.dispose();
   }
 
-  void _next() {
-    if (_step < _steps.length - 1) {
-      setState(() => _step++);
+  @override
+  void didChangeMetrics() {
+    _scheduleTargetResolve();
+  }
+
+  Future<void> _bootstrap() async {
+    final shouldShow = await _controller.shouldStart();
+    if (!mounted) return;
+
+    if (!shouldShow) {
+      _finish();
+      return;
+    }
+
+    await _controller.start();
+    if (!mounted) return;
+
+    _bootstrapped = true;
+    _announceCurrentStep();
+    if (_reduceMotion) {
+      _cardCtrl.value = 1;
     } else {
-      TutorialOverlay.markComplete();
-      widget.onComplete();
+      _cardCtrl.forward(from: 0);
+    }
+    _startTargetPolling();
+    await _resolveStepTarget();
+    if (mounted) setState(() {});
+  }
+
+  void _startTargetPolling() {
+    _targetPoll?.cancel();
+    _targetPoll = Timer.periodic(
+      const Duration(milliseconds: 220),
+      (_) => _scheduleTargetResolve(),
+    );
+  }
+
+  void _onTargetsChanged() {
+    _scheduleTargetResolve();
+  }
+
+  void _scheduleTargetResolve() {
+    if (_resolvingTarget || !_bootstrapped || !mounted) return;
+    _resolvingTarget = true;
+    _resolveStepTarget().whenComplete(() {
+      _resolvingTarget = false;
+    });
+  }
+
+  Future<void> _resolveStepTarget() async {
+    final step = _controller.currentStep;
+    if (step == null) {
+      _finish();
+      return;
+    }
+
+    Rect? newSpot;
+    final targetId = step.targetId;
+    if (targetId != null) {
+      newSpot = OnboardingTargetRegistry.instance.rectFor(targetId);
+      if (newSpot == null) {
+        final before = _controller.currentStep?.id;
+        await _controller.handleMissingTarget();
+        final after = _controller.currentStep?.id;
+        if (!mounted) return;
+        if (before != after) {
+          await _animateStepChange();
+          return;
+        }
+      }
+    }
+
+    if (_spot != newSpot && mounted) {
+      setState(() => _spot = newSpot);
     }
   }
 
-  void _skip() {
-    TutorialOverlay.markComplete();
+  Future<void> _animateStepChange() async {
+    if (!_reduceMotion) {
+      await _cardCtrl.reverse();
+    }
+    if (!mounted) return;
+    _announceCurrentStep();
+    _spot = null;
+    if (_reduceMotion) {
+      _cardCtrl.value = 1;
+      setState(() {});
+    } else {
+      setState(() {});
+      await _cardCtrl.forward(from: 0);
+    }
+    await _resolveStepTarget();
+  }
+
+  void _announceCurrentStep() {
+    final step = _controller.currentStep;
+    if (step == null) return;
+    SemanticsService.announce(
+      '${step.title}. ${step.description}',
+      Directionality.of(context),
+    );
+  }
+
+  Future<void> _next() async {
+    await _controller.next();
+    if (!mounted) return;
+    if (_controller.finished) {
+      _finish();
+      return;
+    }
+    await _animateStepChange();
+  }
+
+  Future<void> _skip() async {
+    await _controller.skip();
+    if (!mounted) return;
+    _finish();
+  }
+
+  Future<void> _finish() async {
     widget.onComplete();
   }
 
   @override
   Widget build(BuildContext context) {
-    final step = _steps[_step];
+    if (!_bootstrapped) {
+      return const Material(color: Colors.transparent);
+    }
+
+    final step = _controller.currentStep;
+    if (step == null) {
+      return const Material(color: Colors.transparent);
+    }
+
     final size = MediaQuery.of(context).size;
+    final primary = Theme.of(context).colorScheme.primary;
+    final blocking = step.blocking ||
+        _controller.flow.defaultInteractionMode == OnboardingInteractionMode.strict;
 
     return Material(
-      color: Colors.black.withValues(alpha: 0.85),
+      color: Colors.transparent,
       child: Stack(
-        children: [
-          // Spotlight
-          if (step.spotlightRect != null)
-            CustomPaint(
-              size: size,
-              painter: _SpotlightPainter(
-                rect: _getSpotlightRect(step, size),
-                pulseAnimation: _pulseAnimation,
+        children: <Widget>[
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: !blocking,
+              child: ColoredBox(
+                color: Colors.black.withValues(alpha: 0.62),
+                child: Stack(
+                  children: <Widget>[
+                    if (_spot != null)
+                      AnimatedBuilder(
+                        animation: _pulse,
+                        builder: (_, __) => CustomPaint(
+                          size: size,
+                          painter: _CutoutPainter(
+                            spot: _spot!,
+                            pulse: _pulse.value,
+                            primaryColor: primary,
+                            shape: step.spotlightShape,
+                          ),
+                        ),
+                      ),
+                    if (_spot != null && step.arrowDirection != OnboardingArrowDirection.none)
+                      AnimatedBuilder(
+                        animation: _arrowBounce,
+                        builder: (_, __) => _ArrowPointer(
+                          spot: _spot!,
+                          dir: step.arrowDirection,
+                          bounce: _arrowBounce.value,
+                          color: primary,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          // Content
+          ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: _getMainAlignment(step.alignment),
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (step.alignment == Alignment.topCenter) const SizedBox(height: 400),
-                  if (step.alignment == Alignment.center && step.spotlightRect == null) const Spacer(),
-                  if (step.alignment == Alignment.center && step.spotlightRect != null) const SizedBox(height: 200),
-                  if (step.alignment == Alignment.bottomRight || step.alignment == Alignment.bottomLeft) const Spacer(),
-                  _buildContent(step),
-                  if (step.alignment == Alignment.center && step.spotlightRect == null) const Spacer(),
-                  if (step.alignment == Alignment.bottomCenter) const SizedBox(height: 100),
-                ],
+            child: Semantics(
+              liveRegion: true,
+              child: _StepCard(
+                step: step,
+                stepIndex: _controller.stepIndex,
+                totalSteps: _controller.flow.steps.length,
+                cardFade: _cardFade,
+                cardSlide: _cardSlide,
+                screenSize: size,
+                spot: _spot,
+                onNext: _next,
+                onSkip: _controller.stepIndex > 0 ? _skip : null,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  MainAxisAlignment _getMainAlignment(Alignment alignment) {
-    if (alignment == Alignment.topCenter) return MainAxisAlignment.start;
-    if (alignment == Alignment.bottomCenter || alignment == Alignment.bottomRight || alignment == Alignment.bottomLeft) {
-      return MainAxisAlignment.end;
-    }
-    return MainAxisAlignment.center;
-  }
-
-  Rect _getSpotlightRect(TutorialStep step, Size size) {
-    final rect = step.spotlightRect!;
-    switch (step.spotlightPosition) {
-      case SpotlightPosition.bottomRight:
-        return Rect.fromLTWH(
-          size.width - 96,
-          size.height - 160,
-          80,
-          80,
-        );
-      case SpotlightPosition.bottomLeft:
-        return Rect.fromLTWH(16, size.height - 160, 64, 64);
-      case SpotlightPosition.bottom:
-        return Rect.fromLTWH(0, size.height - 80, size.width, 80);
-      default:
-        return Rect.fromLTWH(
-          rect.left,
-          rect.top,
-          size.width - 28,
-          rect.height,
-        );
-    }
-  }
-
-  Widget _buildContent(TutorialStep step) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  step.title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              Text(
-                '${_step + 1}/${_steps.length}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white70,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            step.description,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.white,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              if (_step > 0)
-                TextButton(
-                  onPressed: _skip,
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(color: Colors.white70, fontSize: 15),
-                  ),
-                ),
-              const Spacer(),
-              FilledButton(
-                onPressed: _next,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-                child: Text(
-                  _step < _steps.length - 1 ? 'Next' : 'Got it!',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -260,64 +368,340 @@ class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProv
   }
 }
 
-class TutorialStep {
-
-  TutorialStep({
-    required this.title,
-    required this.description,
-    required this.alignment,
-    this.spotlightRect,
-    this.spotlightPosition = SpotlightPosition.custom,
+class _ArrowPointer extends StatelessWidget {
+  const _ArrowPointer({
+    required this.spot,
+    required this.dir,
+    required this.bounce,
+    required this.color,
   });
-  final String title;
-  final String description;
-  final Alignment alignment;
-  final Rect? spotlightRect;
-  final SpotlightPosition spotlightPosition;
+
+  final Rect spot;
+  final OnboardingArrowDirection dir;
+  final double bounce;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    double top;
+    double left;
+    double rotationTurns;
+
+    switch (dir) {
+      case OnboardingArrowDirection.up:
+        left = spot.center.dx - 20;
+        top = spot.top - 56 + bounce;
+        rotationTurns = 0;
+      case OnboardingArrowDirection.down:
+        left = spot.center.dx - 20;
+        top = spot.bottom + 8 - bounce;
+        rotationTurns = 0.5;
+      case OnboardingArrowDirection.left:
+        left = spot.left - 56 + bounce;
+        top = spot.center.dy - 20;
+        rotationTurns = -0.25;
+      case OnboardingArrowDirection.right:
+        left = spot.right + 8 - bounce;
+        top = spot.center.dy - 20;
+        rotationTurns = 0.25;
+      case OnboardingArrowDirection.none:
+        return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      top: top,
+      left: left,
+      child: Transform.rotate(
+        angle: rotationTurns * 2 * math.pi,
+        child: CustomPaint(
+          size: const Size(40, 48),
+          painter: _ArrowPainter(color: color),
+        ),
+      ),
+    );
+  }
 }
 
-enum SpotlightPosition {
-  custom,
-  bottomRight,
-  bottomLeft,
-  bottom,
-}
+class _ArrowPainter extends CustomPainter {
+  const _ArrowPainter({required this.color});
 
-class _SpotlightPainter extends CustomPainter {
-
-  _SpotlightPainter({required this.rect, required this.pulseAnimation}) : super(repaint: pulseAnimation);
-  final Rect rect;
-  final Animation<double> pulseAnimation;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.1)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.18)
+      ..style = PaintingStyle.fill;
 
-    final expandedRect = Rect.fromCenter(
-      center: rect.center,
-      width: rect.width * pulseAnimation.value,
-      height: rect.height * pulseAnimation.value,
-    );
+    final path = Path()
+      ..moveTo(size.width * 0.5, 0)
+      ..lineTo(size.width, size.height * 0.5)
+      ..lineTo(size.width * 0.65, size.height * 0.5)
+      ..lineTo(size.width * 0.65, size.height)
+      ..lineTo(size.width * 0.35, size.height)
+      ..lineTo(size.width * 0.35, size.height * 0.5)
+      ..lineTo(0, size.height * 0.5)
+      ..close();
 
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(expandedRect, const Radius.circular(16)),
-      paint,
-    );
-
-    final glowPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(expandedRect, const Radius.circular(16)),
-      glowPaint,
-    );
+    // Avoid MaskFilter-based shadows here to keep Impeller happy.
+    canvas.save();
+    canvas.translate(0, 2);
+    canvas.drawPath(path, shadowPaint);
+    canvas.restore();
+    canvas.drawPath(path, fillPaint);
   }
 
   @override
-  bool shouldRepaint(_SpotlightPainter oldDelegate) => true;
+  bool shouldRepaint(_ArrowPainter oldDelegate) => oldDelegate.color != color;
 }
 
+class _CutoutPainter extends CustomPainter {
+  const _CutoutPainter({
+    required this.spot,
+    required this.pulse,
+    required this.primaryColor,
+    required this.shape,
+  });
+
+  final Rect spot;
+  final double pulse;
+  final Color primaryColor;
+  final OnboardingSpotlightShape shape;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final expanded = Rect.fromCenter(
+      center: spot.center,
+      width: spot.width + pulse * 8,
+      height: spot.height + pulse * 8,
+    );
+
+    final overlayPaint = Paint()..color = Colors.black.withValues(alpha: 0.72);
+    final fullPath = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    if (shape == OnboardingSpotlightShape.circle) {
+      final radius = math.max(expanded.width, expanded.height) / 2;
+      fullPath
+        ..addOval(Rect.fromCircle(center: expanded.center, radius: radius))
+        ..fillType = PathFillType.evenOdd;
+    } else {
+      fullPath
+        ..addRRect(RRect.fromRectAndRadius(expanded, const Radius.circular(18)))
+        ..fillType = PathFillType.evenOdd;
+    }
+    canvas.drawPath(fullPath, overlayPaint);
+
+    final borderPaint = Paint()
+      ..color = primaryColor.withValues(alpha: 0.5 + pulse * 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+
+    if (shape == OnboardingSpotlightShape.circle) {
+      final radius = math.max(expanded.width, expanded.height) / 2;
+      canvas.drawCircle(expanded.center, radius, borderPaint);
+    } else {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(expanded, const Radius.circular(18)),
+        borderPaint,
+      );
+    }
+
+    final glowPaint = Paint()
+      ..color = primaryColor.withValues(alpha: 0.2 + pulse * 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
+    if (shape == OnboardingSpotlightShape.circle) {
+      final radius = math.max(expanded.width, expanded.height) / 2;
+      canvas.drawCircle(expanded.center, radius, glowPaint);
+    } else {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(expanded, const Radius.circular(18)),
+        glowPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CutoutPainter oldDelegate) {
+    return oldDelegate.pulse != pulse ||
+        oldDelegate.spot != spot ||
+        oldDelegate.shape != shape;
+  }
+}
+
+class _StepCard extends StatelessWidget {
+  const _StepCard({
+    required this.step,
+    required this.stepIndex,
+    required this.totalSteps,
+    required this.cardFade,
+    required this.cardSlide,
+    required this.screenSize,
+    required this.spot,
+    required this.onNext,
+    this.onSkip,
+  });
+
+  final OnboardingStep step;
+  final int stepIndex;
+  final int totalSteps;
+  final Animation<double> cardFade;
+  final Animation<Offset> cardSlide;
+  final Size screenSize;
+  final Rect? spot;
+  final VoidCallback onNext;
+  final VoidCallback? onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final isLast = stepIndex == totalSteps - 1;
+    final placeBottom = _shouldPlaceBottom();
+
+    return Column(
+      mainAxisAlignment: placeBottom ? MainAxisAlignment.end : MainAxisAlignment.start,
+      children: <Widget>[
+        if (!placeBottom) SizedBox(height: _cardTopOffset()),
+        SlideTransition(
+          position: cardSlide,
+          child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20).copyWith(bottom: 32),
+              child: step.customCardBuilder?.call(context) ??
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: <Color>[primary, Color.lerp(primary, Colors.black, 0.2)!],
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.45),
+                          blurRadius: 32,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              if (step.icon != null)
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(step.icon, color: Colors.white, size: 22),
+                                ),
+                              Expanded(
+                                child: Text(
+                                  step.title,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                children: List<Widget>.generate(
+                                  totalSteps,
+                                  (i) => AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    margin: const EdgeInsets.only(left: 4),
+                                    width: i == stepIndex ? 18 : 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: i == stepIndex
+                                          ? Colors.white
+                                          : Colors.white.withValues(alpha: 0.35),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            step.description,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.white,
+                              height: 1.55,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          Row(
+                            children: <Widget>[
+                              if (onSkip != null)
+                                TextButton(
+                                  onPressed: onSkip,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.white.withValues(alpha: 0.65),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                  ),
+                                  child: const Text('Skip tour', style: TextStyle(fontSize: 14)),
+                                ),
+                              const Spacer(),
+                              FilledButton(
+                                onPressed: onNext,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: primary,
+                                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 13),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: Text(
+                                  isLast ? 'Finish' : 'Next',
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _shouldPlaceBottom() {
+    switch (step.preferredPlacement) {
+      case OnboardingCardPlacement.top:
+        return false;
+      case OnboardingCardPlacement.bottom:
+        return true;
+      case OnboardingCardPlacement.auto:
+        final target = spot;
+        if (target == null) return true;
+        final spaceAbove = target.top;
+        final spaceBelow = screenSize.height - target.bottom;
+        return spaceBelow >= spaceAbove;
+    }
+  }
+
+  double _cardTopOffset() {
+    final target = spot;
+    if (target == null) return 60;
+    final desired = target.bottom + 18;
+    return desired.clamp(24.0, screenSize.height * 0.55);
+  }
+}

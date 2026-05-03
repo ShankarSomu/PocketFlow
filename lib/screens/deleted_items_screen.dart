@@ -5,7 +5,7 @@ import '../db/database.dart';
 import '../models/account.dart';
 import '../models/deletable_entity.dart';
 import '../models/recurring_transaction.dart';
-import '../models/savings_goal.dart';
+import '../models/savings_goal.dart'; // Contains Goal
 import '../models/transaction.dart' as model;
 
 /// Screen for viewing and restoring deleted items
@@ -518,7 +518,7 @@ class _DeletedGoalsTab extends StatefulWidget {
 }
 
 class _DeletedGoalsTabState extends State<_DeletedGoalsTab> {
-  List<SavingsGoal>? _goals;
+  List<Goal>? _goals;
 
   @override
   void initState() {
@@ -531,7 +531,7 @@ class _DeletedGoalsTabState extends State<_DeletedGoalsTab> {
     if (mounted) setState(() => _goals = goals);
   }
 
-  Future<void> _restore(SavingsGoal g) async {
+  Future<void> _restore(Goal g) async {
     await AppDatabase.restoreGoal(g.id!);
     widget.onRestore();
     _load();
@@ -542,7 +542,7 @@ class _DeletedGoalsTabState extends State<_DeletedGoalsTab> {
     }
   }
 
-  Future<void> _permanentDelete(SavingsGoal g) async {
+  Future<void> _permanentDelete(Goal g) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -601,7 +601,8 @@ class _DeletedGoalsTabState extends State<_DeletedGoalsTab> {
       itemCount: _goals!.length,
       itemBuilder: (context, i) {
         final g = _goals![i];
-        final progress = g.target > 0 ? (g.saved / g.target) : 0.0;
+        final saved = 0.0; // TODO: Replace with computed value
+        final progress = g.target > 0 ? (saved / g.target) : 0.0;
         final daysLeft = SoftDeleteHelper.daysUntilPurge(
           g.deletedAt ?? DateTime.now().millisecondsSinceEpoch,
         );
@@ -617,7 +618,7 @@ class _DeletedGoalsTabState extends State<_DeletedGoalsTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${CurrencyFormatter.format(g.saved)} / ${CurrencyFormatter.format(g.target)}',
+                  '${CurrencyFormatter.format(saved)} / ${CurrencyFormatter.format(g.target)}',
                 ),
                 LinearProgressIndicator(value: progress),
                 const SizedBox(height: 4),

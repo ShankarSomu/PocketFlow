@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../services/theme_service.dart';
 import '../../../theme/app_color_scheme.dart';
 import '../../accounts/accounts_screen.dart';
-import '../../savings/savings_screen.dart';
+import '../../savings/savings_screen.dart'; // Contains GoalsScreen
 import '../../transactions/transactions_screen.dart';
 
 /// Stats row showing net balance, savings rate, income, and expenses
@@ -144,7 +144,7 @@ class HomeStatsRow extends StatelessWidget {
                 ),
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const SavingsScreen()),
+                  MaterialPageRoute(builder: (_) => const GoalsScreen()),
                 ),
               ),
             ),

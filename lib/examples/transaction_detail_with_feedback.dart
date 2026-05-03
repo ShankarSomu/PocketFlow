@@ -90,7 +90,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             widget.transaction.category ?? 'Uncategorized',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
         ],
@@ -236,7 +236,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color),
       ),
@@ -343,7 +343,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: isSelected ? color.withOpacity(0.2) : Colors.grey.shade100,
+      color: isSelected ? color.withValues(alpha: 0.2) : Colors.grey.shade100,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,

@@ -7,7 +7,12 @@ class AccountRepositoryImpl implements AccountRepository {
   @override
   Future<int> insert(Account account) async {
     final db = await AppDatabase.db();
-    return db.insert('accounts', account.toMap()..remove('id'));
+    final accountMap = account.toMap()..remove('id');
+    // For liability accounts, negate the opening balance so it displays correctly
+    if (account.isLiability && accountMap['balance'] != null && accountMap['balance'] > 0) {
+      accountMap['balance'] = -(accountMap['balance'] as double);
+    }
+    return db.insert('accounts', accountMap);
   }
 
   @override
@@ -20,7 +25,12 @@ class AccountRepositoryImpl implements AccountRepository {
   @override
   Future<void> update(Account account) async {
     final db = await AppDatabase.db();
-    await db.update('accounts', account.toMap(), 
+    final accountMap = account.toMap();
+    // For liability accounts, ensure the balance is stored as negative
+    if (account.isLiability && accountMap['balance'] != null && accountMap['balance'] > 0) {
+      accountMap['balance'] = -(accountMap['balance'] as double);
+    }
+    await db.update('accounts', accountMap, 
         where: 'id=?', whereArgs: [account.id]);
   }
 
@@ -61,7 +71,8 @@ class AccountRepositoryImpl implements AccountRepository {
     
     // Standardized formula based on account type
     if (account.isLiability) {
-      return account.balance + e - i;
+      // Liabilities: stored as negative, expenses increase debt (more negative), income reduces debt (less negative)
+      return account.balance - e + i;
     } else {
       return account.balance + i - e;
     }

@@ -66,6 +66,16 @@ class TransactionCard extends StatelessWidget {
                                   color: Theme.of(context).colorScheme.onSurface),
                             ),
                           ),
+                          // Recurring indicator
+                          if (transaction.recurringId != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Icon(
+                                Icons.repeat_rounded,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                              ),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 4),

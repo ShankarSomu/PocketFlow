@@ -22,8 +22,9 @@ import 'package:pocket_flow/services/navigation_state.dart';
 import 'package:pocket_flow/services/sms_keyword_service.dart';
 import 'services/notification_manager.dart';
 import 'services/notification_service.dart';
-import 'services/recurring_scheduler.dart';
+import 'services/refresh_notifier.dart' as refreshNotifier;
 import 'services/theme_service.dart';
+import 'services/unified_rule_engine.dart';
 import 'theme/app_theme.dart';
 import 'utils/performance_utils.dart';
 import 'widgets/feature_hint.dart';
@@ -107,7 +108,10 @@ void main() async {
   // flutter_local_notifications on Android.
   PerformanceMonitor.init();
   AuthService.autoBackupIfDue();
-  RecurringScheduler.processDue();
+  UnifiedRuleEngine.processToday();
+  refreshNotifier.appRefresh.addListener(() {
+    UnifiedRuleEngine.processToday();
+  });
   runApp(const PocketFlowApp());
 }
 
@@ -115,6 +119,7 @@ void main() async {
 // MaterialApp builder can react even when Profile/Settings are pushed on top.
 final _rootNavIndex = ValueNotifier<int>(0);
 VoidCallback? _rootGoHome;
+final _appNavigatorKey = GlobalKey<NavigatorState>();
 
 class PocketFlowApp extends StatefulWidget {
   const PocketFlowApp({super.key});
@@ -137,7 +142,7 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
   Future<void> _checkFirstLaunch() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenWelcome = prefs.getBool('has_seen_welcome') ?? false;
-    
+
     if (hasSeenWelcome) {
       // Returning user - show splash briefly
       await Future.delayed(const Duration(milliseconds: 1500));
@@ -176,71 +181,151 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
   Future<void> _showTutorial() async {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
-    
+
     final shouldShow = await TutorialOverlay.shouldShow();
     if (!shouldShow || !mounted) {
       _promptSignIn();
       return;
     }
-    
-    await Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        pageBuilder: (_, __, ___) => TutorialOverlay(
-          onComplete: () {
-            Navigator.of(context).pop();
-            _promptSignIn();
-          },
-        ),
-      ),
-    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final nav = _appNavigatorKey.currentState;
+      if (nav == null) { _promptSignIn(); return; }
+      try {
+        await nav.push(
+          PageRouteBuilder(
+            opaque: false,
+            pageBuilder: (_, __, ___) => TutorialOverlay(
+              onComplete: () {
+                nav.pop();
+                _promptSignIn();
+              },
+            ),
+          ),
+        );
+      } catch (e) {
+        // If Navigator is not available, fallback gracefully
+        _promptSignIn();
+      }
+    });
   }
 
   Future<void> _promptSignIn() async {
-    // Wait a bit for the UI to settle
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
-    
-    final shouldSignIn = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.cloud_outlined, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 12),
-            const Text('Sign In to PocketFlow'),
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final nav = _appNavigatorKey.currentState;
+      if (nav == null) return;
+
+      bool? shouldSignIn;
+      try {
+        shouldSignIn = await showModalBottomSheet<bool>(
+          context: nav.context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (ctx) => _SignInBottomSheet(
+            onSignIn: () => Navigator.pop(ctx, true),
+            onSkip: () => Navigator.pop(ctx, false),
+          ),
+        );
+      } catch (e) {
+        return;
+      }
+
+      if ((shouldSignIn ?? false) && mounted) {
+        final user = await AuthService.signIn();
+        final ctx = _appNavigatorKey.currentContext;
+        if (user != null && ctx != null && mounted) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text('Welcome, ${user.displayName ?? user.email}! 👋'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Theme.of(ctx).colorScheme.primary,
+            ),
+          );
+          await _promptRestoreAfterSignIn();
+        }
+      }
+    });
+  }
+
+  Future<void> _promptRestoreAfterSignIn() async {
+    if (!mounted || !AuthService.isSignedIn) return;
+
+    final nav = _appNavigatorKey.currentState;
+    if (nav == null) return;
+
+    try {
+      final folder = await AuthService.ensureSelectedBackupFolder(
+        createIfMissing: false,
+      );
+      if (folder == null) return;
+
+      final hasBackup = await AuthService.hasBackupInSelectedFolder();
+      if (!hasBackup || !mounted) return;
+
+      final shouldRestore = await showDialog<bool>(
+        context: nav.context,
+        barrierDismissible: false,
+        builder: (dialogCtx) => AlertDialog(
+          title: const Text('Backup Found'),
+          content: Text(
+            'We found a Google Drive backup in "${folder.name}".\n\n'
+            'Do you want to restore your data, or skip and start fresh?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text('Start fresh'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              icon: const Icon(Icons.cloud_download_rounded, size: 18),
+              label: const Text('Restore backup'),
+            ),
           ],
         ),
-        content: const Text(
-          'Sign in to sync your data across devices and enable automatic backups to Google Drive.\n\nYou can always sign in later from the profile menu.',
-          style: TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Skip for now'),
-          ),
-          FilledButton.icon(
-            onPressed: () => Navigator.pop(ctx, true),
-            icon: const Icon(Icons.login, size: 18),
-            label: const Text('Sign In'),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if ((shouldSignIn ?? false) && mounted) {
-      final user = await AuthService.signIn();
-      if (user != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (shouldRestore != true || !mounted) return;
+
+      final messengerCtx = _appNavigatorKey.currentContext;
+      if (messengerCtx != null) {
+        ScaffoldMessenger.of(messengerCtx).showSnackBar(
+          const SnackBar(content: Text('Restoring backup...')),
+        );
+      }
+
+      await AuthService.restore();
+      refreshNotifier.notifyDataChanged();
+
+      final successCtx = _appNavigatorKey.currentContext;
+      if (successCtx != null && mounted) {
+        ScaffoldMessenger.of(successCtx).showSnackBar(
           SnackBar(
-            content: Text('Welcome, ${user.displayName ?? user.email}!'),
+            content: const Text('Backup restored successfully'),
             behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(successCtx).colorScheme.tertiary,
+          ),
+        );
+      }
+    } catch (_) {
+      final errCtx = _appNavigatorKey.currentContext;
+      if (errCtx != null && mounted) {
+        ScaffoldMessenger.of(errCtx).showSnackBar(
+          SnackBar(
+            content: const Text('Backup restore failed. Starting with current data.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(errCtx).colorScheme.error,
           ),
         );
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -272,6 +357,7 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
             statusBarBrightness: effectiveDark ? Brightness.dark : Brightness.light,
           ));
           return MaterialApp(
+          navigatorKey: _appNavigatorKey,
           title: 'PocketFlow',
           debugShowCheckedModeBanner: false,
           theme: ts.buildLightTheme(),
@@ -349,12 +435,12 @@ class _RootNavState extends State<_RootNav> {
   int _index = 0;
 
   // Order: Home | Transactions | Recurring | Chat (FAB) | Savings | Budget | Accounts
-  final _screens = const [
+  final _screens = [
     HomeScreen(),
     TransactionsScreen(),
     RecurringScreen(),
     ChatScreen(),
-    SavingsScreen(),
+    GoalsScreen(),
     BudgetScreen(),
     AccountsScreen(),
   ];
@@ -446,7 +532,7 @@ class _RootNavState extends State<_RootNav> {
   }
 
   void _goTo(int i) {
-    const names = ['Home','Transactions','Recurring','Chat','Savings','Budget','Accounts'];
+    const names = ['Home','Transactions','Recurring','Chat','Goals','Budget','Accounts'];
     AppLogger.nav(names[i]);
     final currentPage = _pageCtrl.page?.round() ?? (_screens.length * 500);
     final currentSlot = currentPage % _screens.length;
@@ -466,31 +552,20 @@ class _RootNavState extends State<_RootNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FeatureHint(
-        featureKey: FeatureHints.swipeNavigation,
-        message: 'Swipe left or right to navigate between screens',
-        alignment: Alignment.center,
-        delay: const Duration(seconds: 2),
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _pageCtrl,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              onPageChanged: (i) {
-                const names = ['Home','Transactions','Recurring','Chat','Savings','Budget','Accounts'];
-                final idx = i % _screens.length;
-                AppLogger.nav(names[idx]);
-                setState(() => _index = idx);
-                _rootNavIndex.value = idx;
-                NavigationState.saveLastTab(idx); // Persist swipe navigation
-              },
-              itemBuilder: (_, i) => _KeepAlivePage(child: _screens[i % _screens.length]),
-            ),
-            // Home FAB is now in MaterialApp.builder (above all pushed routes)
-          ],
-        ),
+      body: PageView.builder(
+        controller: _pageCtrl,
+        itemCount: _screens.length * 1000, // Infinite loop simulation
+        onPageChanged: (pageIndex) {
+          final nextIndex = pageIndex % _screens.length;
+          if (_index == nextIndex) return;
+          setState(() => _index = nextIndex);
+          _rootNavIndex.value = nextIndex;
+          NavigationState.saveLastTab(nextIndex);
+        },
+        itemBuilder: (context, index) {
+          final screenIndex = index % _screens.length;
+          return _KeepAlivePage(child: _screens[screenIndex]);
+        },
       ),
       bottomNavigationBar: _BottomNav(
         index: _index,
@@ -530,13 +605,13 @@ class _BottomNav extends StatelessWidget {
     final inactiveColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4);
 
     final items = [
-      const _NavItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
-      const _NavItem(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Transactions'),
-      const _NavItem(Icons.repeat_rounded, Icons.repeat_rounded, 'Recurring'),
-      null, // centre FAB placeholder
-      const _NavItem(Icons.savings_outlined, Icons.savings_rounded, 'Savings'),
-      const _NavItem(Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded, 'Budget'),
-      const _NavItem(Icons.account_balance_wallet_outlined,
+        const _NavItem(Icons.home_outlined, Icons.home_rounded, 'Home'),
+        const _NavItem(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Transactions'),
+        const _NavItem(Icons.repeat_rounded, Icons.repeat_rounded, 'Recurring'),
+        null, // centre FAB placeholder
+        _NavItem(Icons.emoji_events_outlined, Icons.emoji_events, 'Goals'),
+        const _NavItem(Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded, 'Budget'),
+        const _NavItem(Icons.account_balance_wallet_outlined,
           Icons.account_balance_wallet_rounded, 'Accounts'),
     ];
 
@@ -641,6 +716,178 @@ class _NavItem {
   final IconData icon;
   final IconData activeIcon;
   final String label;
+}
+
+// ─── Sign-in bottom sheet ─────────────────────────────────────────────────────
+
+class _SignInBottomSheet extends StatelessWidget {
+  const _SignInBottomSheet({required this.onSignIn, required this.onSkip});
+  final VoidCallback onSignIn;
+  final VoidCallback onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final size = MediaQuery.of(context).size;
+
+    return Container(
+      width: size.width,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 40,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 16, 28, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 28),
+              // Icon badge
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [primary, Color.lerp(primary, Colors.purple, 0.4)!],
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.sync_rounded, color: Colors.white, size: 36),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Keep your data safe',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Sign in with Google to sync across devices and back up automatically to Google Drive.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                  height: 1.55,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              // Feature pills
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _FeaturePill(icon: Icons.devices_rounded, label: 'Multi-device', primary: primary),
+                  const SizedBox(width: 10),
+                  _FeaturePill(icon: Icons.backup_rounded, label: 'Auto backup', primary: primary),
+                  const SizedBox(width: 10),
+                  _FeaturePill(icon: Icons.lock_outline_rounded, label: 'Private', primary: primary),
+                ],
+              ),
+              const SizedBox(height: 28),
+              // Sign in button
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: onSignIn,
+                  icon: const Icon(Icons.login_rounded, size: 20),
+                  label: const Text('Continue with Google'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w700),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Skip button
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: onSkip,
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('Maybe later',
+                      style: TextStyle(fontSize: 15)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturePill extends StatelessWidget {
+  const _FeaturePill({
+    required this.icon,
+    required this.label,
+    required this.primary,
+  });
+  final IconData icon;
+  final String label;
+  final Color primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: primary.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 

@@ -37,8 +37,8 @@ class ExcelExportService {
         await _addBudgetsSheet(excel);
       }
 
-      if (config.dataTypes.contains(ExportDataType.savingsGoals)) {
-        await _addSavingsGoalsSheet(excel);
+      if (config.dataTypes.contains(ExportDataType.goals)) {
+        await _addGoalsSheet(excel);
       }
 
       // Add summary sheet if multiple data types
@@ -257,7 +257,7 @@ class ExcelExportService {
   }
 
   /// Add savings goals sheet to workbook
-  Future<void> _addSavingsGoalsSheet(Excel excel) async {
+  Future<void> _addGoalsSheet(Excel excel) async {
     final sheet = excel['Savings Goals'];
     final goals = await AppDatabase.getGoals();
 
@@ -277,7 +277,9 @@ class ExcelExportService {
 
     // Data
     var rowIndex = 1;
+
     for (final goal in goals) {
+      final saved = _getSavedForGoal(goal);
       sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
           .value = TextCellValue(goal.name);
 
@@ -286,15 +288,15 @@ class ExcelExportService {
       targetCell.cellStyle = CellStyle(numberFormat: NumFormat.standard_2);
 
       final savedCell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex));
-      savedCell.value = DoubleCellValue(goal.saved);
+      savedCell.value = DoubleCellValue(saved);
       savedCell.cellStyle = CellStyle(numberFormat: NumFormat.standard_2);
 
-      final remaining = goal.target - goal.saved;
+      final remaining = goal.target - saved;
       final remainingCell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex));
       remainingCell.value = DoubleCellValue(remaining);
       remainingCell.cellStyle = CellStyle(numberFormat: NumFormat.standard_2);
 
-      final progress = goal.target > 0 ? (goal.saved / goal.target * 100) : 0.0;
+      final progress = goal.target > 0 ? (saved / goal.target * 100) : 0.0;
       final progressCell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex));
       progressCell.value = DoubleCellValue(progress.toDouble());
       progressCell.cellStyle = CellStyle(numberFormat: NumFormat.standard_2);
@@ -310,6 +312,12 @@ class ExcelExportService {
     for (var i = 1; i < 6; i++) {
       sheet.setColumnWidth(i, 12);
     }
+  }
+
+  // Compute saved amount for a goal (replace with actual logic as needed)
+  double _getSavedForGoal(goal) {
+    // TODO: Replace with real computation from transactions if needed
+    return goal.saved ?? 0.0;
   }
 
   /// Add summary sheet to workbook

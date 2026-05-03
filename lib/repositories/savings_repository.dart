@@ -1,19 +1,19 @@
 import '../models/savings_goal.dart';
 
-/// Repository interface for savings goal operations.
-abstract class SavingsRepository {
-  /// Insert a new savings goal
-  Future<int> insert(SavingsGoal goal);
+/// Repository interface for goal operations.
+abstract class GoalsRepository {
+  /// Insert a new goal
+  Future<int> insert(Goal goal);
 
-  /// Get all savings goals
-  Future<List<SavingsGoal>> getAll();
+  /// Get all goals
+  Future<List<Goal>> getAll();
 
-  /// Update an existing savings goal
-  Future<void> update(SavingsGoal goal);
+  /// Update an existing goal
+  Future<void> update(Goal goal);
 
   /// Update only the saved amount for a goal
   Future<void> updateSaved(int id, double saved);
 
-  /// Delete a savings goal by ID
+  /// Delete a goal by ID
   Future<void> delete(int id);
 }

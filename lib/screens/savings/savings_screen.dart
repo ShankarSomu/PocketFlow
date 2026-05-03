@@ -13,17 +13,17 @@ import '../../widgets/empty_states.dart';
 import '../../widgets/error_state_widget.dart';
 import '../shared/shared.dart';
 
-class SavingsScreen extends StatefulWidget {
-  const SavingsScreen({super.key});
+class GoalsScreen extends StatefulWidget {
+  const GoalsScreen({super.key});
 
   @override
-  State<SavingsScreen> createState() => _SavingsScreenState();
+  State<GoalsScreen> createState() => _GoalsScreenState();
 }
 
-class _SavingsScreenState extends State<SavingsScreen> {
+class _GoalsScreenState extends State<GoalsScreen> {
   bool _loading = true;
   String? _error;
-  List<SavingsGoal> _goals = [];
+  List<Goal> _goals = [];
   List<Account> _accounts = [];
   Map<int, double> _accountBalances = {};
 
@@ -65,18 +65,18 @@ class _SavingsScreenState extends State<SavingsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Failed to load savings goals: $e';
+        _error = 'Failed to load goals: $e';
         _loading = false;
       });
     }
   }
 
-  void _showForm([SavingsGoal? existing]) {
+  void _showForm([Goal? existing]) {
     int? accountId = existing?.accountId;
     int priority = existing?.priority ?? 5;
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final targetCtrl = TextEditingController(text: existing != null ? existing.target.toStringAsFixed(2) : '');
-    final savedCtrl = TextEditingController(text: existing != null ? existing.saved.toStringAsFixed(2) : '');
+    // No saved field anymore; remove savedCtrl
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -102,12 +102,7 @@ class _SavingsScreenState extends State<SavingsScreen> {
                   decoration: const InputDecoration(labelText: 'Target Amount', prefixText: '\$', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: savedCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Already Saved', prefixText: '\$', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 12),
+                // Removed 'Already Saved' field
                 DropdownButtonFormField<int?>(
                   initialValue: accountId,
                   decoration: const InputDecoration(labelText: 'Linked Account (optional)', border: OutlineInputBorder()),
@@ -173,13 +168,11 @@ class _SavingsScreenState extends State<SavingsScreen> {
                     onPressed: () async {
                       final name = nameCtrl.text.trim();
                       final target = double.tryParse(targetCtrl.text);
-                      final saved = double.tryParse(savedCtrl.text) ?? 0;
                       if (name.isEmpty || target == null || target <= 0) return;
-                      final goal = SavingsGoal(
+                      final goal = Goal(
                         id: existing?.id,
                         name: name,
                         target: target,
-                        saved: saved,
                         accountId: accountId,
                         priority: priority,
                       );
@@ -213,17 +206,18 @@ class _SavingsScreenState extends State<SavingsScreen> {
     if (n.contains('emergency') || n.contains('fund')) return Icons.shield_rounded;
     if (n.contains('retire')) return Icons.beach_access_rounded;
     if (n.contains('baby') || n.contains('child')) return Icons.child_care_rounded;
-    return Icons.savings_rounded;
+    // Use the target/goal emoji for default
+    return Icons.emoji_events;
   }
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: '\$');
     final totalTarget = _goals.fold(0.0, (sum, g) => sum + g.target);
-    final totalSaved = _goals.fold(0.0, (sum, g) => sum + g.saved);
+    final totalSaved = _goals.fold(0.0, (sum, g) => sum + (_accountBalances[g.accountId] ?? 0.0));
     final totalProgress = totalTarget <= 0 ? 0.0 : (totalSaved / totalTarget).clamp(0.0, 1.0);
-    final completed = _goals.where((g) => g.saved >= g.target).toList();
-    final inProgress = _goals.where((g) => g.saved < g.target).toList();
+    final completed = _goals.where((g) => (_accountBalances[g.accountId] ?? 0.0) >= g.target).toList();
+    final inProgress = _goals.where((g) => (_accountBalances[g.accountId] ?? 0.0) < g.target).toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -486,10 +480,10 @@ class _GoalsSection extends StatelessWidget {
     required this.onTap,
   });
   final String label;
-  final List<SavingsGoal> goals;
+  final List<Goal> goals;
   final IconData Function(String) iconFor;
   final NumberFormat fmt;
-  final void Function(SavingsGoal) onTap;
+  final void Function(Goal) onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +536,7 @@ class _GoalItem extends StatelessWidget {
     required this.showDivider,
     required this.onTap,
   });
-  final SavingsGoal goal;
+  final Goal goal;
   final IconData icon;
   final NumberFormat fmt;
   final bool showDivider;
@@ -562,8 +556,10 @@ class _GoalItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = goal.target <= 0 ? 0.0 : (goal.saved / goal.target).clamp(0.0, 1.0);
-    final isComplete = goal.saved >= goal.target;
+    // Compute saved from account balance
+    final saved = (goal.accountId != null) ? (context.findAncestorStateOfType<_GoalsScreenState>()?._accountBalances[goal.accountId] ?? 0.0) : 0.0;
+    final progress = goal.target <= 0 ? 0.0 : (saved / goal.target).clamp(0.0, 1.0);
+    final isComplete = saved >= goal.target;
     final color = isComplete ? Theme.of(context).colorScheme.tertiary : _colorForGoal(context, goal.name);
 
     return InkWell(
@@ -602,7 +598,7 @@ class _GoalItem extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${fmt.format(goal.saved)} / ${fmt.format(goal.target)}',
+                        '${fmt.format(saved)} / ${fmt.format(goal.target)}',
                         style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
                         overflow: TextOverflow.ellipsis,
                       ),

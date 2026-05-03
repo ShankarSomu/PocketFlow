@@ -78,12 +78,16 @@ class ApiServer {
         'expenses': expenses,
         'net': income - expenses,
         'spending_by_category': cats,
-        'savings_goals': goals.map((g) => {
-              'name': g.name,
-              'target': g.target,
-              'saved': g.saved,
-              'progress_pct': (g.progress * 100).toStringAsFixed(1),
-            }).toList(),
+        'savings_goals': goals.map((g) {
+          final saved = _getSavedForGoal(g);
+          final progress = g.target > 0 ? saved / g.target : 0.0;
+          return {
+            'name': g.name,
+            'target': g.target,
+            'saved': saved,
+            'progress_pct': (progress * 100).toStringAsFixed(1),
+          };
+        }).toList(),
       }),
       headers: _corsHeaders,
     );
@@ -162,10 +166,15 @@ class ApiServer {
   static Future<Response> _getGoals(Request _) async {
     final goals = await AppDatabase.getGoals();
     return Response.ok(
-      jsonEncode(goals.map((g) => {
-            ...g.toMap(),
-            'progress_pct': (g.progress * 100).toStringAsFixed(1),
-          }).toList()),
+      jsonEncode(goals.map((g) {
+        final saved = _getSavedForGoal(g);
+        final progress = g.target > 0 ? saved / g.target : 0.0;
+        return {
+          ...g.toMap(),
+          'saved': saved,
+          'progress_pct': (progress * 100).toStringAsFixed(1),
+        };
+      }).toList()),
       headers: _corsHeaders,
     );
   }
@@ -180,7 +189,7 @@ class ApiServer {
           headers: _corsHeaders);
     }
     final id = await AppDatabase.insertGoal(
-        SavingsGoal(name: name, target: target, saved: 0));
+      Goal(name: name, target: target));
     return Response.ok(jsonEncode({'id': id}), headers: _corsHeaders);
   }
 
@@ -197,7 +206,14 @@ class ApiServer {
       return Response(404,
           body: jsonEncode({'error': 'goal not found'}), headers: _corsHeaders);
     }
-    await AppDatabase.updateGoalSaved(goal.id!, goal.saved + amount);
+    final saved = _getSavedForGoal(goal);
+    await AppDatabase.updateGoalSaved(goal.id!, saved + amount);
     return Response.ok(jsonEncode({'status': 'ok'}), headers: _corsHeaders);
   }
+
+// Compute saved amount for a goal (replace with actual logic as needed)
+static double _getSavedForGoal(goal) {
+  // TODO: Replace with real computation from transactions if needed
+  return goal.saved ?? 0.0;
+}
 }

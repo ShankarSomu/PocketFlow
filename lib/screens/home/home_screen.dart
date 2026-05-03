@@ -6,6 +6,7 @@ import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../models/budget.dart';
 import '../../models/transaction.dart' as model;
+import '../../onboarding/onboarding_target.dart';
 import '../../services/refresh_notifier.dart';
 import '../../services/time_filter.dart';
 import '../../theme/app_color_scheme.dart';
@@ -162,7 +163,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   // -- Fixed header --
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-                    child: HomeHeader(onNotificationsTap: _showNotifications),
+                    child: OnboardingTarget(
+                      id: 'home.header',
+                      child: HomeHeader(onNotificationsTap: _showNotifications),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   // -- Scrollable body --
@@ -175,7 +179,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           _buildCarousel(fmt),
                           const SizedBox(height: 8),
-                          _buildSecondCarousel(),
+                          OnboardingTarget(
+                            id: 'home.chart',
+                            child: _buildSecondCarousel(),
+                          ),
                           const SizedBox(height: 8),
                           _buildRecentTransactions(fmt),
                         ],
@@ -191,7 +198,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 featureKey: FeatureHints.timeFilter,
                 message: 'Tap to filter by time period',
                 alignment: Alignment.bottomLeft,
-                child: CalendarFab(),
+                child: OnboardingTarget(
+                  id: 'home.time_filter',
+                  child: CalendarFab(),
+                ),
               ),
             ),
           ],

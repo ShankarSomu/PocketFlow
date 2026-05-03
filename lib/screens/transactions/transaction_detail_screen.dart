@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../../db/database.dart';
 import '../../models/account.dart';
+import '../../models/recurring_transaction.dart';
+import '../../models/savings_goal.dart'; // Contains Goal
 import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
 import '../../services/sms_correction_service.dart';
@@ -10,6 +12,7 @@ import '../../services/sms_reevaluation_service.dart';
 import '../../services/transaction_feedback_service.dart';
 import '../../widgets/category_picker.dart';
 import '../../widgets/confidence_badge.dart';
+import '../recurring/components/recurring_form.dart';
 
 /// Comprehensive Transaction Detail Screen
 /// 
@@ -39,6 +42,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   Account? _toAccount;
   double _accountBalance = 0.0;
   bool _loading = true;
+  List<Account> _allAccounts = [];
+  List<Goal> _allGoals = [];
   
   // Feedback state
   bool? _userFeedback; // true = correct, false = incorrect
@@ -56,9 +61,13 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     setState(() => _loading = true);
     
     try {
+      final accounts = await AppDatabase.getAccounts();
+      final goals = await AppDatabase.getGoals();
+      _allAccounts = accounts;
+      _allGoals = goals;
+
       // Load account information
       if (_transaction.accountId > 0) {
-        final accounts = await AppDatabase.getAccounts();
         _account = accounts.where((a) => a.id == _transaction.accountId).firstOrNull;
         if (_account != null) {
           _accountBalance = await AppDatabase.accountBalance(_account!.id!, _account!);
@@ -67,7 +76,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       
       // Load transfer accounts if applicable
       if (_transaction.isTransfer) {
-        final accounts = await AppDatabase.getAccounts();
         if (_transaction.fromAccountId != null) {
           _fromAccount = accounts.where((a) => a.id == _transaction.fromAccountId).firstOrNull;
         }
@@ -978,33 +986,81 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   }
 
   Widget _buildActionButtons() {
+    final isRecurring = _transaction.recurringId != null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _showEditDialog,
-              icon: const Icon(Icons.edit, size: 18),
-              label: const Text('Edit Details'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _showEditDialog,
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: const Text('Edit Details'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _confirmDelete,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Delete'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red.shade700,
+                    side: BorderSide(color: Colors.red.shade300),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!isRecurring) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _makeRecurring,
+                icon: const Icon(Icons.repeat_rounded, size: 18),
+                label: const Text('Make Recurring'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _confirmDelete,
-              icon: const Icon(Icons.delete_outline, size: 18),
-              label: const Text('Delete'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red.shade700,
-                side: BorderSide(color: Colors.red.shade300),
-                padding: const EdgeInsets.symmetric(vertical: 14),
+          ] else ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.repeat_rounded,
+                      size: 16, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'This is a recurring transaction',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -2245,6 +2301,32 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     } else {
       return 'Very low confidence. Significant uncertainties in extraction. Please review carefully.';
     }
+  }
+
+  /// Open the recurring form pre-populated from this transaction.
+  Future<void> _makeRecurring() async {
+    // Build a pre-filled RecurringTransaction from this transaction's data
+    final prefilled = RecurringTransaction(
+      type: _transaction.type == 'income' ? 'income' : 'expense',
+      amount: _transaction.amount,
+      category: _transaction.category,
+      note: _transaction.note,
+      accountId: _transaction.accountId > 0 ? _transaction.accountId : null,
+      frequency: 'monthly',
+      startDate: _transaction.date,
+      nextDueDate: _transaction.date,
+    );
+
+    await showRecurringForm(
+      context,
+      existing: null,          // always create new — don't edit an existing rule
+      prefilled: prefilled,    // pre-populate fields
+      accounts: _allAccounts,
+      goals: _allGoals,
+    );
+
+    // Reload so the recurring badge appears if the user saved
+    await _loadData();
   }
 
   /// Show a text input dialog to get a corrected value from the user.

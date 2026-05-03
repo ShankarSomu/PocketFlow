@@ -34,7 +34,7 @@ class MlClassificationResult {
 ///   0 debit | 1 credit | 2 transfer | 3 balance | 4 reminder | 5 non_financial
 class SmsClassifierService {
   static const _modelAsset     = 'ml/sms_classifier.tflite';
-  static const _tokenizerAsset = 'ml/tokenizer_config.json';
+  static const _tokenizerAsset = 'assets/ml/tokenizer_config.json';
 
   static Interpreter? _interpreter;
   static Map<String, int>? _wordIndex;

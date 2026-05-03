@@ -8,6 +8,9 @@ class RecurringTransaction {
     this.goalId,
     this.isActive = true,
     this.deletedAt,
+    this.startDate,
+    this.endDate,
+    this.maxOccurrences,
   });
 
   factory RecurringTransaction.fromMap(Map<String, dynamic> m) =>
@@ -24,6 +27,9 @@ class RecurringTransaction {
         nextDueDate: DateTime.parse(m['next_due_date']),
         isActive: m['is_active'] == 1,
         deletedAt: m['deleted_at'],
+        startDate: m['start_date'] != null ? DateTime.parse(m['start_date']) : null,
+        endDate: m['end_date'] != null ? DateTime.parse(m['end_date']) : null,
+        maxOccurrences: m['max_occurrences'] as int?,
       );
   final int? id;
   final String type; // 'income' | 'expense' | 'transfer' | 'goal'
@@ -35,6 +41,9 @@ class RecurringTransaction {
   final int? goalId;         // savings goal (goal contribution only)
   final String frequency;
   final DateTime nextDueDate;
+  final DateTime? startDate; // when this recurring item began
+  final DateTime? endDate;   // optional hard end date
+  final int? maxOccurrences; // optional max number of occurrences (null = indefinite)
   final bool isActive;
   final int? deletedAt;
 
@@ -66,6 +75,9 @@ class RecurringTransaction {
         'goal_id': goalId,
         'frequency': frequency,
         'next_due_date': nextDueDate.toIso8601String(),
+        'start_date': startDate?.toIso8601String(),
+        'end_date': endDate?.toIso8601String(),
+        'max_occurrences': maxOccurrences,
         'is_active': isActive ? 1 : 0,
         'deleted_at': deletedAt,
       };

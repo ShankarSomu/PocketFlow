@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:tflite_flutter_plus/tflite_flutter_plus.dart';
 import 'package:pocket_flow/services/advanced_sms_parser.dart';
@@ -29,7 +30,9 @@ class MlSmsClassifier {
       tokenizerJson = await rootBundle.loadString('assets/ml/tokenizer_config.json');
     } catch (e) {
       // Fallback for non‑Flutter environments (e.g., unit tests)
-      final file = File('assets/ml/tokenizer_config.json');
+      final file = File('${Directory.current.path}/assets/ml/tokenizer_config.json');
+      print('Attempting to load tokenizer config from: ${file.path}');
+      print('File exists? ${await file.exists()}');
       if (await file.exists()) {
         tokenizerJson = await file.readAsString();
       } else {

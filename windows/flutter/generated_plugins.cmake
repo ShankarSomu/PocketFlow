@@ -9,7 +9,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   record_windows
   share_plus
   speech_to_text_windows
-  tflite_flutter_plus
   url_launcher_windows
 )
 

@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'package:pocket_flow/db/database.dart';
-import 'package:pocket_flow/main.dart' show hybridSmsParser;
+import 'package:pocket_flow/sms_engine/models/sms_types.dart';
+import 'package:pocket_flow/sms_engine/models/sms_transaction_result.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_classification_service.dart';
+import 'package:pocket_flow/sms_engine/parsing/sms_entity_extractor.dart';
 import 'package:pocket_flow/sms_engine/parsing/sms_account_extractor.dart';
 import 'package:pocket_flow/sms_engine/ingestion/sms_keyword_service.dart';
 import 'package:pocket_flow/sms_engine/ingestion/sms_service.dart';
@@ -91,37 +94,37 @@ class SmsScanDebugger {
         passedFinancialCheck++;
         print('✓ Passed financial SMS check');
         
-        // Check 2: Can it be parsed?
+        // Check 2: Can it be parsed by the rule-based pipeline?
         try {
-          final parseResult = await hybridSmsParser.parse(body, senderId: sender);
-          print('  Parser result:');
-          print('    - Is transaction: ${parseResult.isTransaction}');
-          print('    - Type: ${parseResult.transactionType.name}');
-          print('    - Amount: \$${parseResult.amount?.toStringAsFixed(2) ?? 'null'}');
-          print('    - Confidence: ${(parseResult.confidenceScore * 100).toStringAsFixed(1)}%');
-          print('    - Region: ${parseResult.region.name}');
+          final rawSms = RawSmsMessage(
+            id: analyzed,
+            sender: sender,
+            body: body,
+            timestamp: DateTime.now(),
+          );
+          final classification = await SmsClassificationService.classify(rawSms);
+          final entities = await EntityExtractionService.extract(rawSms, classification);
+          print('  Pipeline result:');
+          print('    - Is transaction: ${classification.type.name}');
+          print('    - Amount: \$${entities.amount?.toStringAsFixed(2) ?? "null"}');
+          print('    - Confidence: ${(classification.confidence * 100).toStringAsFixed(1)}%');
           
-          if (parseResult.isTransaction && parseResult.amount != null) {
+          if (entities.amount != null) {
             passedParseCheck++;
             print('✓ Passed parse check - would be imported');
             
             // Check account extraction
             final accountIdentity = await AccountExtractionService.extractIdentity(
               smsText: body,
-              region: parseResult.region,
+              region: RegionEnum.india,
               senderId: sender,
             );
             print('  Account extraction:');
-            print('    - Bank: ${accountIdentity.bank ?? 'Unknown'} (${(accountIdentity.bankConfidence * 100).toStringAsFixed(0)}%)');
-            print('    - Identifier: ${accountIdentity.accountIdentifier ?? 'Unknown'} (${(accountIdentity.identifierConfidence * 100).toStringAsFixed(0)}%)');
+            print('    - Bank: ${accountIdentity.bank ?? "Unknown"} (${(accountIdentity.bankConfidence * 100).toStringAsFixed(0)}%)');
+            print('    - Identifier: ${accountIdentity.accountIdentifier ?? "Unknown"} (${(accountIdentity.identifierConfidence * 100).toStringAsFixed(0)}%)');
           } else {
             print('❌ Failed parse check - would be skipped');
-            if (!parseResult.isTransaction) {
-              print('   Reason: Not classified as transaction');
-            }
-            if (parseResult.amount == null) {
-              print('   Reason: Amount not extracted');
-            }
+            print('   Reason: Amount not extracted (type=${classification.type.name})');
           }
         } catch (e) {
           print('❌ Parse error: $e');

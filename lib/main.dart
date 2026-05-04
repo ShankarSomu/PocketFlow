@@ -11,13 +11,12 @@ import 'package:pocket_flow/screens/profile/profile_screen.dart';
 import 'package:pocket_flow/screens/recurring/recurring_screen.dart';
 import 'package:pocket_flow/screens/savings/savings_screen.dart';
 import 'package:pocket_flow/screens/transactions/transactions_screen.dart';
-import 'package:pocket_flow/screens/tutorial_overlay.dart';
+import 'package:pocket_flow/screens/tutorial/transparent_tutorial_module.dart';
 import 'package:pocket_flow/screens/welcome_screen.dart';
 import 'package:pocket_flow/services/app_logger.dart';
 import 'package:pocket_flow/services/auth_service.dart';
 import 'package:pocket_flow/services/deep_link_service.dart';
 import 'package:pocket_flow/services/image_cache_service.dart';
-import 'package:pocket_flow/sms_engine/_ml_deprecated/sms_ml_classifier.dart';
 import 'package:pocket_flow/services/navigation_state.dart';
 import 'package:pocket_flow/sms_engine/ingestion/sms_keyword_service.dart';
 import 'services/notification_manager.dart';
@@ -28,9 +27,6 @@ import 'services/unified_rule_engine.dart';
 import 'theme/app_theme.dart';
 import 'utils/performance_utils.dart';
 import 'widgets/feature_hint.dart';
-
-// Global hybrid SMS parser instance (rule-based + ML)
-late final HybridSmsParser hybridSmsParser;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,27 +57,7 @@ void main() async {
   ));
   await AppLogger.load();
   await AppLogger.init();
-  
-  // Initialize ML SMS parser early (needed for SMS import)
-  hybridSmsParser = HybridSmsParser();
-  try {
-    await hybridSmsParser.initialize();
-    AppLogger.log(
-      LogLevel.info,
-      LogCategory.system,
-      'ML SMS Classifier initialized',
-      detail: 'Hybrid parser ready (rules + ML)',
-    );
-  } catch (e) {
-    // Log error but don't crash app - parser will fall back to rules-only mode
-    AppLogger.log(
-      LogLevel.warning,
-      LogCategory.system,
-      'ML SMS Classifier initialization failed',
-      detail: 'Falling back to rules-only mode: $e',
-    );
-  }
-  
+
   // Initialize critical services in parallel to speed up boot
   await Future.wait([
     AuthService.init(),
@@ -182,7 +158,7 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
-    final shouldShow = await TutorialOverlay.shouldShow();
+    final shouldShow = await TransparentTutorialModule.shouldShow();
     if (!shouldShow || !mounted) {
       _promptSignIn();
       return;
@@ -196,12 +172,15 @@ class _PocketFlowAppState extends State<PocketFlowApp> {
         await nav.push(
           PageRouteBuilder(
             opaque: false,
-            pageBuilder: (_, __, ___) => TutorialOverlay(
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+            pageBuilder: (_, __, ___) => TransparentTutorialModule(
               onComplete: () {
                 nav.pop();
                 _promptSignIn();
               },
             ),
+            transitionsBuilder: (_, __, ___, child) => child,
           ),
         );
       } catch (e) {

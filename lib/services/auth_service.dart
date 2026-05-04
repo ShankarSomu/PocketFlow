@@ -400,12 +400,50 @@ class AuthService {
     final goals = await AppDatabase.getGoals();
     final recurring = await AppDatabase.getRecurring();
 
+    // ── Export feedback and learning data ───────────────────────────────────
+    final db = await AppDatabase.db();
+    
+    // Get parsing feedback (quick thumbs up/down on fields)
+    final parsingFeedback = await db.query('parsing_feedback');
+    
+    // Get detailed user corrections
+    final userCorrections = await db.query('user_corrections');
+    
+    // Get feedback events
+    final feedbackEvents = await db.query('feedback_events');
+    
+    // Get learned merchant normalizations
+    final merchantNormRules = await db.query('merchant_normalization_rules');
+    
+    // Get learned merchant-category mappings
+    final merchantCategoryMaps = await db.query('merchant_category_map');
+
+    // Get structural negative feedback samples (used by SmsCorrectionService)
+    final smsNegativeSamples = await db.query('sms_negative_samples');
+
+    // Get SMS event ledger for dedupe after restore/rescan
+    final smsEvents = await db.query('sms_events');
+
+    // Get learned rule tables (if any user/system updates exist)
+    final smsClassificationRules = await db.query('sms_classification_rules');
+    final smsRuleIndex = await db.query('sms_rule_index');
+
     return jsonEncode({
       'exported_at': DateTime.now().toIso8601String(),
       'accounts': accounts.map((a) => a.toMap()).toList(),
       'transactions': transactions.map((t) => t.toMap()).toList(),
       'savings_goals': goals.map((g) => g.toMap()).toList(),
       'recurring_transactions': recurring.map((r) => r.toMap()).toList(),
+      // ── FEEDBACK & LEARNING DATA ───────────────────────────────────────
+      'parsing_feedback': parsingFeedback,
+      'user_corrections': userCorrections,
+      'feedback_events': feedbackEvents,
+      'merchant_normalization_rules': merchantNormRules,
+      'merchant_category_map': merchantCategoryMaps,
+      'sms_negative_samples': smsNegativeSamples,
+      'sms_events': smsEvents,
+      'sms_classification_rules': smsClassificationRules,
+      'sms_rule_index': smsRuleIndex,
     });
   }
 
@@ -414,25 +452,95 @@ class AuthService {
     final d = await AppDatabase.db();
 
     await d.transaction((txn) async {
+      // Delete core data
       await txn.delete('recurring_transactions');
       await txn.delete('transactions');
       await txn.delete('budgets');
       await txn.delete('savings_goals');
       await txn.delete('accounts');
+      
+      // ── DELETE FEEDBACK & LEARNING DATA ──────────────────────────────────
+      await txn.delete('parsing_feedback');
+      await txn.delete('user_corrections');
+      await txn.delete('feedback_events');
+      await txn.delete('merchant_normalization_rules');
+      await txn.delete('merchant_category_map');
+      await txn.delete('sms_negative_samples');
+      await txn.delete('sms_events');
+      await txn.delete('sms_rule_index');
+      await txn.delete('sms_classification_rules');
 
-      for (final a in (data['accounts'] as List)) {
+      // Restore core data
+      for (final a in (data['accounts'] as List? ?? [])) {
         await txn.insert('accounts', Map<String, dynamic>.from(a));
       }
-      for (final t in (data['transactions'] as List)) {
+      for (final t in (data['transactions'] as List? ?? [])) {
         await txn.insert('transactions', Map<String, dynamic>.from(t));
       }
-      for (final g in (data['savings_goals'] as List)) {
+      for (final g in (data['savings_goals'] as List? ?? [])) {
         await txn.insert('savings_goals', Map<String, dynamic>.from(g));
       }
-      for (final r in (data['recurring_transactions'] as List)) {
+      for (final r in (data['recurring_transactions'] as List? ?? [])) {
         await txn.insert(
             'recurring_transactions', Map<String, dynamic>.from(r));
       }
+      
+      // ── RESTORE FEEDBACK & LEARNING DATA ─────────────────────────────────
+      for (final pf in (data['parsing_feedback'] as List? ?? [])) {
+        await txn.insert('parsing_feedback', Map<String, dynamic>.from(pf));
+      }
+      for (final uc in (data['user_corrections'] as List? ?? [])) {
+        await txn.insert('user_corrections', Map<String, dynamic>.from(uc));
+      }
+      for (final fe in (data['feedback_events'] as List? ?? [])) {
+        await txn.insert('feedback_events', Map<String, dynamic>.from(fe));
+      }
+      for (final mnr in (data['merchant_normalization_rules'] as List? ?? [])) {
+        await txn.insert('merchant_normalization_rules', Map<String, dynamic>.from(mnr));
+      }
+      for (final mcm in (data['merchant_category_map'] as List? ?? [])) {
+        await txn.insert('merchant_category_map', Map<String, dynamic>.from(mcm));
+      }
+      for (final sns in (data['sms_negative_samples'] as List? ?? [])) {
+        await txn.insert('sms_negative_samples', Map<String, dynamic>.from(sns));
+      }
+      for (final ev in (data['sms_events'] as List? ?? [])) {
+        await txn.insert('sms_events', Map<String, dynamic>.from(ev));
+      }
+      for (final r in (data['sms_classification_rules'] as List? ?? [])) {
+        await txn.insert('sms_classification_rules', Map<String, dynamic>.from(r));
+      }
+      for (final idx in (data['sms_rule_index'] as List? ?? [])) {
+        await txn.insert('sms_rule_index', Map<String, dynamic>.from(idx));
+      }
+
+      // Re-apply learned merchant category mappings to historical SMS
+      // transactions that were stored as uncategorized.
+      await txn.rawUpdate('''
+        UPDATE transactions
+        SET category = (
+          SELECT mcm.category
+          FROM merchant_category_map mcm
+          WHERE LOWER(TRIM(mcm.merchant)) = LOWER(TRIM(transactions.merchant))
+            AND mcm.confidence >= 0.6
+          ORDER BY mcm.confidence DESC, mcm.usage_count DESC
+          LIMIT 1
+        )
+        WHERE source_type = 'sms'
+          AND deleted_at IS NULL
+          AND merchant IS NOT NULL
+          AND (
+            category IS NULL OR
+            category = '' OR
+            LOWER(category) = 'uncategorized'
+          )
+          AND EXISTS (
+            SELECT 1
+            FROM merchant_category_map mcm2
+            WHERE LOWER(TRIM(mcm2.merchant)) = LOWER(TRIM(transactions.merchant))
+              AND mcm2.confidence >= 0.6
+          )
+      ''');
     });
   }
 }

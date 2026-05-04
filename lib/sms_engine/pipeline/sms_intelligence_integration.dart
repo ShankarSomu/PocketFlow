@@ -4,7 +4,6 @@ import 'package:flutter_sms_inbox/flutter_sms_inbox.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:pocket_flow/services/app_logger.dart';
-import 'package:pocket_flow/sms_engine/_ml_deprecated/sms_classifier_service.dart';
 import 'package:pocket_flow/sms_engine/pipeline/sms_pipeline_executor.dart';
 
 /// SMS Intelligence Integration Service
@@ -85,9 +84,6 @@ class SmsIntelligenceIntegration {
         error: 'SMS Intelligence is disabled. Enable it in settings.',
       );
     }
-
-    // Ensure ML classifier is loaded before processing
-    await SmsClassifierService.initialize();
 
     AppLogger.log(
       LogLevel.info,

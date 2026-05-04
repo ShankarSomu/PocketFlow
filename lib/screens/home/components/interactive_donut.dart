@@ -342,6 +342,12 @@ class InteractiveDonutPainter extends CustomPainter {
       final isOtherSel = selectedIdx != null && !isSelected;
       final color = colors[i % colors.length];
       final midAngle = currentAngle + sweep / 2;
+      final drawSweep = sweep - _gap;
+
+      if (drawSweep <= 0) {
+        currentAngle += 2 * pi * fraction * progress;
+        continue;
+      }
 
       final offsetDist = isSelected ? _expansion * 0.7 : 0.0;
       final drawCenter = center +
@@ -351,7 +357,7 @@ class InteractiveDonutPainter extends CustomPainter {
         canvas.drawArc(
           Rect.fromCircle(center: drawCenter, radius: baseRadius),
           currentAngle + _gap / 2,
-          (sweep - _gap).clamp(0.01, sweep),
+          drawSweep,
           false,
           Paint()
             ..color = color.faint
@@ -364,7 +370,7 @@ class InteractiveDonutPainter extends CustomPainter {
       canvas.drawArc(
         Rect.fromCircle(center: drawCenter, radius: baseRadius),
         currentAngle + _gap / 2,
-        (sweep - _gap).clamp(0.01, sweep),
+        drawSweep,
         false,
         Paint()
           ..color = isOtherSel ? color.faint : color

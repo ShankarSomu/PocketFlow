@@ -1309,6 +1309,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                             newCategory: selectedCategory,
                             transactionType: selectedType,
                           );
+                          await TransactionFeedbackService.recordCorrection(
+                            transaction: _transaction,
+                            fieldName: 'category',
+                            originalValue: originalCategory,
+                            correctedValue: selectedCategory,
+                          );
                         }
                         if (amount != originalAmount) {
                           await TransactionFeedbackService.recordQuickFeedback(
@@ -1462,6 +1468,31 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       tx: _transaction,
       feedbackType: isCorrect ? FeedbackType.correct : FeedbackType.incorrectCategory,
     );
+
+    // Thumbs-up: reinforce current merchant→category mapping and account assignment
+    // so future SMS with the same merchant get the same category automatically.
+    if (isCorrect && _transaction.isFromSms) {
+      if (_transaction.merchant != null && _transaction.merchant!.isNotEmpty) {
+        await TransactionFeedbackService.recordQuickFeedback(
+          transaction: _transaction,
+          fieldName: 'merchant',
+          isCorrect: true,
+        );
+      }
+      if (_transaction.category.isNotEmpty) {
+        await TransactionFeedbackService.recordQuickFeedback(
+          transaction: _transaction,
+          fieldName: 'category',
+          isCorrect: true,
+        );
+      }
+      if (_transaction.accountId != null) {
+        await TransactionFeedbackService.recordAccountConfirmation(
+          transaction: _transaction,
+          confirmed: true,
+        );
+      }
+    }
 
     // Update local state
     if (isCorrect) {
@@ -2141,6 +2172,15 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       );
       
       await AppDatabase.updateTransaction(updated);
+
+      // Record account confirmation so future SMS from this institution
+      // get auto-assigned to the same account.
+      if (_transaction.isFromSms) {
+        await TransactionFeedbackService.recordAccountConfirmation(
+          transaction: updated,
+          confirmed: true,
+        );
+      }
       
       // Ask if user wants to update similar transactions
       if (_transaction.extractedBank != null || _transaction.extractedAccountIdentifier != null) {

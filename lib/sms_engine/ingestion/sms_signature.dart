@@ -115,7 +115,28 @@ class SmsSignature {
   /// Structural similarity score (0.0 - 1.0). NO keyword matching.
   /// Weights: sender=0.6, patternType=0.3, structure=0.1
   /// When sender is empty, patternType carries more weight.
+  ///
+  /// IMPORTANT: messages from the same sender but with different patternTypes
+  /// (e.g. bank balance-alert vs. bank deposit) must NEVER match, regardless
+  /// of sender similarity. A negative sample for a balance alert must not
+  /// suppress a real deposit from the same bank.
   double similarityTo(SmsSignature other) {
+    // Hard guard: if both sides have a recognised patternType and they differ,
+    // the score is capped below the blocking threshold to prevent cross-type
+    // suppression from the same sender.
+    const _transactionTypes = {'transaction', 'transaction_debit', 'transaction_credit', 'transfer'};
+    const _nonTransactionTypes = {'alert', 'otp', 'bill_reminder', 'marketing', 'promotion'};
+    final thisIsTransaction = _transactionTypes.contains(patternType);
+    final otherIsTransaction = _transactionTypes.contains(other.patternType);
+    final thisIsNonTransaction = _nonTransactionTypes.contains(patternType);
+    final otherIsNonTransaction = _nonTransactionTypes.contains(other.patternType);
+    // If one is a known transaction type and the other is a known non-transaction
+    // type, they can never be similar enough to block.
+    if ((thisIsTransaction && otherIsNonTransaction) ||
+        (thisIsNonTransaction && otherIsTransaction)) {
+      return 0.0;
+    }
+
     double score = 0.0;
 
     if (sender.isNotEmpty && other.sender.isNotEmpty) {

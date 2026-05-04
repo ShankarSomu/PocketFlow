@@ -45,7 +45,7 @@ class AppDatabase {
     final path = join(await getDatabasesPath(), 'pocket_flow.db');
     return openDatabase(
       path,
-      version: 27,
+    version: 34,
       onCreate: (db, _) => _AppDatabaseSchema._createAll(db),
       onUpgrade: (db, oldVersion, _) =>
           _AppDatabaseMigrations._migrate(db, oldVersion),

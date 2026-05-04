@@ -3,7 +3,7 @@
 /// Barrel file for all SMS Intelligence UI components
 /// 
 /// Available screens:
-/// - IntelligenceDashboardScreen: Main entry point with overview & quick stats
+/// - SmsIntelligenceDashboardScreen: Main entry point with overview & quick stats
 /// - TransferPairsScreen: Review and confirm detected transfers
 /// - RecurringPatternsScreen: Manage detected recurring patterns
 /// - MerchantInsightsScreen: View spending patterns by merchant
@@ -15,12 +15,12 @@
 /// // Navigate to dashboard
 /// Navigator.push(
 ///   context,
-///   MaterialPageRoute(builder: (context) => const IntelligenceDashboardScreen()),
+///   MaterialPageRoute(builder: (context) => const SmsIntelligenceDashboardScreen()),
 /// );
 /// ```
 library;
 
-export 'intelligence_dashboard_screen.dart';
+export 'sms_intelligence_dashboard_screen.dart';
 export 'merchant_insights_screen.dart';
 export 'recurring_patterns_screen.dart';
 export 'transfer_pairs_screen.dart';

@@ -1,17 +1,43 @@
 ﻿import 'package:pocket_flow/db/database.dart';
-import 'package:pocket_flow/models/pending_action.dart';
 import 'package:pocket_flow/sms_engine/models/sms_types.dart';
 import 'package:pocket_flow/models/transaction.dart' as model;
 import 'package:pocket_flow/repositories/signal_weight_repository.dart';
 import 'package:pocket_flow/sms_engine/account/sms_account_resolver.dart';
 import 'package:pocket_flow/services/app_logger.dart';
-import 'package:pocket_flow/services/confidence_scoring.dart';
 import 'package:pocket_flow/sms_engine/parsing/sms_entity_extractor.dart';
 import 'package:pocket_flow/services/pending_action_service.dart';
 import 'package:pocket_flow/services/privacy_guard.dart';
 import 'package:pocket_flow/sms_engine/parsing/sms_classification_service.dart';
-import 'package:pocket_flow/sms_engine/_ml_deprecated/sms_classifier_service.dart';
 import 'package:pocket_flow/sms_engine/rules/sms_correction_service.dart';
+import 'package:pocket_flow/sms_engine/ingestion/sms_normalizer.dart';
+import 'package:pocket_flow/sms_engine/ingestion/sms_event_repository.dart';
+import 'package:pocket_flow/sms_engine/cluster/sms_cluster_memory.dart';
+import 'package:pocket_flow/sms_engine/cluster/sms_cluster_propagator.dart';
+import 'package:pocket_flow/sms_engine/probability/sms_probability_engine.dart';
+import 'package:pocket_flow/sms_engine/stability/sms_stability_guard.dart';
+import 'package:pocket_flow/sms_engine/audit/sms_audit_repository.dart';
+
+/// Internal carrier for Phase 4+5 signal data — written to `sms_audit_log`
+/// after the pipeline completes. Stored on [SmsProcessingResult] so the
+/// outer [SmsPipelineExecutor.processSms] can write the audit record once it
+/// has the [eventId].
+class _SmsAuditContext {
+  const _SmsAuditContext({
+    required this.clusterId,
+    required this.senderKnown,
+    required this.patternCacheHit,
+    required this.probScore,
+    required this.stability,
+    required this.needsReview,
+  });
+
+  final int? clusterId;
+  final bool senderKnown;
+  final bool patternCacheHit;
+  final SmsProbabilityScore probScore;
+  final StabilityAssessment stability;
+  final bool needsReview;
+}
 
 class SmsProcessingResult {
   SmsProcessingResult({
@@ -22,6 +48,7 @@ class SmsProcessingResult {
     this.pendingActionId,
     this.requiresUserAction = false,
     this.confidence = 0.0,
+    this.auditContext,
   });
 
   final bool success;
@@ -32,38 +59,168 @@ class SmsProcessingResult {
   final bool requiresUserAction;
   final double confidence;
 
+  /// Phase 6: present only for financial pipeline paths (transaction/unknown).
+  /// Written to `sms_audit_log` by [SmsPipelineExecutor.processSms].
+  final _SmsAuditContext? auditContext;
+
   bool get isTransaction => transactionId != null;
   bool get isPending => pendingActionId != null;
 }
 
 class SmsPipelineExecutor {
   static final _signalWeightRepo = SignalWeightRepository();
+  static final _eventRepo = SmsEventRepository();
+
+  static Future<int?> _findExistingSmsTransactionIdBySource(
+    String smsSource,
+  ) async {
+    final db = await AppDatabase.db();
+    final rows = await db.query(
+      'transactions',
+      columns: ['id'],
+      where:
+          'source_type = ? AND sms_source = ? AND (deleted_at IS NULL OR user_disputed = 1)',
+      whereArgs: ['sms', smsSource],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['id'] as int?;
+  }
 
   static Future<SmsProcessingResult> processSms({
     required String senderAddress,
     required String messageBody,
     required DateTime receivedAt,
   }) async {
+    // ── Privacy gate ──────────────────────────────────────────────────────────
+    AppLogger.sms('Pipeline: Privacy check', detail: 'sender=$senderAddress');
+    // ── Phase 3: startup propagation scan (once per session) ─────────────────
+    SmsClusterPropagator.propagateAll();
+    if (PrivacyGuard.isSensitive(messageBody)) {
+      return SmsProcessingResult(
+        success: true,
+        message: 'Blocked sensitive SMS',
+        smsType: SmsType.nonFinancial,
+      );
+    }
+    final sanitizedBody = PrivacyGuard.sanitize(messageBody);
+    if (sanitizedBody == null) {
+      return SmsProcessingResult(
+        success: true,
+        message: 'Fully sensitive SMS',
+        smsType: SmsType.nonFinancial,
+      );
+    }
+
+    // ── Normalize + content-hash dedup ────────────────────────────────────────
+    // Use the raw sanitized body (not token-masked) so only truly identical
+    // messages hash the same. Two transactions of different amounts at the same
+    // merchant will have different hashes and will NOT be treated as duplicates.
+    final contentHash = SmsNormalizer.computeDedupeHash(sanitizedBody, senderAddress);
+    final existingEventId = await _eventRepo.findIdByHash(contentHash);
+    if (existingEventId != null) {
+      AppLogger.sms(
+        'Pipeline: Duplicate SMS skipped by event hash',
+        detail: 'hash=$contentHash eventId=$existingEventId',
+      );
+      return SmsProcessingResult(
+        success: true,
+        message: 'Duplicate SMS skipped',
+        smsType: SmsType.nonFinancial,
+      );
+    }
+
+    // Fallback dedupe for restored backups where sms_events may be empty:
+    // if an identical SMS source already exists in transactions, skip import.
+    final existingTxId = await _findExistingSmsTransactionIdBySource(messageBody);
+    if (existingTxId != null) {
+      AppLogger.sms(
+        'Pipeline: Duplicate SMS skipped by transaction source',
+        detail: 'txId=$existingTxId',
+      );
+      return SmsProcessingResult(
+        success: true,
+        message: 'Duplicate SMS skipped',
+        smsType: SmsType.nonFinancial,
+      );
+    }
+
+    // ── Cluster memory lookup (Phase 2) ─────────────────────────────────────
+    // Template hash uses token-masked body so structurally identical messages
+    // (same template, different amounts/dates) map to the same cluster.
+    final normalizedBody = SmsNormalizer.normalize(sanitizedBody);
+    final templateHash = SmsNormalizer.computeHash(normalizedBody, senderAddress);
+    final cluster = await SmsClusterMemory.lookupOrCreate(
+      templateHash: templateHash,
+      sender: senderAddress,
+      normalizedBody: normalizedBody,
+    );
+
+    // ── Log raw event (pending status until pipeline completes) ───────────────
+    final eventId = await _eventRepo.insert(
+      rawBody: messageBody,
+      sender: senderAddress,
+      receivedAt: receivedAt,
+      contentHash: contentHash,
+    );
+
+    // ── Run structural pipeline ───────────────────────────────────────────────
+    final result = await _runPipeline(
+      senderAddress: senderAddress,
+      sanitizedBody: sanitizedBody,
+      receivedAt: receivedAt,
+      cluster: cluster,
+    );
+
+    // ── Record cluster outcome (Phase 2) ──────────────────────────────────────
+    final isFinancialOutcome = result.transactionId != null ||
+        (result.smsType != SmsType.nonFinancial && result.success);
+    if (isFinancialOutcome || cluster.matchCount > 1) {
+      // Record even non-financial outcomes once we have prior hits — helps the
+      // cluster learn that a template is consistently non-financial.
+      final outcomeTxType = result.smsType.name;
+      await SmsClusterMemory.recordOutcome(
+        templateHash: templateHash,
+        transactionType: outcomeTxType,
+        confirmed: result.transactionId != null,
+      );
+    }
+
+    // ── Update event status ───────────────────────────────────────────────────
+    final status = result.transactionId != null
+        ? SmsEventStatus.processed
+        : (result.success ? SmsEventStatus.skipped : SmsEventStatus.skipped);
+    await _eventRepo.updateStatus(eventId, status,
+        transactionId: result.transactionId);
+
+    // ── Phase 6: Audit log ──────────────────────────────────────────────────
+    final audit = result.auditContext;
+    if (audit != null) {
+      await SmsAuditRepository.insert(
+        eventId: eventId,
+        clusterId: audit.clusterId,
+        transactionId: result.transactionId,
+        senderKnown: audit.senderKnown,
+        patternCacheHit: audit.patternCacheHit,
+        probScore: audit.probScore,
+        stability: audit.stability,
+        needsReview: audit.needsReview,
+      );
+    }
+
+    return result;
+  }
+
+  /// Core structural pipeline — runs after privacy gate, dedup, and event
+  /// logging. No ML calls; relies on sender/body heuristics and rule engine.
+  static Future<SmsProcessingResult> _runPipeline({
+    required String senderAddress,
+    required String sanitizedBody,
+    required DateTime receivedAt,
+    required SmsCluster cluster,
+  }) async {
     final startTime = DateTime.now();
     try {
-      AppLogger.sms('Pipeline: Privacy check', detail: 'sender=$senderAddress');
-      if (PrivacyGuard.isSensitive(messageBody)) {
-        return SmsProcessingResult(
-          success: true,
-          message: 'Blocked sensitive SMS',
-          smsType: SmsType.nonFinancial,
-        );
-      }
-
-      final sanitizedBody = PrivacyGuard.sanitize(messageBody);
-      if (sanitizedBody == null) {
-        return SmsProcessingResult(
-          success: true,
-          message: 'Fully sensitive SMS',
-          smsType: SmsType.nonFinancial,
-        );
-      }
-
       final rawSms = RawSmsMessage(
         id: 0,
         sender: senderAddress,
@@ -71,37 +228,45 @@ class SmsPipelineExecutor {
         timestamp: receivedAt,
       );
 
-      AppLogger.sms('Pipeline: ML classification', detail: 'sender=$senderAddress');
-      final mlStartTime = DateTime.now();
-      final mlResult = await SmsClassifierService.classify(sanitizedBody);
-      final mlDuration = DateTime.now().difference(mlStartTime);
-      if (mlDuration.inMilliseconds > 200) {
-        AppLogger.sms('SLOW: ML classify took ${mlDuration.inMilliseconds}ms', level: LogLevel.warning);
-      }
-
-      // Check structural negative samples using ML label for accurate pattern matching
-      // If user previously marked a structurally similar SMS as "not a transaction", skip it
-      final isBlocked = await SmsCorrectionService.isBlocked(
-        sanitizedBody, senderAddress, mlLabel: mlResult.label);
+      // Check structural negative samples
+      final isBlocked =
+          await SmsCorrectionService.isBlocked(sanitizedBody, senderAddress);
       if (isBlocked) {
-        AppLogger.sms('BLOCKED by structural similarity', detail: 'sender=$senderAddress mlLabel=${mlResult.label}');
+        AppLogger.sms('BLOCKED by structural similarity',
+            detail: 'sender=$senderAddress');
         return SmsProcessingResult(
           success: true,
           message: 'Blocked by learned rule',
           smsType: SmsType.nonFinancial,
         );
       }
-      
-      AppLogger.sms('Pipeline: Rule-based classification', detail: 'mlLabel=${mlResult.label}');
-      final classifyStartTime = DateTime.now();
-      final classification = await SmsClassificationService.classifyWithMl(
-        sms: rawSms,
-        mlLabel: mlResult.label,
-        mlConfidence: mlResult.confidence,
-      );
-      final classifyDuration = DateTime.now().difference(classifyStartTime);
-      if (classifyDuration.inMilliseconds > 100) {
-        AppLogger.sms('SLOW: Classification took ${classifyDuration.inMilliseconds}ms', level: LogLevel.warning);
+
+      // ── Cluster fast-path (Phase 2) ───────────────────────────────────────
+      // If this template has been seen enough times with consistent outcomes,
+      // skip the rule engine and use the cluster's known type directly.
+      late final SmsClassification classification;
+      if (cluster.isKnown && cluster.transactionType != null) {
+        final knownSmsType = _smsTypeFromName(cluster.transactionType!);
+        if (knownSmsType != null) {
+          AppLogger.sms(
+            'ClusterMemory: fast-path classification',
+            detail: 'type=${cluster.transactionType} conf=${cluster.confidence.toStringAsFixed(2)} '
+                'matches=${cluster.matchCount}',
+          );
+          classification = SmsClassification(
+            type: knownSmsType,
+            confidence: cluster.confidence,
+            reason: 'cluster_memory:${cluster.templateHash.substring(0, 8)}',
+          );
+        } else {
+          classification = await _classifyWithTiming(rawSms, senderAddress);
+        }
+      } else {
+        // Record a hit on existing learning clusters so the count grows.
+        if (cluster.matchCount > 1) {
+          await SmsClusterMemory.recordHit(cluster.templateHash);
+        }
+        classification = await _classifyWithTiming(rawSms, senderAddress);
       }
 
       if (classification.type == SmsType.nonFinancial) {
@@ -132,7 +297,12 @@ class SmsPipelineExecutor {
             reason: 'Reclassified from accountUpdate (has amount)',
           );
           final resolution = await AccountResolutionEngine.resolve(entities);
-          return _processTransaction(rawSms, creditClassification, entities, resolution);
+          final sSenderKnown = await SmsProbabilityEngine.checkSenderKnown(senderAddress);
+          final sPatternHit = await SmsProbabilityEngine.checkPatternCache(cluster.templateHash);
+          return _processTransaction(
+            rawSms, creditClassification, entities, resolution,
+            cluster: cluster, senderKnown: sSenderKnown, patternCacheHit: sPatternHit,
+          );
         }
         // No amount - just a balance notification, skip
         return SmsProcessingResult(
@@ -162,6 +332,10 @@ class SmsPipelineExecutor {
         AppLogger.sms('SLOW: Account resolution took ${resolveDuration.inMilliseconds}ms', level: LogLevel.warning);
       }
 
+      // ── Phase 4: pre-compute probability inputs ──────────────────────────
+      final senderKnown = await SmsProbabilityEngine.checkSenderKnown(senderAddress);
+      final patternCacheHit = await SmsProbabilityEngine.checkPatternCache(cluster.templateHash);
+
       AppLogger.sms('Pipeline: Processing type ${classification.type.name}');
       switch (classification.type) {
         case SmsType.transactionDebit:
@@ -171,6 +345,9 @@ class SmsPipelineExecutor {
             classification,
             entities,
             resolution,
+            cluster: cluster,
+            senderKnown: senderKnown,
+            patternCacheHit: patternCacheHit,
           );
         case SmsType.transfer:
           return _processTransfer(rawSms, entities, resolution);
@@ -180,6 +357,9 @@ class SmsPipelineExecutor {
             classification,
             entities,
             resolution,
+            cluster: cluster,
+            senderKnown: senderKnown,
+            patternCacheHit: patternCacheHit,
           );
         default:
           return SmsProcessingResult(
@@ -198,7 +378,7 @@ class SmsPipelineExecutor {
     } finally {
       final totalDuration = DateTime.now().difference(startTime);
       if (totalDuration.inMilliseconds > 500) {
-        AppLogger.sms('SLOW: Total pipeline took ${totalDuration.inMilliseconds}ms', 
+        AppLogger.sms('SLOW: Total pipeline took ${totalDuration.inMilliseconds}ms',
           detail: 'sender=$senderAddress', level: LogLevel.warning);
       }
     }
@@ -208,25 +388,27 @@ class SmsPipelineExecutor {
     RawSmsMessage sms,
     SmsClassification classification,
     ExtractedEntities entities,
-    AccountResolution resolution,
-  ) async {
-    final weights = await _signalWeightRepo.getWeights();
+    AccountResolution resolution, {
+    required SmsCluster cluster,
+    required bool senderKnown,
+    required bool patternCacheHit,
+  }) async {
+    // ── Phase 4: Probability Engine ───────────────────────────────────────────
+    final probScore = await SmsProbabilityEngine.compute(
+      senderKnown: senderKnown,
+      cluster: cluster,
+      classification: classification,
+      entities: entities,
+      resolution: resolution,
+      patternCacheHit: patternCacheHit,
+    );
 
-    final signalScore =
-        (entities.amount != null ? weights['has_amount'] ?? 0.4 : 0) +
-        (entities.accountIdentifier != null ? weights['has_account'] ?? 0.2 : 0) +
-        (entities.institutionName != null ? weights['has_bank'] ?? 0.1 : 0) +
-        (entities.merchant != null ? weights['has_merchant'] ?? 0.1 : 0) +
-        (classification.confidence > 0.8
-            ? weights['strong_classification'] ?? 0.2
-            : 0);
+    // ── Phase 5: Stability Guard ────────────────────────────────────────────
+    final stability = SmsStabilityGuard.assess(cluster, probScore);
 
-    final blendedConfidence =
-        (signalScore * 0.6 + resolution.confidence * 0.4).clamp(0.0, 1.0);
-
+    final blendedConfidence = probScore.score;
     final needsReview =
-        blendedConfidence < ConfidenceScoring.thresholdMedium ||
-        resolution.accountId == null; // Needs review only if no account resolved
+        probScore.requiresReview || resolution.accountId == null || stability.forceReview;
 
     // IMPROVED: Create transaction even without account (use placeholder)
     // User can review and assign account later in Transactions screen
@@ -253,11 +435,21 @@ class SmsPipelineExecutor {
 
     return SmsProcessingResult(
       success: true,
-      message: needsReview ? 'Transaction created (review needed)' : 'Transaction created',
+      message: stability.forceReview
+          ? 'Transaction created (review needed: ${stability.threat.name})'
+          : (needsReview ? 'Transaction created (review needed)' : 'Transaction created'),
       transactionId: id,
       smsType: classification.type,
       requiresUserAction: needsReview,
       confidence: blendedConfidence,
+      auditContext: _SmsAuditContext(
+        clusterId: cluster.id,
+        senderKnown: senderKnown,
+        patternCacheHit: patternCacheHit,
+        probScore: probScore,
+        stability: stability,
+        needsReview: needsReview,
+      ),
     );
   }
 
@@ -329,11 +521,27 @@ class SmsPipelineExecutor {
     RawSmsMessage sms,
     SmsClassification classification,
     ExtractedEntities entities,
-    AccountResolution resolution,
-  ) async {
+    AccountResolution resolution, {
+    required SmsCluster cluster,
+    required bool senderKnown,
+    required bool patternCacheHit,
+  }) async {
     // If we have an amount, create a transaction with needs_review=true
     // rather than a pending action. The user can review it in the Transactions screen.
     if (entities.amount != null) {
+      // ── Phase 4: Probability Engine ─────────────────────────────────────────
+      final probScore = await SmsProbabilityEngine.compute(
+        senderKnown: senderKnown,
+        cluster: cluster,
+        classification: classification,
+        entities: entities,
+        resolution: resolution,
+        patternCacheHit: patternCacheHit,
+      );
+
+      // ── Phase 5: Stability Guard ──────────────────────────────────────────
+      final stability = SmsStabilityGuard.assess(cluster, probScore);
+
       final accountId = resolution.accountId ?? await _getOrCreatePlaceholderAccount();
 
       final tx = model.Transaction(
@@ -346,8 +554,8 @@ class SmsPipelineExecutor {
         type: 'expense', // Default to expense; user can correct during review
         smsSource: sms.body,
         sourceType: 'sms',
-        confidenceScore: classification.confidence,
-        needsReview: true, // Always needs review for unknown financial
+        confidenceScore: probScore.score,
+        needsReview: true, // unknownFinancial always needs review
         extractedBank: entities.institutionName,
         extractedAccountIdentifier: entities.accountIdentifier,
       );
@@ -356,33 +564,26 @@ class SmsPipelineExecutor {
 
       return SmsProcessingResult(
         success: true,
-        message: 'Transaction created (review needed - unclassified)',
+        message: stability.forceReview
+            ? 'Transaction created (review needed - ${stability.threat.name})'
+            : 'Transaction created (review needed - unclassified)',
         transactionId: id,
         smsType: classification.type,
         requiresUserAction: true,
-        confidence: classification.confidence,
+        confidence: probScore.score,
+        auditContext: _SmsAuditContext(
+          clusterId: cluster.id,
+          senderKnown: senderKnown,
+          patternCacheHit: patternCacheHit,
+          probScore: probScore,
+          stability: stability,
+          needsReview: true,
+        ),
       );
     }
 
     // No amount found - fall back to pending action
     return _createPending(sms, classification.type, 'ambiguous_transaction');
-  }
-
-  static Future<SmsProcessingResult> _processBalance(
-    RawSmsMessage sms,
-    SmsClassification classification,
-  ) async {
-    final entities = await EntityExtractionService.extract(sms, classification);
-
-    if (entities.amount == null) {
-      return _createPending(sms, classification.type, 'missing_balance');
-    }
-
-    return SmsProcessingResult(
-      success: true,
-      message: 'Balance SMS logged',
-      smsType: SmsType.accountUpdate,
-    );
   }
 
   static Future<SmsProcessingResult> _createPending(
@@ -472,5 +673,34 @@ class SmsPipelineExecutor {
     if (tx.extractedAccountIdentifier != null) signals.add('has_account');
     if (tx.sourceType == 'sms') signals.add('has_transaction_verb');
     return signals;
+  }
+
+  // ── Cluster memory helpers ────────────────────────────────────────────────
+
+  /// Run [SmsClassificationService.classify] with timing instrumentation.
+  static Future<SmsClassification> _classifyWithTiming(
+    RawSmsMessage rawSms,
+    String senderAddress,
+  ) async {
+    AppLogger.sms('Pipeline: Rule-based classification',
+        detail: 'sender=$senderAddress');
+    final start = DateTime.now();
+    final result = await SmsClassificationService.classify(rawSms);
+    final elapsed = DateTime.now().difference(start);
+    if (elapsed.inMilliseconds > 100) {
+      AppLogger.sms('SLOW: Classification took ${elapsed.inMilliseconds}ms',
+          level: LogLevel.warning);
+    }
+    return result;
+  }
+
+  /// Convert a stored [SmsType.name] string back to an [SmsType], or return
+  /// `null` if the name is unrecognised (guards against stale cluster data).
+  static SmsType? _smsTypeFromName(String name) {
+    try {
+      return SmsType.values.byName(name);
+    } catch (_) {
+      return null;
+    }
   }
 }

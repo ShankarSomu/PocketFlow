@@ -92,11 +92,27 @@ extension AppDatabaseExecutionLog on AppDatabase {
     AppLogger.userAction('deleteAllData', detail: 'All data wiped');
     final d = await AppDatabase.db();
     await d.transaction((txn) async {
+      // ── Core financial data ────────────────────────────────────────────────
       await txn.delete('recurring_transactions');
       await txn.delete('transactions');
       await txn.delete('budgets');
       await txn.delete('savings_goals');
       await txn.delete('accounts');
+
+      // ── SMS Intelligence pipeline state ────────────────────────────────────
+      // These must be cleared so that re-scan treats all messages as new and
+      // doesn't skip them as duplicates via content-hash dedup.
+      await txn.delete('sms_events');
+      await txn.delete('sms_clusters');
+      await txn.delete('sms_pattern_cache');
+      await txn.delete('sms_audit_log');
+      await txn.delete('pending_actions');
+
+      // ── SMS learning / negative-sample tables ─────────────────────────────
+      await txn.delete('sms_negative_samples');
+      await txn.delete('parsing_feedback');
+      await txn.delete('user_corrections');
+      await txn.delete('feedback_events');
     });
   }
 

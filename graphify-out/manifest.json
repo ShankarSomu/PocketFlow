@@ -16,15 +16,15 @@
     "hash": "b87c56dc25054ab6da16b511c0cc705b"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\java\\io\\flutter\\plugins\\GeneratedPluginRegistrant.java": {
-    "mtime": 1776637244.3221753,
-    "hash": "119020a396bb2086dc5b44fd1b8b920a"
+    "mtime": 1777848682.7611783,
+    "hash": "dfa75251539414fd47dd4264abaec6c2"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\android\\app\\src\\main\\kotlin\\com\\pocketflow\\pocket_flow\\MainActivity.kt": {
     "mtime": 1775949250.2871945,
     "hash": "cbe566066cb75f2acf5fd6fe85d14298"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Flutter\\ephemeral\\flutter_lldb_helper.py": {
-    "mtime": 1777740932.0901623,
+    "mtime": 1777848680.910614,
     "hash": "98fc75412162af387e2e3461e4e58094"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\AppDelegate.swift": {
@@ -36,8 +36,8 @@
     "hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\GeneratedPluginRegistrant.m": {
-    "mtime": 1776637244.3423839,
-    "hash": "27ff13217317475c1d65640e90219b72"
+    "mtime": 1777848682.8011231,
+    "hash": "c030c97c439a3ab67f3daea023745e83"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\ios\\Runner\\Runner-Bridging-Header.h": {
     "mtime": 1775948910.01108,
@@ -52,8 +52,8 @@
     "hash": "24e5d095048eb86c30423f4e04b6e57b"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\main.dart": {
-    "mtime": 1777843044.4162743,
-    "hash": "b273377556f437efbcaefe1046e04293"
+    "mtime": 1777862516.2378292,
+    "hash": "1c5409f797a1e5f1b9d8c12deea10a66"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\core\\accessibility.dart": {
     "mtime": 1776576720.068339,
@@ -132,8 +132,8 @@
     "hash": "fccdf46e9375da9fa7790d11b5056f80"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database.dart": {
-    "mtime": 1777843044.4428236,
-    "hash": "38b21bf14b43e96109518bc3c895a0b1"
+    "mtime": 1777864729.517104,
+    "hash": "11beea84840503baea55a5ec21e5e6a6"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_accounts.dart": {
     "mtime": 1777819278.43944,
@@ -148,16 +148,16 @@
     "hash": "f96f15b3176743d90931bc7c5bb22a20"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_execution_log.dart": {
-    "mtime": 1777819278.442439,
-    "hash": "f28cf15c64dbde5bb93eeec622d73306"
+    "mtime": 1777858252.0293443,
+    "hash": "7435139d31b887edcfaa453076b6cbea"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_migrations.dart": {
-    "mtime": 1777819278.4384382,
-    "hash": "350b62c06ae9b1f188b2f4e0ccdf9c09"
+    "mtime": 1777864740.8723006,
+    "hash": "34db6ce3581317a65f3b520ef708b6d4"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_schema.dart": {
-    "mtime": 1777819278.4384382,
-    "hash": "609ed87b6f9072b281069b8c9955145a"
+    "mtime": 1777864733.827773,
+    "hash": "d7414b024ab23486509b3ce71a91aea4"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\db\\database_transactions.dart": {
     "mtime": 1777819278.4404387,
@@ -178,10 +178,6 @@
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\edit_transaction_with_blocking.dart": {
     "mtime": 1777843044.4621575,
     "hash": "2051dcc548a8744fde8f148e96c6440a"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\hybrid_parser_usage.dart": {
-    "mtime": 1777843044.4655342,
-    "hash": "4b9e186e3269ce06496d68875b789906"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\examples\\refactored_widget_example.dart": {
     "mtime": 1776576720.1269174,
@@ -340,12 +336,8 @@
     "hash": "f95bae87a869d360849cc7a707eede81"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\notifications_screen.dart": {
-    "mtime": 1777243961.1584785,
-    "hash": "f67c4c0e4375493d291abb3229e53c1f"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\tutorial_overlay.dart": {
-    "mtime": 1777839183.83498,
-    "hash": "f6cc1ebdedac4ee08bcc09e2b4ddb751"
+    "mtime": 1777862477.0759795,
+    "hash": "2c13251455a0790e6dbf1fc0690121d2"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\welcome_screen.dart": {
     "mtime": 1776576720.2230616,
@@ -476,8 +468,8 @@
     "hash": "c82309883a6d0ec9836acf3640bb4a1c"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\interactive_donut.dart": {
-    "mtime": 1776579076.389131,
-    "hash": "670539110debcf5287298b0b9b2e8e55"
+    "mtime": 1777865730.0677447,
+    "hash": "4b0d11586b91ac23c7b81a8603e10cec"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\home\\components\\monthly_summary_card.dart": {
     "mtime": 1776576720.3318489,
@@ -535,13 +527,9 @@
     "mtime": 1776576720.3760424,
     "hash": "ec15df1f3a62f908ff037367afbde69d"
   },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\intelligence_dashboard_screen.dart": {
-    "mtime": 1777843044.5698488,
-    "hash": "1a55f2d9934f4ecc5f0347c6fcc163f1"
-  },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\intelligence_screens.dart": {
-    "mtime": 1776576720.3847263,
-    "hash": "ba9551e3ce433ea6fc20b268509993aa"
+    "mtime": 1777862463.0243568,
+    "hash": "e273200bac7d477e800d0675d6aab32d"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\merchant_insights_screen.dart": {
     "mtime": 1777170428.3446572,
@@ -551,13 +539,25 @@
     "mtime": 1777170442.6247158,
     "hash": "aea444f04eb6e85062933a87b7c41d04"
   },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\sms_intelligence_dashboard_screen.dart": {
+    "mtime": 1777862447.0940223,
+    "hash": "c775f662e61c2dd692c81941092c1264"
+  },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\transfer_pairs_screen.dart": {
     "mtime": 1776579068.3046405,
     "hash": "130e34286aac38e7c3a133c911035136"
   },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\components\\sms_intelligence_ui_components.dart": {
+    "mtime": 1777862405.4641764,
+    "hash": "a56a0bda655d2165a590ce2c232d34aa"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\intelligence\\components\\sms_scan_result_card.dart": {
+    "mtime": 1777862390.4860303,
+    "hash": "623cebb057505bb3639af332ff1bcd60"
+  },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\profile_screen.dart": {
-    "mtime": 1777843044.5798643,
-    "hash": "fd5ead9a5e8894c0f1008b78b3cadefd"
+    "mtime": 1777866605.5090437,
+    "hash": "b7b940766bb321735438d6280d175b30"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\account_health_card.dart": {
     "mtime": 1776576720.4041793,
@@ -576,8 +576,8 @@
     "hash": "5e3bf021915d34c122da6820d40ddd5d"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_components.dart": {
-    "mtime": 1776576720.4234166,
-    "hash": "286e9b08aca51e465a3d6cda4e3ee925"
+    "mtime": 1777843367.4737864,
+    "hash": "c6224736c5d4c131188a52cd933e2b0e"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\profile\\components\\profile_dialogs.dart": {
     "mtime": 1776576720.4234166,
@@ -676,24 +676,24 @@
     "hash": "52641be9f855231bda641fe64efe402c"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\transactions_screen.dart": {
-    "mtime": 1777843044.6248748,
-    "hash": "623d49c154e0103b924543a84467152c"
+    "mtime": 1777867382.1880152,
+    "hash": "15f4711033c65fb70e7312b1b100f638"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\transaction_detail_screen.dart": {
-    "mtime": 1777843044.6344564,
-    "hash": "6a1109009bf2651ba601f3b18be765c1"
+    "mtime": 1777867377.2600515,
+    "hash": "695761b9042cb5ac938e5f6f44572bc1"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\account_carousel.dart": {
-    "mtime": 1776954430.9266438,
-    "hash": "12f2727259da02658f0e8686759167ec"
+    "mtime": 1777862472.4555233,
+    "hash": "437f994989e9cf5f63556c5c84982f95"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\account_chip.dart": {
     "mtime": 1776576720.5131185,
     "hash": "5f17d884ec8be85a1a741cce36c619f8"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\intelligence_overview_card.dart": {
-    "mtime": 1776576720.5190465,
-    "hash": "385fa767f5723716f7b267bc61a5cb93"
+    "mtime": 1777862467.3747063,
+    "hash": "74dc2bbd71bbf0ddf88870949efdef4e"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\transactions\\components\\transactions_components.dart": {
     "mtime": 1776576720.522046,
@@ -715,6 +715,10 @@
     "mtime": 1776576720.5336306,
     "hash": "aa2d212bd09b028007e80f53516c4442"
   },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\screens\\tutorial\\transparent_tutorial_module.dart": {
+    "mtime": 1777862509.1212919,
+    "hash": "cafba211f2cbbed9ddc58f1ec836cf69"
+  },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\account_matching_service.dart": {
     "mtime": 1776576720.5391462,
     "hash": "676b55da07a8e57993a3c5fc1018c550"
@@ -728,8 +732,8 @@
     "hash": "7147c1a8daf4a5c59c616004461b14c4"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\auth_service.dart": {
-    "mtime": 1777839183.8397522,
-    "hash": "676015bb5e916b3f54b1d6ab3b065f48"
+    "mtime": 1777867398.9360814,
+    "hash": "ee0e1a55d9854386cee4f9c031d05448"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\services\\chat_parser.dart": {
     "mtime": 1777772814.2254472,
@@ -864,24 +868,40 @@
     "hash": "08dea0cce429dc42e3e7a24e654a8603"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\account\\sms_account_resolver.dart": {
-    "mtime": 1777843044.6866424,
-    "hash": "64e06f970b3bdf0a81c3ece214b86617"
+    "mtime": 1777843267.0632083,
+    "hash": "d040ffba3a929e73ee3f55408fa1b632"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\audit\\sms_audit_repository.dart": {
+    "mtime": 1777846438.9164157,
+    "hash": "02b2ee3e35d4ae6f05c1fe07aeef6e39"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\cluster\\sms_cluster_memory.dart": {
+    "mtime": 1777845312.866303,
+    "hash": "33dbb7bcf72c207922e2c9e8fafe12e3"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\cluster\\sms_cluster_propagator.dart": {
+    "mtime": 1777845353.9001546,
+    "hash": "3be2f981f342bd4607f7a74133d2a900"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\debug\\sms_scan_debugger.dart": {
-    "mtime": 1777843044.6914563,
-    "hash": "aeeffe9c5e9816b81c84c6d78b57129d"
+    "mtime": 1777847378.8654659,
+    "hash": "418483e172219dab4b6c31622ecd7a8f"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\export\\sms_export_service.dart": {
-    "mtime": 1777843044.6948712,
-    "hash": "2b22d28020ad4c2c0b7101b2105a3526"
+    "mtime": 1777843267.0632083,
+    "hash": "443b661c1503acf6d345b50aaf81ff73"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\feedback\\sms_feedback_service.dart": {
-    "mtime": 1777561176.581164,
-    "hash": "847a83b7283f5f8747a163b4d25039b5"
+    "mtime": 1777866427.616216,
+    "hash": "c1a3f9ddbfea2a2db289078cbcdb54bd"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_data_masker.dart": {
     "mtime": 1776735293.7176964,
     "hash": "ea31db98a8bbfc07c664b071b69e67a0"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_event_repository.dart": {
+    "mtime": 1777843666.4587338,
+    "hash": "8113e350d77aacc090cdded19b450de8"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_keywords_seed.dart": {
     "mtime": 1777174520.3365967,
@@ -891,13 +911,17 @@
     "mtime": 1776735714.5699375,
     "hash": "7b1436a18586256b7f8888229399149d"
   },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_normalizer.dart": {
+    "mtime": 1777844259.1396585,
+    "hash": "4c3280d4a9df5c7b0575af8cf77369fd"
+  },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_service.dart": {
-    "mtime": 1777843044.7043767,
-    "hash": "37b42573a3b96b6dd0f83b4f82eba447"
+    "mtime": 1777867394.978181,
+    "hash": "88bed03f543c23d5b76705da1a5b961d"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\ingestion\\sms_signature.dart": {
-    "mtime": 1777299657.2336538,
-    "hash": "da7cf530728e1c54bba3a47b7dfcacd2"
+    "mtime": 1777858291.0076957,
+    "hash": "520fdf262796334b8f441c787a2ce4dc"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\models\\sms_template.dart": {
     "mtime": 1776576720.1652453,
@@ -912,64 +936,60 @@
     "hash": "36b6ae546f1e769c5c2199dfdcd0b826"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_account_extractor.dart": {
-    "mtime": 1777843044.7131734,
-    "hash": "9a543e87cc3ae52b36de08318e784c17"
+    "mtime": 1777843267.0812042,
+    "hash": "3e89ff421b06c7da090ed2a3c768a17d"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_advanced_parser.dart": {
     "mtime": 1777843044.7185726,
     "hash": "8bafea1245d571422464138875090756"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_classification_service.dart": {
-    "mtime": 1777843044.7225838,
-    "hash": "2c2e85f9974c65f6037a0e32cca382a3"
+    "mtime": 1777843267.0587447,
+    "hash": "82aca5f5736e69541d7bfce1f92ea86b"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\parsing\\sms_entity_extractor.dart": {
-    "mtime": 1777843044.726572,
-    "hash": "fa88868966066b46d94043c4f8c34344"
+    "mtime": 1777843267.1060836,
+    "hash": "1288038f09daddc5520144dafbabee3c"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\pipeline\\sms_intelligence_integration.dart": {
-    "mtime": 1777843044.730577,
-    "hash": "3f60c103bf8c075a2061a35efc2be887"
+    "mtime": 1777847098.1675339,
+    "hash": "275c6320202f0fbc01e01b527cf783c5"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\pipeline\\sms_pipeline_executor.dart": {
-    "mtime": 1777843044.7336166,
-    "hash": "c456f4961f1bb592b3ea934fa292b69b"
+    "mtime": 1777866332.5024357,
+    "hash": "b5a29ee381f853e73814a905b8cb6d99"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\probability\\sms_probability_engine.dart": {
+    "mtime": 1777845684.4633908,
+    "hash": "f3e4898ff489c0324187705af02c7e2e"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\rules\\sms_correction_service.dart": {
-    "mtime": 1777843044.7386754,
-    "hash": "8a7ac45a861f76d6fc7522c26f300bd6"
+    "mtime": 1777866325.0776834,
+    "hash": "34a4783f9c8b03360377cc8c6dddfd84"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\rules\\sms_reevaluation_service.dart": {
-    "mtime": 1777843044.7420783,
-    "hash": "f1d5535f89842a065413b41749fabb2c"
+    "mtime": 1777843267.1023471,
+    "hash": "43ad0dc461276c872e26738608326bd9"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\rules\\sms_rule_engine.dart": {
-    "mtime": 1776735293.743878,
-    "hash": "4cb7c86c92a4e2c86a92027c35d4612c"
+    "mtime": 1777843267.122652,
+    "hash": "33cdf328b5fea15feea48ecf4f9bdf95"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\screens\\sms_review_screen.dart": {
-    "mtime": 1776735293.7131696,
-    "hash": "b1b81266c904c5d57ed3f97a5bdb8229"
+    "mtime": 1777843267.0936756,
+    "hash": "4546367f64b71f233333e84791c289ca"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\screens\\sms_training_export_screen.dart": {
     "mtime": 1777843044.7495203,
     "hash": "74bdb9bf4a8712111f0c5efef68506b9"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\screens\\components\\sms_monitoring_section.dart": {
-    "mtime": 1777843044.7531102,
-    "hash": "92f9a437d4457cb33663424a7cee05b1"
+    "mtime": 1777843267.0731525,
+    "hash": "6af74c8fa1178e69e77efee978e4c393"
   },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\_ml_deprecated\\sms_classifier_service.dart": {
-    "mtime": 1777732144.4877572,
-    "hash": "2302cfbc28004a43a7570151b4d93778"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\_ml_deprecated\\sms_ml_classifier.dart": {
-    "mtime": 1777843044.757107,
-    "hash": "1b143f25a82c10816810e9b5af763bd7"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\_ml_deprecated\\sms_ml_model_manager.dart": {
-    "mtime": 1777005374.9889655,
-    "hash": "a181e09375e92cafd6e3a047a5ff74b8"
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\sms_engine\\stability\\sms_stability_guard.dart": {
+    "mtime": 1777846010.3029108,
+    "hash": "530356a5ace569dcfa801a1b8e42b95e"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\lib\\theme\\app_color_scheme.dart": {
     "mtime": 1776576720.653721,
@@ -1164,8 +1184,8 @@
     "hash": "1ce35a34338886d96bce73c6e20138ef"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\flutter\\generated_plugin_registrant.cc": {
-    "mtime": 1776637244.327217,
-    "hash": "04c4bf361e7b5a78a8f256cfda0a0d69"
+    "mtime": 1777848682.7776198,
+    "hash": "948e38b3771a343bcfa974afd7056f38"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\linux\\flutter\\generated_plugin_registrant.h": {
     "mtime": 1775950079.3941774,
@@ -1184,8 +1204,8 @@
     "hash": "ffa1a7c0a2ad45a2c14a921596516ff8"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Flutter\\GeneratedPluginRegistrant.swift": {
-    "mtime": 1776637244.3454566,
-    "hash": "93fa7f4850bb6920843b1653c8a1859c"
+    "mtime": 1777848682.8051345,
+    "hash": "d88ef98fd7d044d5503a3a6e588a139f"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\macos\\Runner\\AppDelegate.swift": {
     "mtime": 1775948910.7015097,
@@ -1226,10 +1246,6 @@
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\citi_balance_alert_test.dart": {
     "mtime": 1777843044.8293016,
     "hash": "20b65ebd7c91300ba48d02cc50251d8a"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\convert_to_tflite.py": {
-    "mtime": 1776825438.227154,
-    "hash": "cbb25e55ec0f63ccbfcc9eed879aac7c"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\debug_account_extraction.dart": {
     "mtime": 1777843044.8327637,
@@ -1288,8 +1304,8 @@
     "hash": "599c9c7d5f682ea3aae8facc6b6fa756"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_engine_comprehensive_test.dart": {
-    "mtime": 1777843044.8571026,
-    "hash": "ffc2262f7c3c007be5ba4d2512489f7e"
+    "mtime": 1777847628.1001728,
+    "hash": "c57f30b26589a452cc09b108bb45cf03"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\sms_export_examples_test.dart": {
     "mtime": 1777843044.8615203,
@@ -1319,10 +1335,6 @@
     "mtime": 1777843044.895547,
     "hash": "95a78b2a1a2ef2d23c29509cd798bd70"
   },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_tflite_model.py": {
-    "mtime": 1776735293.726761,
-    "hash": "b4f0881a0f778f41b04982f042d7bc8f"
-  },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_ucdavis_message.dart": {
     "mtime": 1777843044.9005752,
     "hash": "e4137d3f3c5a72da49b8647d8815b85c"
@@ -1330,10 +1342,6 @@
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\test_user_sms.dart": {
     "mtime": 1777843044.9057105,
     "hash": "e8066182203dbf8525bffa8479d4af59"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\train_sms_classifier.py": {
-    "mtime": 1777217347.958707,
-    "hash": "ef44a8b0cbd585f2571bfec111160b1b"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\test\\train_sms_ner_model.py": {
     "mtime": 1776824902.9352806,
@@ -1408,8 +1416,8 @@
     "hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\flutter\\generated_plugin_registrant.cc": {
-    "mtime": 1776637244.3352668,
-    "hash": "4033d59c284cdc39dab9d4293b6e9820"
+    "mtime": 1777848682.7874887,
+    "hash": "7519a5904bb87127e9b039c7b89263fd"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\windows\\flutter\\generated_plugin_registrant.h": {
     "mtime": 1775950079.4081757,
@@ -1464,8 +1472,8 @@
     "hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\pubspec.yaml": {
-    "mtime": 1777645273.096159,
-    "hash": "eeecca0efefbeb48b384c7c5e5430c22"
+    "mtime": 1777847098.2136576,
+    "hash": "7b13182acab611e836f053beef2998be"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\README.md": {
     "mtime": 1776957662.7383158,
@@ -1482,18 +1490,6 @@
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\README.md": {
     "mtime": 1777007325.0083268,
     "hash": "367470117362a9de39b69ef4a0c072b5"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\SMS_PARSING_FLOW.md": {
-    "mtime": 1776959746.3829727,
-    "hash": "c1262091aadb1597bac1562ce932bf6e"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\SMS_RULE_IMPROVEMENTS_PLAN.md": {
-    "mtime": 1776959656.0280714,
-    "hash": "639124de50d7d7a0168afe687c2d9747"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\SMS_SCAN_FLOW_COMPLETE.md": {
-    "mtime": 1777006142.4171655,
-    "hash": "fa6b5135460f4b18b2fa9dcf90bdf9a1"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\TRANSACTION_FEEDBACK_SYSTEM.md": {
     "mtime": 1777006538.6299934,
@@ -1523,38 +1519,6 @@
     "mtime": 1776958399.1795769,
     "hash": "b8a6808451359b807148f22d3a42a111"
   },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\IMPROVED_SMS_WORKFLOW_PROPOSAL.md": {
-    "mtime": 1777242635.7650535,
-    "hash": "fe9032d6afff81fee413f5bed35a783e"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\PENDING_ACTIONS_FIXES.md": {
-    "mtime": 1777242177.0716786,
-    "hash": "aa31d94cad33405f6a2c297ae6150509"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS Debugging.txt": {
-    "mtime": 1776583715.6299682,
-    "hash": "8afec5186008e63721751ba9c5bf9358"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_DEBUGGING_CHANGES.md": {
-    "mtime": 1777239896.9968235,
-    "hash": "7735e252ba650fec8b0714b8a150ae97"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_DEBUG_QUICK_REFERENCE.md": {
-    "mtime": 1777239923.868213,
-    "hash": "365f153b52a0fb40e9f3921882473699"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_HANG_DEBUGGING_GUIDE.md": {
-    "mtime": 1777239851.1925817,
-    "hash": "14d4b1f14fd192a905470a3112707c27"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\SMS_ISSUES_RESOLVED.md": {
-    "mtime": 1777240718.4817078,
-    "hash": "d8b1d003c4a4f4c8e4d120fb1b91c989"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\Diagnostics\\TRANSACTION_TYPE_HANDLING.md": {
-    "mtime": 1777242850.1840036,
-    "hash": "0afc674b457e56b2db0b771986348bc5"
-  },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\accounting\\system-overview.md": {
     "mtime": 1776958315.3704627,
     "hash": "edb8dc98d498538e5a0491fca1030380"
@@ -1562,30 +1526,6 @@
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\machine-learning\\overview.md": {
     "mtime": 1776958314.110112,
     "hash": "c41c633cb6917e9efb0aa57a267183b4"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\account-resolution.md": {
-    "mtime": 1776957998.4797182,
-    "hash": "b525514ffe10caec073051afc52dc1a3"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\classification.md": {
-    "mtime": 1776957855.8028173,
-    "hash": "4416ea8774ca773e42323758ab93cd6b"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\entity-extraction.md": {
-    "mtime": 1776957906.526134,
-    "hash": "bcacadced7c2cb35e83d75bb4aecaa92"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\overview.md": {
-    "mtime": 1776957805.0407078,
-    "hash": "bf6b3127c554ab7c06b328b8783733ee"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\recurring-patterns.md": {
-    "mtime": 1776958147.1746273,
-    "hash": "88a8fedb1266540fde3a90b6f617c8db"
-  },
-  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\features\\sms-intelligence\\transfer-detection.md": {
-    "mtime": 1776958067.2149012,
-    "hash": "e2e336f5a2004e099128eb51e2ccc0d0"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\getting-started\\configuration.md": {
     "mtime": 1776957733.8728888,
@@ -1602,6 +1542,14 @@
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\reference\\quick-reference.md": {
     "mtime": 1776958461.0910585,
     "hash": "5da75114d921e2b0abf1fa6bf7d48dda"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\sms-intelligence\\functional-guide.md": {
+    "mtime": 1777846632.4748182,
+    "hash": "9cce201f94d9c063e5822829839db993"
+  },
+  "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\sms-intelligence\\technical-reference.md": {
+    "mtime": 1777846580.840433,
+    "hash": "51c4153d66a03042f9cc6ae956d66fd9"
   },
   "C:\\Users\\shank\\projects\\github\\PocketFlow\\docs\\templates\\page-template.md": {
     "mtime": 1776578527.887843,

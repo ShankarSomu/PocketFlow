@@ -11,7 +11,6 @@ import 'package:pocket_flow/services/app_logger.dart';
 import 'package:pocket_flow/services/chat_parser.dart';
 import 'package:pocket_flow/services/recurring_pattern_engine.dart';
 import 'package:pocket_flow/sms_engine/pipeline/sms_pipeline_executor.dart';
-import 'package:pocket_flow/sms_engine/_ml_deprecated/sms_classifier_service.dart';
 import 'package:pocket_flow/sms_engine/parsing/sms_classification_service.dart';
 import 'package:pocket_flow/sms_engine/parsing/sms_entity_extractor.dart';
 import 'package:pocket_flow/sms_engine/account/sms_account_resolver.dart';
@@ -42,6 +41,7 @@ const _kSmsProcessed = 'sms_processed_ids';    // JSON set of processed SMS IDs
 const _kSmsCustomStartDate = 'sms_custom_start_date';
 const _kSmsCustomEndDate = 'sms_custom_end_date';
 const _kSmsLastScanResult = 'sms_last_scan_result'; // JSON of last scan result
+const _kSmsLastScanBreakdown = 'sms_last_scan_breakdown'; // JSON detail by category
 
 /// How far back to look when scanning SMS.
 enum SmsScanRange {
@@ -220,6 +220,22 @@ class SmsService {
     }));
   }
 
+  static Future<Map<String, dynamic>> getLastScanBreakdown() async {
+    final p = await SharedPreferences.getInstance();
+    final raw = p.getString(_kSmsLastScanBreakdown);
+    if (raw == null) return {};
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  static Future<void> _saveLastScanBreakdown(Map<String, dynamic> breakdown) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kSmsLastScanBreakdown, jsonEncode(breakdown));
+  }
+
   static Future<Set<int>> _getProcessedIds() async {
     final p = await SharedPreferences.getInstance();
     final raw = p.getString(_kSmsProcessed);
@@ -251,6 +267,7 @@ class SmsService {
     await p.remove(_kSmsProcessed);
     await p.remove(_kSmsLastScan);
     await p.remove(_kSmsLastScanResult);
+    await p.remove(_kSmsLastScanBreakdown);
   }
 
   // ── Permission ───────────────────────────────────────────────────────────────
@@ -325,8 +342,32 @@ class SmsService {
     int blockedByRule = 0;
     int messagesChecked = 0;
 
-    AppLogger.sms('Phase 2: Initializing ML classifier', level: LogLevel.info);
-    await SmsClassifierService.initialize();
+    final scanBreakdown = <String, dynamic>{
+      'scan_meta': {
+        'range': range.key,
+        'cutoff': cutoff?.toIso8601String(),
+        'end_date': endDate?.toIso8601String(),
+        'scan_started_at': scanStartTime.toIso8601String(),
+      },
+      'imported': <Map<String, dynamic>>[],
+      'non_financial': <Map<String, dynamic>>[],
+      'already_processed': <Map<String, dynamic>>[],
+      'blocked_by_rule': <Map<String, dynamic>>[],
+      'parse_failed': <Map<String, dynamic>>[],
+      'out_of_range': <Map<String, dynamic>>[],
+    };
+
+    void addBreakdownSample(String bucket, SmsMessage sms, {String? detail}) {
+      final list = scanBreakdown[bucket] as List<Map<String, dynamic>>;
+      if (list.length >= 50) return;
+      list.add({
+        'id': sms.id,
+        'sender': sms.sender ?? 'UNKNOWN',
+        'date': (sms.date ?? DateTime.now()).toIso8601String(),
+        'preview': _previewSmsBody(sms.body ?? ''),
+        if (detail != null && detail.isNotEmpty) 'detail': detail,
+      });
+    }
 
     final processingStartTime = DateTime.now();
     
@@ -361,13 +402,18 @@ class SmsService {
       if (date != null) {
         // Since we sorted newest-to-oldest, we can stop entirely once we hit the cutoff
         if (cutoff != null && date.isBefore(cutoff)) {
-          filteredByDate++;
+          final remainingIncludingCurrent = allMessages.length - messagesChecked + 1;
+          filteredByDate += remainingIncludingCurrent;
+          addBreakdownSample('out_of_range', sms,
+              detail: 'Older than scan range cutoff');
           AppLogger.sms('scan_stop_cutoff_reached', detail: 'Reached date ${date.toIso8601String()}');
           break; 
         }
         
         if (endDate != null && date.isAfter(endDate)) {
           filteredByDate++;
+          addBreakdownSample('out_of_range', sms,
+              detail: 'Newer than custom end date');
           continue;
         }
       }
@@ -377,6 +423,7 @@ class SmsService {
       if (!force && processedIds.contains(id)) {
         skipped++;
         alreadyProcessed++;
+        addBreakdownSample('already_processed', sms);
         continue;
       }
 
@@ -390,6 +437,7 @@ class SmsService {
         if (!result.success) {
           failed++;
           parseFailed++;
+          addBreakdownSample('parse_failed', sms, detail: result.message);
           continue;
         }
 
@@ -397,23 +445,32 @@ class SmsService {
 
         if (result.isTransaction) {
           imported++;
+          addBreakdownSample('imported', sms,
+              detail: 'Transaction created (id=${result.transactionId ?? 'n/a'})');
         } else if (result.isPending) {
           pending++;
           skipped++;
+          addBreakdownSample('parse_failed', sms,
+              detail: 'Pending user action: ${result.message}');
         } else {
           skipped++;
           if (result.smsType == SmsType.nonFinancial) {
             nonFinancial++;
             if (result.message == 'Blocked by learned rule') {
               blockedByRule++;
+              addBreakdownSample('blocked_by_rule', sms, detail: result.message);
+            } else {
+              addBreakdownSample('non_financial', sms, detail: result.message);
             }
           } else {
             parseFailed++;
+            addBreakdownSample('parse_failed', sms, detail: result.message);
           }
         }
       } catch (e) {
         failed++;
         parseFailed++;
+        addBreakdownSample('parse_failed', sms, detail: e.toString());
         AppLogger.err('sms_msg_process_err', e);
       }
     }
@@ -454,6 +511,21 @@ class SmsService {
       }
     }
 
+    // Phase 6: Auto-apply learned merchant categories to historical
+    // uncategorized SMS transactions so previous months update automatically.
+    try {
+      final recategorized = await _autoCategorizeHistoricalSmsTransactions();
+      if (recategorized > 0) {
+        AppLogger.sms(
+          'Auto-recategorized historical SMS transactions',
+          detail: 'updated=$recategorized',
+          level: LogLevel.info,
+        );
+      }
+    } catch (e) {
+      AppLogger.err('sms_auto_recategorize', e);
+    }
+
     final totalDuration = DateTime.now().difference(scanStartTime);
     AppLogger.sms('=== SMS SCAN COMPLETE ===', 
       detail: 'Processed ${allMessages.length} messages in ${totalDuration.inSeconds}s, Imported $imported',
@@ -471,6 +543,8 @@ class SmsService {
       blockedByRule: blockedByRule,
     );
     await _saveLastScanResult(result);
+    scanBreakdown['scan_meta']['scan_completed_at'] = DateTime.now().toIso8601String();
+    await _saveLastScanBreakdown(scanBreakdown);
     return result;
   }
 
@@ -579,6 +653,35 @@ class SmsService {
     if (normalized.isEmpty) return '<empty>';
     if (normalized.length <= maxLength) return normalized;
     return '${normalized.substring(0, maxLength)}...';
+  }
+
+  static Future<int> _autoCategorizeHistoricalSmsTransactions() async {
+    final db = await AppDatabase.db();
+    return db.rawUpdate('''
+      UPDATE transactions
+      SET category = (
+        SELECT mcm.category
+        FROM merchant_category_map mcm
+        WHERE LOWER(TRIM(mcm.merchant)) = LOWER(TRIM(transactions.merchant))
+          AND mcm.confidence >= 0.6
+        ORDER BY mcm.confidence DESC, mcm.usage_count DESC
+        LIMIT 1
+      )
+      WHERE source_type = 'sms'
+        AND deleted_at IS NULL
+        AND merchant IS NOT NULL
+        AND (
+          category IS NULL OR
+          category = '' OR
+          LOWER(category) = 'uncategorized'
+        )
+        AND EXISTS (
+          SELECT 1
+          FROM merchant_category_map mcm2
+          WHERE LOWER(TRIM(mcm2.merchant)) = LOWER(TRIM(transactions.merchant))
+            AND mcm2.confidence >= 0.6
+        )
+    ''');
   }
 
   static Future<void> createAccountsFromTransactions() async {

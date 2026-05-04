@@ -92,6 +92,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = await AuthService.signIn();
       if (!mounted) return;
       if (user != null) {
+        await _promptRestoreAfterSignIn();
+        if (!mounted) return;
         // Reload account health after sign-in
         await _loadAccountHealth();
         if (!mounted) return;
@@ -107,6 +109,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .showSnackBar(const SnackBar(content: Text('Sign in failed')));
     } finally {
       _isSigningIn = false;
+    }
+  }
+
+  Future<void> _promptRestoreAfterSignIn() async {
+    if (!mounted || !AuthService.isSignedIn) return;
+
+    try {
+      final folder = await AuthService.ensureSelectedBackupFolder(
+        createIfMissing: false,
+      );
+      if (folder == null) return;
+
+      final hasBackup = await AuthService.hasBackupInSelectedFolder();
+      if (!hasBackup || !mounted) return;
+
+      final shouldRestore = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) => AlertDialog(
+          title: const Text('Backup Found'),
+          content: Text(
+            'We found a Google Drive backup in "${folder.name}".\n\n'
+            'Do you want to restore your data, or skip and start fresh?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: const Text('Start fresh'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              icon: const Icon(Icons.cloud_download_rounded, size: 18),
+              label: const Text('Restore backup'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldRestore != true || !mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Restoring backup...')),
+      );
+
+      await AuthService.restore();
+      notifyDataChanged();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Backup restored successfully'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.tertiary,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Backup restore failed. Starting with current data.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 

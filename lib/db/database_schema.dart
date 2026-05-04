@@ -140,6 +140,7 @@ extension _AppDatabaseSchema on AppDatabase {
         account_candidate_id INTEGER REFERENCES account_candidates(id),
         sms_source TEXT,
         metadata TEXT,
+        confidence REAL NOT NULL DEFAULT 0.0,
         status TEXT NOT NULL DEFAULT 'pending',
         resolved_at TEXT,
         resolution_action TEXT,
@@ -239,7 +240,8 @@ extension _AppDatabaseSchema on AppDatabase {
         matched_rule_ids TEXT,
         hit_count INTEGER DEFAULT 1,
         last_hit_at INTEGER NOT NULL,
-        created_at INTEGER NOT NULL
+        created_at INTEGER NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1
       )''');
     await db.execute('''CREATE TABLE merchant_normalizations(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -343,6 +345,7 @@ extension _AppDatabaseSchema on AppDatabase {
         correction_date TEXT NOT NULL,
         sms_text TEXT,
         feedback_type TEXT NOT NULL,
+        weight REAL NOT NULL DEFAULT 0.0,
         FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
       )''');
     await db.execute('''CREATE TABLE parsing_feedback(
@@ -353,6 +356,7 @@ extension _AppDatabaseSchema on AppDatabase {
         feedback_date TEXT NOT NULL,
         sms_text TEXT,
         extracted_value TEXT,
+        weight REAL NOT NULL DEFAULT 0.0,
         FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
       )''');
     await db.execute('''CREATE TABLE IF NOT EXISTS feedback_events(
@@ -397,7 +401,64 @@ extension _AppDatabaseSchema on AppDatabase {
         created_at INTEGER NOT NULL
       )''');
 
-    // Indexes
+    // SMS event log (raw ingest + dedup + audit trail)
+    await db.execute('''CREATE TABLE IF NOT EXISTS sms_events(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        raw_body TEXT NOT NULL,
+        sender TEXT NOT NULL,
+        received_at TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        processing_status TEXT NOT NULL DEFAULT 'pending',
+        transaction_id INTEGER REFERENCES transactions(id),
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )''');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_sms_events_hash ON sms_events(content_hash)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_events_status ON sms_events(processing_status)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_events_received ON sms_events(received_at)');
+
+    // SMS cluster memory (Phase 2) — one row per structural template
+    await db.execute('''CREATE TABLE IF NOT EXISTS sms_clusters(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        template_hash TEXT NOT NULL UNIQUE,
+        sender TEXT NOT NULL,
+        normalized_body TEXT NOT NULL,
+        transaction_type TEXT,
+        institution TEXT,
+        match_count INTEGER NOT NULL DEFAULT 1,
+        confirmed_count INTEGER NOT NULL DEFAULT 0,
+        rejected_count INTEGER NOT NULL DEFAULT 0,
+        confidence REAL NOT NULL DEFAULT 0.0,
+        status TEXT NOT NULL DEFAULT 'learning',
+        propagated_at TEXT,
+        first_seen TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_seen TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_clusters_status ON sms_clusters(status)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_clusters_sender ON sms_clusters(sender)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_clusters_propagated ON sms_clusters(propagated_at)');
+
+    // SMS audit log (Phase 6) — immutable per-event signal breakdown for replay + audit
+    await db.execute('''CREATE TABLE IF NOT EXISTS sms_audit_log(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL REFERENCES sms_events(id),
+        cluster_id INTEGER REFERENCES sms_clusters(id),
+        transaction_id INTEGER REFERENCES transactions(id),
+        sender_known INTEGER NOT NULL DEFAULT 0,
+        pattern_cache_hit INTEGER NOT NULL DEFAULT 0,
+        sender_prior REAL NOT NULL DEFAULT 0.0,
+        cluster_posterior REAL NOT NULL DEFAULT 0.0,
+        signal_score REAL NOT NULL DEFAULT 0.0,
+        account_score REAL NOT NULL DEFAULT 0.0,
+        prob_score REAL NOT NULL DEFAULT 0.0,
+        derived_from TEXT,
+        stability_threat TEXT NOT NULL DEFAULT 'none',
+        needs_review INTEGER NOT NULL DEFAULT 0,
+        pipeline_version TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_audit_event ON sms_audit_log(event_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_audit_transaction ON sms_audit_log(transaction_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_audit_created ON sms_audit_log(created_at)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category)');

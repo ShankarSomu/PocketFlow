@@ -6,7 +6,7 @@ import '../services/notification_manager.dart';
 import '../theme/app_color_scheme.dart';
 import 'transactions/transactions_screen.dart';
 import 'accounts/accounts_screen.dart';
-import 'intelligence/intelligence_dashboard_screen.dart';
+import 'intelligence/sms_intelligence_dashboard_screen.dart';
 import 'intelligence/transfer_pairs_screen.dart';
 import 'intelligence/recurring_patterns_screen.dart';
 
@@ -158,7 +158,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       } else if (route.contains('recurring')) {
         screen = const RecurringPatternsScreen();
       } else if (route.contains('intelligence')) {
-        screen = const IntelligenceDashboardScreen();
+        screen = const SmsIntelligenceDashboardScreen();
       }
 
       if (screen != null && mounted) {

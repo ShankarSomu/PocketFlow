@@ -34,7 +34,7 @@ class SmsCorrectionService {
       case FeedbackType.notATransaction:
         // Soft-delete this transaction
         await db.update('transactions',
-            {'deleted_at': now},
+            {'deleted_at': now, 'user_disputed': 1, 'needs_review': 0},
             where: 'id = ?', whereArgs: [tx.id]);
 
         // Store negative sample using ML-aware signature
@@ -133,7 +133,7 @@ class SmsCorrectionService {
     final db = await AppDatabase.db();
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.update('transactions',
-        {'deleted_at': now},
+        {'deleted_at': now, 'user_disputed': 1, 'needs_review': 0},
         where: 'id = ?', whereArgs: [transactionId]);
     final sig = SmsSignature.from(smsText, null);
     await db.insert('sms_negative_samples', {

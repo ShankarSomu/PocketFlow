@@ -8,6 +8,7 @@ import '../../db/database.dart';
 import '../../models/account.dart';
 import '../../models/transaction.dart' as model;
 import '../../services/refresh_notifier.dart';
+import 'package:pocket_flow/sms_engine/feedback/sms_feedback_service.dart';
 import 'package:pocket_flow/sms_engine/rules/sms_correction_service.dart';
 import '../../services/time_filter.dart';
 import '../../widgets/category_picker.dart';
@@ -1144,6 +1145,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           originalCategory: transaction.category,
                           newCategory: category,
                           transactionType: transaction.type,
+                        );
+                        await TransactionFeedbackService.recordCorrection(
+                          transaction: transaction,
+                          fieldName: 'category',
+                          originalValue: transaction.category,
+                          correctedValue: category,
                         );
                       }
                       

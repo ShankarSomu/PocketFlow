@@ -274,6 +274,33 @@ class TransactionFeedbackService {
         'last_used_at': DateTime.now().toIso8601String(),
       });
     }
+
+    // Apply this learned category retroactively to historical SMS transactions
+    // that are still uncategorized.
+    await _backfillUncategorizedTransactionsForMerchant(db, merchant, category);
+  }
+
+  static Future<void> _backfillUncategorizedTransactionsForMerchant(
+    Database db,
+    String merchant,
+    String category,
+  ) async {
+    await db.rawUpdate(
+      '''
+      UPDATE transactions
+      SET category = ?
+      WHERE source_type = 'sms'
+        AND deleted_at IS NULL
+        AND merchant IS NOT NULL
+        AND LOWER(TRIM(merchant)) = LOWER(TRIM(?))
+        AND (
+          category IS NULL OR
+          category = '' OR
+          LOWER(category) = 'uncategorized'
+        )
+      ''',
+      [category, merchant],
+    );
   }
 
   // ─────────────────────────────────────────────────────────────

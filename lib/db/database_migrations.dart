@@ -3,6 +3,20 @@ part of 'database.dart';
 // ── Migrations: incremental schema upgrades ───────────────────────────────────
 
 extension _AppDatabaseMigrations on AppDatabase {
+  static Future<bool> _hasColumn(
+    Database db,
+    String tableName,
+    String columnName,
+  ) async {
+    final rows = await db.rawQuery('PRAGMA table_info(' + tableName + ')');
+    for (final row in rows) {
+      if ((row['name'] as String?) == columnName) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   static Future<void> _migrate(Database db, int oldVersion) async {
     if (oldVersion < 2) {
       await db.execute(
@@ -433,6 +447,106 @@ extension _AppDatabaseMigrations on AppDatabase {
         )''');
       await db.execute('CREATE INDEX idx_execution_logs_rule ON execution_logs(rule_type, rule_id, execution_date)');
       AppLogger.db('migration_v27', detail: 'execution log + rule refs enabled');
+    }
+    if (oldVersion < 28) {
+      await db.execute('''CREATE TABLE IF NOT EXISTS sms_events(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          raw_body TEXT NOT NULL,
+          sender TEXT NOT NULL,
+          received_at TEXT NOT NULL,
+          content_hash TEXT NOT NULL,
+          processing_status TEXT NOT NULL DEFAULT 'pending',
+          transaction_id INTEGER REFERENCES transactions(id),
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )''');
+      await db.execute('CREATE UNIQUE INDEX idx_sms_events_hash ON sms_events(content_hash)');
+      await db.execute('CREATE INDEX idx_sms_events_status ON sms_events(processing_status)');
+      await db.execute('CREATE INDEX idx_sms_events_received ON sms_events(received_at)');
+      AppLogger.db('migration_v28', detail: 'sms_events table created for raw ingest + dedup');
+    }
+    if (oldVersion < 29) {
+      await db.execute('''CREATE TABLE IF NOT EXISTS sms_clusters(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          template_hash TEXT NOT NULL UNIQUE,
+          sender TEXT NOT NULL,
+          normalized_body TEXT NOT NULL,
+          transaction_type TEXT,
+          institution TEXT,
+          match_count INTEGER NOT NULL DEFAULT 1,
+          confirmed_count INTEGER NOT NULL DEFAULT 0,
+          rejected_count INTEGER NOT NULL DEFAULT 0,
+          confidence REAL NOT NULL DEFAULT 0.0,
+          status TEXT NOT NULL DEFAULT 'learning',
+          propagated_at TEXT,
+          first_seen TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          last_seen TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_clusters_status ON sms_clusters(status)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_clusters_sender ON sms_clusters(sender)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_clusters_propagated ON sms_clusters(propagated_at)');
+      AppLogger.db('migration_v29', detail: 'sms_clusters table created for Phase 2 Cluster Memory');
+    }
+    if (oldVersion < 30) {
+      await db.execute('''CREATE TABLE IF NOT EXISTS sms_audit_log(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event_id INTEGER NOT NULL REFERENCES sms_events(id),
+          cluster_id INTEGER REFERENCES sms_clusters(id),
+          transaction_id INTEGER REFERENCES transactions(id),
+          sender_known INTEGER NOT NULL DEFAULT 0,
+          pattern_cache_hit INTEGER NOT NULL DEFAULT 0,
+          sender_prior REAL NOT NULL DEFAULT 0.0,
+          cluster_posterior REAL NOT NULL DEFAULT 0.0,
+          signal_score REAL NOT NULL DEFAULT 0.0,
+          account_score REAL NOT NULL DEFAULT 0.0,
+          prob_score REAL NOT NULL DEFAULT 0.0,
+          derived_from TEXT,
+          stability_threat TEXT NOT NULL DEFAULT 'none',
+          needs_review INTEGER NOT NULL DEFAULT 0,
+          pipeline_version TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_audit_event ON sms_audit_log(event_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_audit_transaction ON sms_audit_log(transaction_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_sms_audit_created ON sms_audit_log(created_at)');
+      AppLogger.db('migration_v30', detail: 'sms_audit_log table created for Phase 6 Replay/Audit');
+    }
+    if (oldVersion < 31) {
+      final hasIsActive = await _hasColumn(db, 'sms_pattern_cache', 'is_active');
+      if (!hasIsActive) {
+        await db.execute(
+            'ALTER TABLE sms_pattern_cache ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1');
+      }
+      await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_cache_signature_active ON sms_pattern_cache(pattern_signature, is_active)');
+      AppLogger.db('migration_v31',
+          detail: 'sms_pattern_cache.is_active backfilled for pattern-cache lookups');
+    }
+    if (oldVersion < 32) {
+      final hasPendingConfidence = await _hasColumn(db, 'pending_actions', 'confidence');
+      if (!hasPendingConfidence) {
+        await db.execute(
+            'ALTER TABLE pending_actions ADD COLUMN confidence REAL NOT NULL DEFAULT 0.0');
+      }
+      AppLogger.db('migration_v32',
+          detail: 'pending_actions.confidence backfilled for SMS review actions');
+    }
+    if (oldVersion < 33) {
+      final hasParseFeedbackWeight = await _hasColumn(db, 'parsing_feedback', 'weight');
+      if (!hasParseFeedbackWeight) {
+        await db.execute(
+            'ALTER TABLE parsing_feedback ADD COLUMN weight REAL NOT NULL DEFAULT 0.0');
+      }
+      AppLogger.db('migration_v33',
+          detail: 'parsing_feedback.weight backfilled for feedback scoring');
+    }
+    if (oldVersion < 34) {
+      final hasUserCorrectionsWeight = await _hasColumn(db, 'user_corrections', 'weight');
+      if (!hasUserCorrectionsWeight) {
+        await db.execute(
+            'ALTER TABLE user_corrections ADD COLUMN weight REAL NOT NULL DEFAULT 0.0');
+      }
+      AppLogger.db('migration_v34',
+          detail: 'user_corrections.weight backfilled for feedback scoring');
     }
   }
 }

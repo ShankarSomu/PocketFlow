@@ -22,7 +22,7 @@ class IntelligenceOverviewCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const IntelligenceDashboardScreen(),
+            builder: (context) => const SmsIntelligenceDashboardScreen(),
           ),
         );
       },
